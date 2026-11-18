@@ -289,6 +289,14 @@ html body #selzList button{background:rgba(255,255,255,.07);color:#fff;border-co
 <script>window.SOLO_CARRERA=1;window.SOLO_NAVIDAD=1;document.body.classList.add("solo")</script>
 <script>addEventListener("error",e=>{const l=document.getElementById("load");if(l){l.hidden=false;l.textContent="Error: "+(e.message||e.target?.src||"recurso no cargado")}},true);setTimeout(()=>{const l=document.getElementById("load");if(l&&!l.hidden&&l.textContent.startsWith("Cargando"))l.textContent="Sigue cargando… si no aparece, recarga la página."},20000)</script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.7.3/build/index.module.js","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>
+<script>/* móvil: el reparto de Navidad con gráficos completos salta solo a la versión móvil (navm.html) */
+(()=>{const movil=matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<=820;
+ if(!movil||window.LITE||/[?&]pc=1/.test(location.search))return;
+ const ir=()=>fetch('navm.html',{method:'HEAD',cache:'no-store'}).then(r=>{if(r.ok){location.replace('navm.html'+location.search+location.hash);return true}return false}).catch(()=>false);
+ if(window.SOLO_NAVIDAD){ir();return}
+ document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#selzNavidad');if(!b||!e.isTrusted)return;
+  e.stopImmediatePropagation();e.preventDefault();ir().then(ok=>{if(!ok)b.click()})},true);   // si no hay versión móvil al lado, sigue aquí
+})();</script>
 <script type="module">
 const ZONA='vigo';let START=[48.0,42.75],START_A=null;const ANG=Math.PI/2;
 const PZA_ESP=[94.22,29.45],PZA_ESP_A=1.15;   // salida del coche: Praza de España, mirando Gran Vía arriba

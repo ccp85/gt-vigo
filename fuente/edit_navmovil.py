@@ -15,6 +15,10 @@ r("window.CIRT=()=>CIR;","window.CIRT=()=>CIR;\n"+leer('navmovil_lotes.js'))
 # 3) Menú de elegir carroza con el móvil en horizontal: el diseño apilado (carroza arriba, opciones abajo) no cabía en 390 px
 #    de alto; en horizontal se usa el de dos columnas, con el panel de opciones desplazable y el botón de jugar siempre a la vista
 r("@media (max-width:860px){","@media (max-width:860px) and (orientation:portrait),(max-width:560px){")
+# 4) En el móvil, el reparto de Navidad con gráficos completos salta solo a la versión móvil (navmovil_salto.html):
+#    al abrir nav.html y al pulsar «🎄 Navidad 2026» en el juego completo. Solo si navm.html está al lado (GitHub Pages);
+#    con ?pc=1 en la dirección se queda en la de gráficos completos.
+r('<script type="module">',leer('navmovil_salto.html')+'<script type="module">')
 # 4) Botones e indicadores en vertical (navmovil.css)
 s=s.replace('</style>',leer('navmovil.css')+'</style>',1)
 open(f,'w',encoding='utf8').write(s)
