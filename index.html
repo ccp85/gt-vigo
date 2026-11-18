@@ -3611,10 +3611,11 @@ if(window.LITE)(()=>{
  // (coches, carrozas, barcos) se juntan dentro del grupo y viajan con él
  const INFR=new WeakMap();
  let BUS=null,BI=0,NUEV=new Map();
- function busca1(o,ahora){if(EN.has(o)||!cand(o)||!enEscena(o))return;let I=INFO.get(o);if(I&&I.no)return;
+ function busca1(o,ahora){if(o.isInstancedMesh){dieta(o);return}if(EN.has(o)||!cand(o)||!enEscena(o))return;let I=INFO.get(o);if(I&&I.no)return;
   const vo0=VOL.has(o.material),vo=volatil(o.material);const f=firma(o);if(vo&&!vo0&&I){I.f=f;I.t=ahora;I.cambios=0;return}
   if(!I){INFO.set(o,{f,t:ahora,cambios:0});return}
   if(I.f!==f){I.f=f;I.t=ahora;I.cambios++}
+  if(grande(o)){if(I.cambios===0&&ahora-I.t>=ESPERA)COLAT.add(o);return}
   const mete=(k,pl,r)=>(NUEV.get(k)||NUEV.set(k,{pl,r,l:[]}).get(k)).l.push(o);
   const pl=plegable(o.material),ka=claveMat(o.material)+'#'+claveAttr(o.geometry,pl)+'#'+o.receiveShadow+'#'+o.castShadow+'#'+o.renderOrder;
   if(I.cambios<=2){if(I.f===f&&ahora-I.t>=ESPERA*(1+I.cambios*3))mete(ka+'#'+celda(o),pl,null);return}
@@ -3630,6 +3631,56 @@ if(window.LITE)(()=>{
     L.srcs.push(o);EN.set(o,L);nv+=v}
    if(L&&L.srcs.length<2){for(const q of L.srcs)EN.delete(q);LOTES.delete(L.k);COLA.delete(L)}}NUEV=new Map()}
  // los lotes se montan poco a poco (unos milisegundos cada vez) para que no se note un parón al entrar en una zona
+
+ // ---- suelos enteros de una zona (aceras, calzada, tierra…: hasta 200.000 triángulos en una sola pieza que abarca 4 km)
+ // se trocean en cuadros de unos 600 m: así solo se dibuja lo que entra en la cámara y no la zona entera
+ let TRZ=null;const TC=9,TROZ=new Map(),COLAT=new Set(),GRA=new WeakMap();
+ function grande(o){let r=GRA.get(o.geometry);if(r===undefined){const g=o.geometry,n=(g.index?g.index.count:g.attributes.position.count)/3;if(!g.boundingSphere)g.computeBoundingSphere();
+   r=n>12000&&g.boundingSphere.radius*o.matrixWorld.getMaxScaleOnAxis()>8;GRA.set(o.geometry,r)}return r}
+ function* trocear(o){const g=o.geometry,P=g.attributes.position,IX=g.index,nt=(IX?IX.count:P.count)/3,mw=o.matrixWorld,e=mw.elements;m3.getNormalMatrix(mw);
+  const nombres=Object.keys(g.attributes),vi=k=>IX?IX.getX(k):k,celdas=new Map(),flip=mw.determinant()<0;
+  for(let t=0;t<nt;t++){let cx=0,cz=0;for(let j=0;j<3;j++){const v=vi(t*3+j),x=P.getX(v),y=P.getY(v),z=P.getZ(v);cx+=e[0]*x+e[4]*y+e[8]*z+e[12];cz+=e[2]*x+e[6]*y+e[10]*z+e[14]}
+   const k=Math.floor(cx/3/TC)+','+Math.floor(cz/3/TC);let a=celdas.get(k);if(!a)celdas.set(k,a=[]);a.push(t);if((t&4095)===4095)yield}
+  const G=new THREE.Group();G.name='trozos';G.matrixAutoUpdate=false;
+  for(const ts of celdas.values()){const nv=ts.length*3,out={};for(const n of nombres)out[n]=new Float32Array(nv*g.attributes[n].itemSize);let w=0;
+   for(const t of ts)for(let j0=0;j0<3;j0++){const v=vi(t*3+(flip?(3-j0)%3:j0));
+    for(const n of nombres){const A=g.attributes[n],it=A.itemSize,D=out[n];
+     if(n==='position'){const x=A.getX(v),y=A.getY(v),z=A.getZ(v);D[w*3]=e[0]*x+e[4]*y+e[8]*z+e[12];D[w*3+1]=e[1]*x+e[5]*y+e[9]*z+e[13];D[w*3+2]=e[2]*x+e[6]*y+e[10]*z+e[14]}
+     else if(n==='normal'){v3.fromBufferAttribute(A,v).applyMatrix3(m3).normalize();D[w*3]=v3.x;D[w*3+1]=v3.y;D[w*3+2]=v3.z}
+     else for(let c=0;c<it;c++)D[w*it+c]=A.getComponent(v,c)}
+    w++}
+   const gg=new THREE.BufferGeometry();for(const n of nombres)gg.setAttribute(n,new THREE.BufferAttribute(out[n],g.attributes[n].itemSize));gg.computeBoundingSphere();
+   const me=new THREE.Mesh(gg,o.material);me.matrixAutoUpdate=false;me.raycast=noop;me.userData.noLote=1;me.receiveShadow=o.receiveShadow;me.renderOrder=o.renderOrder;G.add(me);yield}
+  if(!enEscena(o)||EN.has(o)){for(const m of G.children)m.geometry.dispose();return}
+  RAIZ.add(G);o.layers.mask=HID;EN.set(o,'T');TROZ.set(o,{G,f:firma(o)});if(!LIB.has(g)){LIB.add(g);g.dispose()}}
+ function quitaTrozos(o,T){T.G.removeFromParent();for(const m of T.G.children)m.geometry.dispose();TROZ.delete(o);if(EN.get(o)==='T')soltar(o)}
+ function revisaT(){for(const [o,T] of TROZ){if(!enEscena(o)){quitaTrozos(o,T);continue}if(firma(o)!==T.f){quitaTrozos(o,T);const I=INFO.get(o);if(I)I.no=true}}}
+ // ---- figuras repetidas miles de veces (público, bombillas, aros de luz): la misma forma con menos caras
+ const DIET=new WeakSet(),DG=new WeakMap();
+ function dieta(o){if(DIET.has(o))return;DIET.add(o);const g=o.geometry,p=g&&g.parameters;if(!p)return;let n=DG.get(g);
+  if(n===undefined){n=null;try{
+   if(g.type==='SphereGeometry'&&p.widthSegments>6)n=new THREE.SphereGeometry(p.radius,6,Math.min(p.heightSegments,4),p.phiStart,p.phiLength,p.thetaStart,p.thetaLength);
+   else if(g.type==='TorusGeometry'&&(p.tubularSegments>10||p.radialSegments>4))n=new THREE.TorusGeometry(p.radius,p.tube,Math.min(4,p.radialSegments),Math.min(10,p.tubularSegments),p.arc);
+   else if(g.type==='CylinderGeometry'&&p.radialSegments>6)n=new THREE.CylinderGeometry(p.radiusTop,p.radiusBottom,p.height,6,1,p.openEnded,p.thetaStart,p.thetaLength);
+   else if(g.type==='ConeGeometry'&&p.radialSegments>6)n=new THREE.ConeGeometry(p.radius,p.height,6,1,p.openEnded,p.thetaStart,p.thetaLength)}catch(e){n=null}
+   if(n)for(const k in g.attributes)if(!n.attributes[k]){n.dispose();n=null;break}   // con atributos propios no se toca
+   DG.set(g,n)}
+  if(n)o.geometry=n}
+
+ // ---- calidad automática: si el móvil no llega a ~22 imágenes por segundo, se baja un escalón (nunca se vuelve a subir)
+ // 1: menos resolución · 2: aún menos resolución y se ve menos lejos (más niebla) · 3: además se quita el público de las aceras
+ const NV={n:0,t:performance.now()+12000,f0:R.info.render.frame,malos:0,pr:9,lejos:99};
+ {const sp=R.setPixelRatio.bind(R);R.setPixelRatio=v=>sp(Math.min(v,NV.pr))}
+ {let fv=pcam.far;Object.defineProperty(pcam,'far',{configurable:true,get(){return Math.min(fv,NV.lejos)},set(v){fv=v}})}
+ const nieblaCorta=()=>{for(const F of [scene.fog,typeof FOG!=='undefined'?FOG:null])if(F&&F.isFog&&!F.__nv){F.__nv=1;let fv=F.far,nv=F.near;
+   Object.defineProperty(F,'far',{configurable:true,get(){return Math.min(fv,NV.lejos-1.5)},set(v){fv=v}});
+   Object.defineProperty(F,'near',{configurable:true,get(){return Math.min(nv,(NV.lejos-1.5)*.35)},set(v){nv=v}})}};
+ function escalon(){NV.n++;if(NV.n===1){NV.pr=.7}else if(NV.n===2){NV.pr=.55;NV.lejos=11;nieblaCorta();pcam.updateProjectionMatrix()}
+  else if(NV.n===3){scene.traverse(o=>{if(o.isInstancedMesh&&o.count>1500&&o.frustumCulled===false)o.layers.mask=HID})}
+  R.setPixelRatio(R.getPixelRatio()>NV.pr?NV.pr:R.getPixelRatio());window.dispatchEvent(new Event('resize'))}
+ setInterval(()=>{const a=performance.now(),fr=R.info.render.frame;if(document.hidden||!driving){NV.t=a;NV.f0=fr;return}
+  if(a-NV.t<2500)return;const fps=(fr-NV.f0)*1000/(a-NV.t);NV.t=a;NV.f0=fr;NV.fps=fps;
+  if(NV.n<3&&fps<22){if(++NV.malos>=2){NV.malos=0;escalon();NV.t=a+3000}}else NV.malos=0},500);
  const COLA=new Set(),T={tick:0,mon:0};
  function montar(t0,lim){for(const L of COLA){COLA.delete(L);if(LOTES.get(L.k)===L){const t=performance.now();rehacer(L);T.mon=Math.max(T.mon,performance.now()-t)}if(performance.now()-t0>lim)break}}
  // cada décima de segundo, unos 4 ms como mucho: revisar lotes por turnos, buscar piezas nuevas por trozos y montar lotes
@@ -3639,8 +3690,13 @@ if(window.LITE)(()=>{
    while(RI<REV.length&&performance.now()-t0<1.5)revisa1(REV[RI++]);
    if(!BUS&&t0-tB>2000){BUS=[];scene.traverse(o=>{if(o.isMesh&&o!==RAIZ&&!EN.has(o))BUS.push(o)});BI=0;tB=t0}
    if(BUS){const ahora=performance.now();while(BI<BUS.length&&performance.now()-t0<3)busca1(BUS[BI++],ahora);if(BI>=BUS.length){BUS=null;buscaFin()}}
+   revisaT();if(!TRZ&&COLAT.size){const o=COLAT.values().next().value;COLAT.delete(o);if(!EN.has(o)&&enEscena(o))TRZ=trocear(o)}
+   if(TRZ){const t1=performance.now();while(performance.now()-t1<5)if(TRZ.next().done){TRZ=null;break}}   // a trozos de 5 ms, sin parón
+   if(typeof FONDO!=='undefined'&&FONDO.m&&FONDO.m.layers.mask!==HID)FONDO.m.layers.mask=HID;   // los montes lejanos: en el móvil quedan fuera de la vista pero se calculaban igual
    if(COLA.size)montar(t0,COLA.size>40?12:5);/* al llegar a una zona hay muchos: se monta más deprisa */T.tick=Math.max(T.tick,performance.now()-t0)}catch(e){console.warn('lotes',e)}},100);
- window.__LOTES=()=>({lotes:LOTES.size,piezas:EN.size,cola:COLA.size,ms:{tick:+T.tick.toFixed(1),montarLote:+T.mon.toFixed(1)}});
+ if(/[?&]fps=1/.test(location.search)){const d=document.createElement('div');d.style.cssText='position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:99;background:rgba(0,0,0,.6);color:#9f9;font:600 12px monospace;padding:3px 6px;border-radius:6px;pointer-events:none';document.body.appendChild(d);
+  let n0=R.info.render.frame,t=performance.now();setInterval(()=>{const a=performance.now(),i=R.info.render;d.textContent=Math.round((i.frame-n0)*1000/(a-t))+' fps · calidad -'+NV.n+' · '+i.calls+' dib · '+Math.round(i.triangles/1000)+'k tri';n0=i.frame;t=a},1000)}
+ window.__LOTES=()=>({nivel:NV.n,fps:NV.fps&&+NV.fps.toFixed(1),trozos:TROZ.size,lotes:LOTES.size,piezas:EN.size,cola:COLA.size,ms:{tick:+T.tick.toFixed(1),montarLote:+T.mon.toFixed(1)}});
 })();
 
 // botones de arriba solo con su icono cuando el móvil está en vertical (el texto no cabía y tapaba el marcador)
