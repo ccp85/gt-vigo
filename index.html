@@ -1452,32 +1452,39 @@ const heli=mkHeli();heli.visible=false;scene.add(heli);
 const persona=mkPersona();persona.scale.setScalar(.8);persona.visible=false;scene.add(persona);
 const sombraPie=new THREE.Mesh(new THREE.CircleGeometry(.016,16),new THREE.MeshBasicMaterial({color:0x1d1c33,transparent:true,opacity:.35,depthWrite:false}));sombraPie.rotation.x=-Math.PI/2;sombraPie.renderOrder=3;sombraPie.visible=false;scene.add(sombraPie);window.persona=persona;window.groundY=(x,y)=>groundY(x,y);window.groundMap=(x,y)=>groundMap(x,y);
 function mkLanchaM(piloto,estela){const g=new THREE.Group(),R=new THREE.Group();
- const C=(c,mt,ro)=>new THREE.MeshStandardMaterial({color:c,metalness:mt,roughness:ro,flatShading:true});
- const mB=C(0xf8f8f8,.05,.5),mAO=C(0x1e3a6e,.1,.45),mAM=C(0x2d4a8a,.1,.45),mGC=C(0xb8b8b8,.1,.55),mG=C(0x909090,.15,.5),mGO=C(0x5a5a5a,.2,.45),mN=C(0x2c2c2c,.3,.4),mNM=C(0x1c1c1c,.05,.75),mCr=new THREE.MeshStandardMaterial({color:0xd0e0f0,metalness:.15,roughness:.1,transparent:true,opacity:.6}),mPl=C(0xe0e0e0,.55,.3);
- const LARGO=4.5,ANCHO=1.7,AB=.28;
- const box=(w,h,d,mat,x,y,z,rx=0,ry=0,par=R)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.rotation.set(rx,ry,0);par.add(m);return m};
- // casco azul
- box(ANCHO*.95,.28,LARGO*.65,mAO,0,AB-.02,-.15);box(ANCHO*.5,.32,LARGO*.38,mAO,0,AB+.04,LARGO*.32,-.18);box(ANCHO*.85,.26,LARGO*.22,mAO,0,AB-.01,-LARGO*.38);
- // cubierta blanca
- box(ANCHO*.88,.16,LARGO*.62,mB,0,AB+.22,-.05);box(ANCHO*.48,.14,LARGO*.32,mB,0,AB+.28,LARGO*.28,-.1);
- for(const sx of[-1,1]){box(.07,.12,LARGO*.55,mAO,sx*ANCHO*.44,AB+.18,.05);box(.07,.09,LARGO*.58,mB,sx*ANCHO*.42,AB+.32,0);
-  // asientos
-  const x=sx*.28;box(.38,.1,.42,mG,x,AB+.28+.05,.05);box(.36,.42,.09,mGC,x,AB+.28+.3,.05-.16,-.08);
-  // parabrisas: marco y cristal lateral
-  box(.035,.48,.08,mN,sx*.42,AB+.52,LARGO*.16,0,sx*.12);box(.04,.32,.35,mCr,sx*.38,AB+.5,LARGO*.12,0,sx*.2)}
- box(.78,.4,.035,mCr,0,AB+.55,LARGO*.2,-.28);
- {const m=new THREE.Mesh(new THREE.CylinderGeometry(.02,.028,.65,6),mPl);m.position.set(-.32,AB+.55,LARGO*.3);R.add(m)}
- box(.1,.07,.1,mAO,-.32,AB+.25,LARGO*.3);box(.08,.05,.07,mAM,-.12,AB+.26,LARGO*.26);
+ const mat=(c,x={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.82,metalness:.04,flatShading:true},x));
+ const M={casco:mat(0xe8e9e8,{side:THREE.DoubleSide}),cubierta:mat(0xf3f3f0),sombra:mat(0xbfc4c8),navy:mat(0x172b4d),navyClaro:mat(0x263e63),cristal:mat(0x687681,{transparent:true,opacity:.48,roughness:.22,side:THREE.DoubleSide}),
+  borde:mat(0x252d38),asiento:mat(0x858d94),asientoLuz:mat(0xaab0b4),metal:mat(0x555d66,{metalness:.55}),motor:mat(0x1d3155),negro:mat(0x15191f),blanco:mat(0xffffff)};
+ const LARGO=4.5,O=new THREE.Group();O.position.z=.135;R.add(O);
+ const mesh=(geo,m,x,y,z,rx=0,ry=0,rz=0,par=O)=>{const q=new THREE.Mesh(geo,m);q.position.set(x,y,z);q.rotation.set(rx,ry,rz);par.add(q);return q},B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),Cy=(a,b,h,n)=>new THREE.CylinderGeometry(a,b,h,n);
+ // casco en V por estaciones [z, semiancho, borda, pantoque, quilla]
+ {const E=[[-2.18,.48,.78,.37,.13],[-1.72,.77,.82,.32,.10],[-.95,.84,.83,.25,.08],[0,.82,.85,.24,.08],[.92,.68,.91,.34,.11],[1.62,.43,1,.48,.19],[2.18,.08,1.08,.76,.55]];
+  const V=[],I=[];for(const[z,w,top,ch,k]of E)V.push(-w,top,z,-w*.78,ch,z,0,k,z,w*.78,ch,z,w,top,z);
+  for(let i=0;i<E.length-1;i++)for(let j=0;j<4;j++){const a_=i*5+j,b_=a_+1,c_=(i+1)*5+j,d_=c_+1;I.push(a_,c_,b_,b_,c_,d_)}
+  I.push(0,1,2,0,2,4,2,3,4);// espejo de popa
+  const g_=new THREE.BufferGeometry();g_.setAttribute('position',new THREE.Float32BufferAttribute(V,3));g_.setIndex(I);g_.computeVertexNormals();O.add(new THREE.Mesh(g_,M.casco));
+  mesh(B(1.48,.16,3.35),M.navy,0,.105,-.35)}
+ // cubierta
+ mesh(B(1.48,.1,3.62),M.cubierta,0,.79,-.12);
+ for(const l of[-1,1]){mesh(B(.105,.16,3.48),M.cubierta,l*.75,.84,-.18,0,0,l*-.035);mesh(B(.035,.055,3.3),M.navy,l*.79,.735,-.2);mesh(B(.1,.12,.34),M.sombra,l*.69,.91,-1.45)}
+ mesh(B(.72,.055,.82),M.cubierta,0,.85,1.53);mesh(B(.54,.045,.32),M.navy,0,.89,1.55);mesh(B(1.1,.045,1.05),M.navy,0,.87,-.63);
+ // asientos
+ for(const[x,z,ry]of[[-.28,-.72,0],[.3,-.13,Math.PI]]){const S_=new THREE.Group();S_.position.set(x,0,z);S_.rotation.y=ry;O.add(S_);mesh(B(.53,.13,.48),M.asiento,0,.98,0,0,0,0,S_);mesh(B(.53,.52,.14),M.asientoLuz,0,1.27,-.17,-.1,0,0,S_);mesh(B(.12,.22,.12),M.metal,0,.84,0,0,0,0,S_)}
+ // consola
+ mesh(B(.58,.24,.3),M.navyClaro,-.38,1,.28,-.12);mesh(B(.25,.12,.025),M.negro,-.38,1.13,.31);mesh(new THREE.TorusGeometry(.105,.018,5,8),M.metal,-.38,1.12,.08,Math.PI/2);
+ // parabrisas de tres paneles
+ for(const p of[{x:-.43,w:.43,z:.69},{x:0,w:.43,z:.73},{x:.43,w:.43,z:.69}]){mesh(B(p.w,.48,.018),M.cristal,p.x,1.34,p.z+.02,-.5);mesh(B(p.w+.035,.055,.075),M.borde,p.x,1.13,p.z,-.5)}
+ for(const x of[-.66,-.22,.22,.66])mesh(B(.035,.5,.045),M.borde,x,1.34,.72,-.5);
  // motor fueraborda
- {const M=new THREE.Group();box(.5,.62,.55,mN,0,.35,0,0,0,M);box(.56,.32,.48,mGO,0,.72,0,0,0,M);box(.32,.38,.4,mNM,0,.02,-.04,0,0,M);
-  const h=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.035,5),mG);h.rotation.x=Math.PI/2;h.position.set(0,-.08,-.1);M.add(h);M.position.set(0,AB+.32,-LARGO*.4);R.add(M)}
- box(.18,.1,.22,mGO,0,AB+.22,-LARGO*.32);box(ANCHO*.4,.05,.1,mAO,0,AB+.34,LARGO*.4);box(.22,.1,.15,mGO,0,AB+.3,LARGO*.08);
- const AC=AB+.2;// altura de asiento para el patrón
- if(piloto){// patrón sentado en el asiento de babor
+ mesh(B(.48,.25,.18),M.negro,0,.78,-2.17);mesh(B(.13,.56,.13),M.metal,0,.49,-2.28);mesh(Cy(.24,.3,.57,6),M.motor,0,1.02,-2.31);mesh(B(.4,.1,.35),M.navyClaro,0,1.32,-2.31);
+ mesh(Cy(.055,.055,.18,6),M.metal,0,.2,-2.36,Math.PI/2);mesh(B(.06,.34,.035),M.metal,0,.2,-2.45,0,0,.45);mesh(B(.06,.34,.035),M.metal,0,.2,-2.45,0,0,-.45);
+ // antena
+ mesh(Cy(.07,.09,.1,6),M.blanco,.48,.94,-1.48);mesh(Cy(.012,.018,1.02,5),M.metal,.48,1.49,-1.48,0,0,-.06);mesh(Cy(.018,.018,.09,5),M.negro,.42,2.03,-1.48);
+ if(piloto){// patrón sentado en el puesto de mando, con las manos al volante
   const PI_=new THREE.MeshStandardMaterial({color:0xe0b38f,roughness:.7}),CA=new THREE.MeshStandardMaterial({color:0xd8402e,roughness:.7}),PA=new THREE.MeshStandardMaterial({color:0x2b3142,roughness:.8});
-  box(.34,.5,.24,CA,-.28,AC+.5,0);box(.32,.14,.46,PA,-.28,AC+.22,.2);{const m=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),PI_);m.position.set(-.28,AC+.88,.02);R.add(m)}
-  box(.1,.1,.4,CA,-.16,AC+.56,.28,-.4)}
- R.scale.setScalar(.2/LARGO);R.rotation.y=Math.PI/2;R.position.y=-.0035;R.updateMatrixWorld(true);
+  mesh(B(.36,.5,.24),CA,-.28,1.3,-.72);mesh(B(.32,.14,.46),PA,-.28,1.1,-.5);mesh(new THREE.SphereGeometry(.12,10,8),PI_,-.28,1.68,-.7);
+  for(const dx of[-.1,.1])mesh(B(.08,.08,.5),CA,-.28+dx,1.32,-.42,-.3)}
+ R.scale.setScalar(.2/LARGO);R.rotation.y=Math.PI/2;R.position.y=-.021;R.updateMatrixWorld(true);
  R.traverse(m=>{if(!m.isMesh)return;const q=new THREE.Mesh(m.geometry.clone().applyMatrix4(m.matrixWorld),m.material);q.castShadow=true;g.add(q)});
  if(estela){const est=new THREE.Mesh(new THREE.PlaneGeometry(.3,.12),new THREE.MeshBasicMaterial({map:ESTELA_TEX,transparent:true,depthWrite:false,opacity:.7}));est.rotation.x=-Math.PI/2;est.position.set(-.25,-.016,0);g.add(est);g.userData.est=est}
  g.userData.lancha=1;return g}
