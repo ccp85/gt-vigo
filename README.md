@@ -31,7 +31,7 @@ En el repositorio: **Settings → Pages → Source: Deploy from a branch → `ma
 Los `.html` se generan a partir de una base y una cadena de scripts de edición:
 
 - `index_base.html`: base reconstruida con todas las ediciones antiguas ya aplicadas.
-- `edit_*.py`: cada script añade o cambia una parte del juego (Samil, Castrelos, Monte do Castro, coche de policía, lancha, misión de skate, etc.). Se aplican en el orden de la lista `NUEVAS` de `build.sh`. **No reutilizar el nombre de un script existente** al añadir uno nuevo.
+- `edit_*.py`: cada script añade o cambia una parte del juego (Samil, Castrelos, Monte do Castro, entrada por la AP-9, coche de policía, lancha, misión de skate, etc.). Se aplican en el orden de la lista `NUEVAS` de `build.sh`. **No reutilizar el nombre de un script existente** al añadir uno nuevo.
 - `edit_navmovil.py` con `navmovil_lotes.js`, `navmovil.css` y `navmovil_cabecera.html`: versión móvil. Añade la cabecera de móvil a todas las páginas (codificación y ancho de pantalla) y el menú de carroza a dos columnas con el móvil en horizontal; solo en `navm.html`, junta en lotes las piezas que no se mueven para dibujar muchas menos cosas por imagen (en el centro, de unas 1.100 a unas 350) y ajusta los botones en vertical. Con `navmovil_salto.html`, en un móvil `nav.html` y el botón «🎄 Navidad 2026» del juego completo llevan solos a `navm.html` (con `?pc=1` en la dirección se queda la versión de gráficos completos).
 - `build.sh`: copia la base, aplica los scripts en orden y genera `index.html`, `gp.html`, `nav.html` y `navm.html` (el último script, `edit_skatetest.py`, produce las variantes; también crea un `navskate.html` de pruebas que no se incluye aquí).
 - `syn.js`: comprobación rápida de sintaxis de los HTML generados.
