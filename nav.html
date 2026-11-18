@@ -1895,7 +1895,7 @@ let MAPA=null,MI=null;window.dbg=()=>({MAPA,MI});
  const T=Math.ceil(j.h/2),out=new Uint8ClampedArray(j.w*j.h*4);for(let y0=0;y0<j.h;y0+=T){const hh=Math.min(T,j.h-y0),c=document.createElement('canvas');c.width=j.w;c.height=hh;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,-y0);out.set(g.getImageData(0,0,j.w,hh).data,y0*j.w*4);c.width=c.height=1}MI=out;MAPA=j}catch(e){console.warn(e)}})();
 const cell=(x,y)=>{if(!MAPA)return{t:1,z:0};const i=Math.round((x-MAPA.ox)*MAPA.res),j=Math.round((y-MAPA.oy)*MAPA.res);if(i<0||j<0||i>=MAPA.w||j>=MAPA.h)return{t:-1,z:0};const o=(j*MAPA.w+i)*4;return{t:Math.round(MI[o]/40),z:MI[o+1]/255*MAPA.zmax,c:MI[o+2]>127}};   // c: paso de cebra
 const GROUND=[];const RCGd=new THREE.Raycaster();RCGd.firstHitOnly=true;const _o=new THREE.Vector3(),_dn=new THREE.Vector3(0,-1,0);
-const groundMap=(x,y)=>{const c=cell(x,y);return c.t===4?.1:c.t===5?.02:c.z+(c.t===2?.025:0)};
+const groundMap=(x,y)=>{const c=cell(x,y);return c.t===4?Math.max(.1,c.z):c.t===5?Math.max(.02,c.z+.01):c.z+(c.t===2?.025:0)};
 const groundY=(x,y)=>{if(GROUND.length){_o.set(x,9,y);RCGd.set(_o,_dn);RCGd.far=12;const h=RCGd.intersectObjects(GROUND,false);if(h.length)return h[0].point.y}return groundMap(x,y)};
 // suelo bajo el vehículo: con puentes y pasos elevados elige la superficie que queda justo debajo (no la de arriba),
 // así se puede pasar por debajo de un tablero sin aparecer encima
