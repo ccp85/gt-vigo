@@ -42,3 +42,4 @@ Las rutas de `build.sh` son las de la máquina donde se desarrolló; para usarlo
 - Mapa: © colaboradores de OpenStreetMap. Edificios: Dirección General del Catastro.
 - Google Earth y fotos se usaron solo como referencia visual: todos los modelos (Samil, Castrelos, fortaleza del Castro, Porta do Sol, etc.) son propios y genéricos.
 - El coche patrulla y la lancha se basan en modelos low-poly aportados por el autor.
+- El protagonista (a pie y pilotando la moto de agua) es `protagonista.glb`, un modelo aportado por el autor. Se genera desde su `.obj` + textura con `fuente/herramientas/obj2glb.py` (lo gira, lo parte en cuerpo/piernas/brazos y comprime la textura); `fuente/edit_protagonista.py` lo carga solo en `index.html`.
