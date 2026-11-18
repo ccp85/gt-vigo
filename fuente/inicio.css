@@ -1,0 +1,136 @@
+/* ===== Pantalla de inicio v2: coche, moto y helicóptero a lo grande ===== */
+html body #selz.v2{--acc:#ff5a36;--acc2:#ffb03a;--accRGB:255,90,54;--disp:"Russo One","Arial Black",Impact,system-ui,sans-serif;
+ display:grid;grid-template-rows:auto 1fr auto auto;gap:0;align-items:stretch;justify-content:stretch;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+ overflow:hidden;background:#07081a;color:#fff;font:500 14px/1.4 var(--body);user-select:none;-webkit-user-select:none}
+html body #selz.v2[hidden]{display:none!important}
+html body #selz.v2 button{font-family:inherit}
+#selz.v2 .iBg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+ background:radial-gradient(ellipse 70% 55% at var(--gx,50%) 55%,rgba(var(--accRGB),.28),transparent 70%),linear-gradient(180deg,#07081a 0%,#14163a 45%,#2b1c3f 72%,#4a2340 86%,#1a1028 100%)}
+#selz.v2 .iBg .lines{position:absolute;inset:-20%;background:repeating-linear-gradient(100deg,transparent 0 60px,rgba(255,255,255,.035) 60px 62px,transparent 62px 150px,rgba(var(--accRGB),.05) 150px 151px);animation:iLines 1.6s linear infinite}
+@keyframes iLines{to{background-position:-300px 0}}
+#selz.v2 .iBg svg{position:absolute;left:0;right:0;bottom:0;width:100%;height:30vh;opacity:.6}
+#selz.v2 .iBg .sun{position:absolute;left:50%;bottom:16vh;width:46vmin;height:46vmin;transform:translateX(-50%);border-radius:50%;opacity:.22;
+ background:linear-gradient(180deg,var(--acc2),var(--acc) 60%,transparent 61%,transparent 64%,var(--acc) 65% 70%,transparent 71% 75%,var(--acc) 76% 80%,transparent 81% 85%,var(--acc) 86% 89%,transparent 90%)}
+#selz.v2 .iBg .vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.55))}
+#selz.v2 #iGl{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+
+#selz.v2 .iHead{position:relative;z-index:6;text-align:center;padding:clamp(10px,3vh,30px) 12px 0;pointer-events:none}
+#selz.v2 .iT{font:400 clamp(64px,13.5vw,170px)/.86 var(--disp);letter-spacing:.02em;transform:skewX(-9deg);white-space:nowrap}
+#selz.v2 .iT span{display:inline-block;color:transparent;background:linear-gradient(180deg,#fff 0 45%,#cfd3ff 46%,#fff 100%);-webkit-background-clip:text;background-clip:text;
+ animation:iLetIn .9s cubic-bezier(.2,1.5,.35,1) both,iFlash 4s ease-in-out infinite;animation-delay:calc(var(--i)*80ms),calc(1.2s + var(--i)*110ms);
+ filter:drop-shadow(-.06em 0 0 rgba(var(--accRGB),.55)) drop-shadow(-.14em 0 0 rgba(var(--accRGB),.22)) drop-shadow(0 .05em .12em rgba(0,0,0,.5))}
+#selz.v2 .iT span.o{background:linear-gradient(180deg,#ffe08a 0,var(--acc2) 38%,var(--acc) 62%,#c81e2b 100%);-webkit-background-clip:text;background-clip:text}
+#selz.v2 .iT .sp{width:.28em}
+@keyframes iLetIn{0%{opacity:0;transform:translateX(1.6em) skewX(-40deg) scaleX(1.6)}60%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes iFlash{0%,86%,100%{transform:none}90%{transform:translateY(-.05em) scale(1.06);filter:brightness(1.6) drop-shadow(-.12em 0 0 rgba(var(--accRGB),.8)) drop-shadow(-.3em 0 0 rgba(var(--accRGB),.3))}}
+#selz.v2 .iTag{display:inline-flex;gap:.9em;align-items:center;margin-top:clamp(6px,1.4vh,14px);font:700 clamp(10px,1.35vw,14px) var(--body);letter-spacing:.42em;text-transform:uppercase;color:rgba(255,255,255,.75);clip-path:inset(0 100% 0 0);animation:iType 1.2s steps(28) .9s forwards}
+#selz.v2 .iTag i{width:28px;height:2px;background:var(--acc);display:inline-block}
+@keyframes iType{to{clip-path:inset(0 0 0 0)}}
+
+#selz.v2 #iSel{position:relative;z-index:2;display:flex;gap:clamp(8px,1.4vw,18px);padding:clamp(10px,2.4vh,26px) clamp(12px,3vw,48px);min-height:0}
+#selz.v2 .iCard{--c:#ff5a36;--c2:#ffb03a;--cr:255,90,54;position:relative;display:block;flex:1 1 0;min-width:0;min-height:0;cursor:pointer;outline:none;border:0;padding:0;margin:0;background:none;color:#fff;text-align:left;font:inherit;
+ transition:flex-grow .55s cubic-bezier(.3,1.25,.4,1);clip-path:polygon(7% 0,100% 0,93% 100%,0 100%);animation:iCardIn .8s cubic-bezier(.2,1.2,.3,1) both;animation-delay:calc(.35s + var(--n)*.12s)}
+@keyframes iCardIn{from{opacity:0;transform:translateY(60px) scale(.9)}to{opacity:1;transform:none}}
+#selz.v2 .iCard[data-v=moto]{--c:#22d3ee;--c2:#a5f3fc;--cr:34,211,238}
+#selz.v2 .iCard[data-v=heli]{--c:#c6f432;--c2:#fff59d;--cr:198,244,50}
+#selz.v2 .iCard>span{position:absolute}
+#selz.v2 .iCard .bgc{inset:0;background:linear-gradient(160deg,rgba(var(--cr),.16),rgba(12,13,34,.82) 45%,rgba(6,7,20,.92));border:1px solid rgba(255,255,255,.08);transition:background .4s}
+#selz.v2 .iCard .bgc::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.14) 45%,transparent 55%);transform:translateX(-120%)}
+#selz.v2 .iCard.on .bgc{background:linear-gradient(160deg,rgba(var(--cr),.42),rgba(var(--cr),.08) 40%,rgba(8,9,26,.9) 75%)}
+#selz.v2 .iCard.on .bgc::after{animation:iSheen 2.8s ease-in-out infinite}
+@keyframes iSheen{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+#selz.v2 .iCard:not(.on):hover .bgc{background:linear-gradient(160deg,rgba(var(--cr),.26),rgba(12,13,34,.82) 45%,rgba(6,7,20,.92))}
+#selz.v2 .iCard:focus-visible .bgc,body.pad #selz.v2 .iCard:focus .bgc{outline:3px solid var(--c);outline-offset:-3px}
+#selz.v2 .iCard .edge{left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--c),var(--c2));opacity:.35;transition:opacity .3s,height .3s}
+#selz.v2 .iCard.on .edge{opacity:1;height:7px;box-shadow:0 0 30px rgba(var(--cr),.9)}
+#selz.v2 .iCard .mq{left:0;top:50%;transform:translateY(-58%) rotate(-7deg);white-space:nowrap;pointer-events:none;font:400 clamp(70px,13vw,210px)/1 var(--disp);color:transparent;-webkit-text-stroke:1.5px rgba(var(--cr),.22);animation:iMq 14s linear infinite}
+#selz.v2 .iCard.on .mq{-webkit-text-stroke:2px rgba(var(--cr),.35);animation-duration:6s}
+@keyframes iMq{to{transform:translateY(-58%) rotate(-7deg) translateX(-50%)}}
+#selz.v2 .iCard .num{left:12%;top:clamp(10px,2.4vh,22px);font:400 clamp(13px,1.3vw,16px) var(--disp);letter-spacing:.18em;color:var(--c)}
+#selz.v2 .iCard .num b{display:block;font:700 10.5px var(--body);letter-spacing:.32em;color:rgba(255,255,255,.55);margin-top:3px}
+#selz.v2 .iCard .pick{right:9%;top:clamp(10px,2.4vh,22px);font:700 10px var(--body);letter-spacing:.28em;padding:5px 10px;border-radius:999px;background:var(--c);color:#0a0b1c;opacity:0;transform:translateY(-8px);transition:.3s}
+#selz.v2 .iCard.on .pick{opacity:1;transform:none}
+#selz.v2 .iCard .stage{left:0;right:0;top:12%;bottom:30%;display:grid;place-items:center;font-size:clamp(60px,9vw,130px)}
+#selz.v2 .iCard .info{left:8%;right:10%;bottom:clamp(14px,3vh,30px)}
+#selz.v2 .iCard .info>span{display:block}
+#selz.v2 .iCard .kind{font:700 11px var(--body);letter-spacing:.3em;text-transform:uppercase;color:var(--c);margin-bottom:6px}
+#selz.v2 .iCard .name{font:400 clamp(22px,2.9vw,46px)/1 var(--disp);letter-spacing:.02em;transform:skewX(-8deg);white-space:nowrap;text-shadow:0 4px 24px rgba(var(--cr),.5)}
+#selz.v2 .iCard .name span{display:inline-block;animation:iNm .55s cubic-bezier(.2,1.4,.4,1) both;animation-delay:calc(var(--i)*35ms)}
+@keyframes iNm{from{opacity:0;transform:translateX(.8em) skewX(-30deg);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+#selz.v2 .iCard .stats{display:grid!important;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;margin-top:12px;max-height:0;opacity:0;overflow:hidden;transition:max-height .5s,opacity .4s}
+#selz.v2 .iCard.on .stats{max-height:120px;opacity:1}
+#selz.v2 .iCard .stats>span:not(.b){font:700 10px var(--body);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+#selz.v2 .iCard .stats .b{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;transform:skewX(-20deg)}
+#selz.v2 .iCard .stats .b i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c2),var(--c));box-shadow:0 0 12px rgba(var(--cr),.7);transition:width .9s cubic-bezier(.2,1,.3,1) .15s}
+#selz.v2 .iCard.on .stats .b i{width:var(--v)}
+#selz.v2 .iCard.on{flex-grow:2.3}
+
+#selz.v2 .iFoot{position:relative;z-index:6;display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 16px clamp(8px,1.8vh,18px)}
+#selz.v2 #iPct{font:700 10.5px var(--body);letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.6);min-height:0}
+#selz.v2 #iPct:empty{display:none}
+html body #selz.v2 #selzJugar{position:relative;border:0;cursor:pointer;color:#0a0b1c;padding:0;background:none;box-shadow:none;border-radius:0;transform:skewX(-10deg);animation:iCardIn .8s .8s both;font:inherit}
+#selz.v2 #selzJugar .in{display:flex;align-items:center;gap:16px;padding:clamp(12px,2vh,18px) clamp(30px,4vw,56px);background:linear-gradient(135deg,var(--acc2),var(--acc) 55%,color-mix(in srgb,var(--acc) 70%,#000));border-radius:6px;
+ box-shadow:0 12px 40px rgba(var(--accRGB),.55),inset 0 1px 0 rgba(255,255,255,.4);transition:background .5s,box-shadow .5s,transform .15s;animation:iPulse 2s ease-in-out infinite}
+#selz.v2 #selzJugar:hover .in{transform:scale(1.04)}#selz.v2 #selzJugar:active .in{transform:scale(.97)}
+#selz.v2 #selzJugar:disabled{opacity:.6;cursor:wait}
+#selz.v2 #selzJugar:focus-visible,body.pad #selz.v2 #selzJugar:focus{outline:3px solid #fff;outline-offset:6px}
+@keyframes iPulse{50%{box-shadow:0 12px 60px rgba(var(--accRGB),.85),inset 0 1px 0 rgba(255,255,255,.4)}}
+#selz.v2 #selzJugar .tri{width:0;height:0;border-left:22px solid #0a0b1c;border-top:14px solid transparent;border-bottom:14px solid transparent}
+#selz.v2 #selzJugar .tx{text-align:left}
+#selz.v2 #selzJugar .tx b{display:block;font:400 clamp(24px,3vw,36px)/1 var(--disp);letter-spacing:.06em}
+#selz.v2 #selzJugar .tx small{display:block;font:700 11px var(--body);letter-spacing:.24em;text-transform:uppercase;opacity:.75;margin-top:3px}
+#selz.v2 .iAlt{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+html body #selz.v2 .iAlt button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:6px;padding:9px 16px;font:400 13px/1.2 var(--disp);letter-spacing:.06em;cursor:pointer;transform:skewX(-10deg);box-shadow:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .2s,transform .2s}
+html body #selz.v2 .iAlt button:hover{background:rgba(255,255,255,.16);transform:skewX(-10deg) translateY(-2px);filter:none}
+html body #selz.v2 .iAlt #selzNavidad{background:linear-gradient(135deg,#c4161f,#8e0f1a);border-color:#ffd24a}
+#selz.v2 .iHint{font:600 10.5px var(--body);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.38)}
+#selz.v2 .iTick{position:relative;z-index:6;overflow:hidden;white-space:nowrap;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.35);font:400 11px/26px var(--disp);letter-spacing:.3em;color:rgba(255,255,255,.45)}
+#selz.v2 .iTick div{display:inline-block;animation:iTick 40s linear infinite}
+#selz.v2 .iTick em{font-style:normal;color:var(--acc)}
+@keyframes iTick{to{transform:translateX(-50%)}}
+#selz.v2 #iSnd{position:absolute;z-index:8;top:calc(10px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:17px;cursor:pointer;padding:0}
+
+#selz.v2 #iMapa{position:absolute;inset:0;z-index:12;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,6,18,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#selz.v2 #iMapa[hidden]{display:none}
+#selz.v2 #iMapa .c{display:flex;flex-direction:column;gap:10px;align-items:center;max-width:100%}
+#selz.v2 #iMapa .h{display:flex;justify-content:space-between;align-items:center;width:100%;gap:12px}
+#selz.v2 #iMapa .h b{font:400 clamp(22px,3vw,32px) var(--disp);transform:skewX(-8deg)}
+html body #selz.v2 #iMapa .menu{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:700 18px var(--body);cursor:pointer;padding:0}
+#selz.v2 #iMapa .s{align-self:flex-start;color:rgba(255,255,255,.7);font:500 13px var(--body)}
+#selz.v2 #iMapa .s span{color:var(--acc);font-weight:700}
+html body #selz.v2 #selzMap{width:min(92vw,72vh,620px);box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 3px rgba(var(--accRGB),.5)}
+
+/* arranque */
+#iGo{position:fixed;inset:0;z-index:40;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(var(--accRGB),.35),rgba(7,8,26,.9) 70%);animation:iGoBg 1.5s ease forwards}
+#iGo b{display:block;font:400 clamp(60px,14vw,180px)/1 "Russo One","Arial Black",Impact,system-ui,sans-serif;transform:skewX(-10deg);color:#fff;text-shadow:-.08em 0 0 rgb(var(--accRGB)),-.2em 0 0 rgba(var(--accRGB),.4),0 0 60px rgba(var(--accRGB),.8);animation:iGoTx 1.5s cubic-bezier(.2,1.3,.3,1) forwards}
+#iGo small{display:block;text-align:center;font:700 13px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.3em;margin-top:14px;color:#fff;opacity:.85}
+@keyframes iGoTx{0%{transform:scale(3) skewX(-10deg);opacity:0;filter:blur(12px)}25%{transform:scale(1) skewX(-10deg);opacity:1;filter:none}80%{opacity:1}100%{transform:scale(.9) translateX(-40vw) skewX(-25deg);opacity:0}}
+@keyframes iGoBg{0%{opacity:0}15%,75%{opacity:1}100%{opacity:0}}
+
+/* móvil en vertical: tarjetas en columna y la elegida grande */
+@media (orientation:portrait) and (max-width:900px){
+ #selz.v2 .iT{font-size:clamp(54px,18vw,120px)}
+ #selz.v2 .iTag{letter-spacing:.26em;font-size:10px}#selz.v2 .iTag i{width:16px}
+ #selz.v2 #iSel{flex-direction:column;padding:10px 14px}
+ #selz.v2 .iCard{clip-path:polygon(0 0,100% 0,100% 78%,95% 100%,0 100%)}
+ #selz.v2 .iCard.on{flex-grow:3.4}
+ #selz.v2 .iCard:not(.on) .stage{left:46%;right:2%;top:2%;bottom:2%;font-size:40px}
+ #selz.v2 .iCard:not(.on) .info{left:6%;right:auto;bottom:50%;transform:translateY(50%)}
+ #selz.v2 .iCard:not(.on) .name{font-size:clamp(18px,5.4vw,26px)}
+ #selz.v2 .iCard:not(.on) .num{display:none}
+ #selz.v2 .iCard .num{left:6%}
+ #selz.v2 .iCard.on .stage{top:13%;bottom:34%}
+ #selz.v2 .iCard .info{left:6%}
+ #selz.v2 .iCard .mq{font-size:clamp(60px,24vw,150px)}
+ #selz.v2 .iCard.on .name{font-size:clamp(28px,8.5vw,44px)}
+ #selz.v2 .iHint{display:none}
+ html body #selz.v2 #selzJugar{width:100%;max-width:440px}#selz.v2 #selzJugar .in{justify-content:center}
+ #selz.v2 #iSnd{width:34px;height:34px;font-size:14px}
+}
+@media (orientation:landscape) and (max-height:520px){
+ #selz.v2 .iHead{padding-top:6px}#selz.v2 .iT{font-size:clamp(40px,9vh,70px)}#selz.v2 .iTag{display:none}
+ #selz.v2 #iSel{padding:6px 16px}#selz.v2 .iHint{display:none}#selz.v2 .iCard .stats{display:none!important}
+ #selz.v2 .iFoot{flex-direction:row;justify-content:center;gap:14px;padding-bottom:6px}#selz.v2 #selzJugar .in{padding:8px 26px}
+ #selz.v2 .iTick{display:none}
+}
+@media (prefers-reduced-motion:reduce){#selz.v2 *,#iGo,#iGo b{animation-duration:.01s!important;animation-iteration-count:1!important}}

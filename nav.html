@@ -167,7 +167,394 @@ body.drive .bar #bRadio{display:inline-block!important}body.carrera .bar #bRadio
  body.lite #radioOSD{top:calc(150px + env(safe-area-inset-top,0px))!important}
 }
 </style>
-<div id="selz"><h2 class="gt">GT <span>VIGO</span></h2><p>Toca el mapa para elegir dónde empezar, o echa una carrera.</p><canvas id="selzMap" width="760" height="760" aria-label="Mapa de Vigo"></canvas><div id="selzBtns"><button id="selzJugar">▶ Mundo abierto</button><button id="selzCarrera">🏁 Carrera</button><button id="selzNavidad">🎄 Navidad 2026</button></div></div>
+<div id="selz" class="v2">
+ <div class="iBg" aria-hidden="true"><div class="sun"></div><div class="lines"></div>
+  <svg viewBox="0 0 1440 240" preserveAspectRatio="none"><path fill="#090818" d="M0 240V170l40-6 20-30h14v-22h10v22h18l10-18 12 18h20v-34h16v34h12l14-26h22v26h18v-46h20v46l40-28 60-38 18-12h10v-12h40v12h10l20 14 60 40 30 4v-30h18v30h10v-58h22v58h16v-40h14v40h20v-70h26v70h18v-36h12l6-12 6 12v36h24v-52h18v52h40l4-74 4 74h10v-60h4l70 0v4h-70v56h30l4-80 4 80h50v-30h20v30h40l8-20h24l10 20h70l90 6h40v-2l4-60 4 60h96l90-60 90 60v2h40l4-60 4 60h80V240Z"/><path fill="none" stroke="#090818" stroke-width="2" d="M1060 172 1138 112 1220 172M1138 112 1100 172M1138 112 1176 172M1260 172 1312 112 1380 172"/><rect y="200" width="1440" height="40" fill="#04040c" opacity=".7"/></svg>
+  <div class="vig"></div></div>
+ <canvas id="iGl" aria-hidden="true"></canvas>
+ <div class="iHead">
+  <div class="iT" role="heading" aria-level="1" aria-label="GT Vigo"><span style="--i:0">G</span><span style="--i:1">T</span><span class="sp"></span><span class="o" style="--i:2">V</span><span class="o" style="--i:3">I</span><span class="o" style="--i:4">G</span><span class="o" style="--i:5">O</span></div>
+  <div class="iTag"><i></i>Mundo abierto · Ría de Vigo<i></i></div>
+ </div>
+ <div id="iSel" role="radiogroup" aria-label="Elige vehículo">
+  <button class="iCard on" data-v="coche" style="--n:0" role="radio" aria-checked="true">
+   <span class="bgc"></span><span class="mq">COCHE · COCHE · COCHE · COCHE · </span>
+   <span class="num">01<b>Coche</b></span><span class="pick">ELEGIDO</span>
+   <span class="stage"></span>
+   <span class="info"><span class="kind">Deportivo</span><span class="name" data-n="Ría GT 300"></span>
+    <span class="stats"><span>Velocidad</span><span class="b"><i style="--v:82%"></i></span><span>Aceleración</span><span class="b"><i style="--v:70%"></i></span><span>Manejo</span><span class="b"><i style="--v:76%"></i></span></span></span>
+   <span class="edge"></span>
+  </button>
+  <button class="iCard" data-v="moto" style="--n:1" role="radio" aria-checked="false">
+   <span class="bgc"></span><span class="mq">MOTO · MOTO · MOTO · MOTO · MOTO · </span>
+   <span class="num">02<b>Moto</b></span><span class="pick">ELEGIDA</span>
+   <span class="stage"></span>
+   <span class="info"><span class="kind">Naked</span><span class="name" data-n="Castro 600"></span>
+    <span class="stats"><span>Velocidad</span><span class="b"><i style="--v:74%"></i></span><span>Aceleración</span><span class="b"><i style="--v:92%"></i></span><span>Manejo</span><span class="b"><i style="--v:88%"></i></span></span></span>
+   <span class="edge"></span>
+  </button>
+  <button class="iCard" data-v="heli" style="--n:2" role="radio" aria-checked="false">
+   <span class="bgc"></span><span class="mq">HELICÓPTERO · HELICÓPTERO · </span>
+   <span class="num">03<b>Helicóptero</b></span><span class="pick">ELEGIDO</span>
+   <span class="stage"></span>
+   <span class="info"><span class="kind">Vuelo libre</span><span class="name" data-n="Cíes H-1"></span>
+    <span class="stats"><span>Velocidad</span><span class="b"><i style="--v:95%"></i></span><span>Altura</span><span class="b"><i style="--v:100%"></i></span><span>Manejo</span><span class="b"><i style="--v:60%"></i></span></span></span>
+   <span class="edge"></span>
+  </button>
+ </div>
+ <div class="iFoot">
+  <div id="iPct"></div>
+  <button id="selzJugar"><span class="in"><span class="tri"></span><span class="tx"><b>JUGAR</b><small id="iSub">Conducir el Ría GT 300</small></span></span></button>
+  <div class="iAlt"><button id="selzCarrera">🏁 Carrera</button><button id="selzNavidad">🎄 Navidad 2026</button><button id="iMapaB">🗺️ Elegir lugar</button></div>
+  <div class="iHint">◀ ▶ elegir vehículo · Enter jugar</div>
+ </div>
+ <div class="iTick" aria-hidden="true"><div id="iTk"></div></div>
+ <button id="iSnd" aria-label="Sonido del menú" title="Sonido del menú">🔈</button>
+ <div id="iMapa" hidden><div class="c">
+  <div class="h"><b>¿Dónde empiezas?</b><button class="menu" id="iMapaX" aria-label="Cerrar">✕</button></div>
+  <div class="s">Toca un sitio del mapa y arrancas allí en <span id="iMapaV">coche</span></div>
+  <canvas id="selzMap" width="760" height="760" aria-label="Mapa de Vigo"></canvas>
+ </div></div>
+</div>
+<style id="inicioV2">
+/* ===== Pantalla de inicio v2: coche, moto y helicóptero a lo grande ===== */
+html body #selz.v2{--acc:#ff5a36;--acc2:#ffb03a;--accRGB:255,90,54;--disp:"Russo One","Arial Black",Impact,system-ui,sans-serif;
+ display:grid;grid-template-rows:auto 1fr auto auto;gap:0;align-items:stretch;justify-content:stretch;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+ overflow:hidden;background:#07081a;color:#fff;font:500 14px/1.4 var(--body);user-select:none;-webkit-user-select:none}
+html body #selz.v2[hidden]{display:none!important}
+html body #selz.v2 button{font-family:inherit}
+#selz.v2 .iBg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+ background:radial-gradient(ellipse 70% 55% at var(--gx,50%) 55%,rgba(var(--accRGB),.28),transparent 70%),linear-gradient(180deg,#07081a 0%,#14163a 45%,#2b1c3f 72%,#4a2340 86%,#1a1028 100%)}
+#selz.v2 .iBg .lines{position:absolute;inset:-20%;background:repeating-linear-gradient(100deg,transparent 0 60px,rgba(255,255,255,.035) 60px 62px,transparent 62px 150px,rgba(var(--accRGB),.05) 150px 151px);animation:iLines 1.6s linear infinite}
+@keyframes iLines{to{background-position:-300px 0}}
+#selz.v2 .iBg svg{position:absolute;left:0;right:0;bottom:0;width:100%;height:30vh;opacity:.6}
+#selz.v2 .iBg .sun{position:absolute;left:50%;bottom:16vh;width:46vmin;height:46vmin;transform:translateX(-50%);border-radius:50%;opacity:.22;
+ background:linear-gradient(180deg,var(--acc2),var(--acc) 60%,transparent 61%,transparent 64%,var(--acc) 65% 70%,transparent 71% 75%,var(--acc) 76% 80%,transparent 81% 85%,var(--acc) 86% 89%,transparent 90%)}
+#selz.v2 .iBg .vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.55))}
+#selz.v2 #iGl{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+
+#selz.v2 .iHead{position:relative;z-index:6;text-align:center;padding:clamp(10px,3vh,30px) 12px 0;pointer-events:none}
+#selz.v2 .iT{font:400 clamp(64px,13.5vw,170px)/.86 var(--disp);letter-spacing:.02em;transform:skewX(-9deg);white-space:nowrap}
+#selz.v2 .iT span{display:inline-block;color:transparent;background:linear-gradient(180deg,#fff 0 45%,#cfd3ff 46%,#fff 100%);-webkit-background-clip:text;background-clip:text;
+ animation:iLetIn .9s cubic-bezier(.2,1.5,.35,1) both,iFlash 4s ease-in-out infinite;animation-delay:calc(var(--i)*80ms),calc(1.2s + var(--i)*110ms);
+ filter:drop-shadow(-.06em 0 0 rgba(var(--accRGB),.55)) drop-shadow(-.14em 0 0 rgba(var(--accRGB),.22)) drop-shadow(0 .05em .12em rgba(0,0,0,.5))}
+#selz.v2 .iT span.o{background:linear-gradient(180deg,#ffe08a 0,var(--acc2) 38%,var(--acc) 62%,#c81e2b 100%);-webkit-background-clip:text;background-clip:text}
+#selz.v2 .iT .sp{width:.28em}
+@keyframes iLetIn{0%{opacity:0;transform:translateX(1.6em) skewX(-40deg) scaleX(1.6)}60%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes iFlash{0%,86%,100%{transform:none}90%{transform:translateY(-.05em) scale(1.06);filter:brightness(1.6) drop-shadow(-.12em 0 0 rgba(var(--accRGB),.8)) drop-shadow(-.3em 0 0 rgba(var(--accRGB),.3))}}
+#selz.v2 .iTag{display:inline-flex;gap:.9em;align-items:center;margin-top:clamp(6px,1.4vh,14px);font:700 clamp(10px,1.35vw,14px) var(--body);letter-spacing:.42em;text-transform:uppercase;color:rgba(255,255,255,.75);clip-path:inset(0 100% 0 0);animation:iType 1.2s steps(28) .9s forwards}
+#selz.v2 .iTag i{width:28px;height:2px;background:var(--acc);display:inline-block}
+@keyframes iType{to{clip-path:inset(0 0 0 0)}}
+
+#selz.v2 #iSel{position:relative;z-index:2;display:flex;gap:clamp(8px,1.4vw,18px);padding:clamp(10px,2.4vh,26px) clamp(12px,3vw,48px);min-height:0}
+#selz.v2 .iCard{--c:#ff5a36;--c2:#ffb03a;--cr:255,90,54;position:relative;display:block;flex:1 1 0;min-width:0;min-height:0;cursor:pointer;outline:none;border:0;padding:0;margin:0;background:none;color:#fff;text-align:left;font:inherit;
+ transition:flex-grow .55s cubic-bezier(.3,1.25,.4,1);clip-path:polygon(7% 0,100% 0,93% 100%,0 100%);animation:iCardIn .8s cubic-bezier(.2,1.2,.3,1) both;animation-delay:calc(.35s + var(--n)*.12s)}
+@keyframes iCardIn{from{opacity:0;transform:translateY(60px) scale(.9)}to{opacity:1;transform:none}}
+#selz.v2 .iCard[data-v=moto]{--c:#22d3ee;--c2:#a5f3fc;--cr:34,211,238}
+#selz.v2 .iCard[data-v=heli]{--c:#c6f432;--c2:#fff59d;--cr:198,244,50}
+#selz.v2 .iCard>span{position:absolute}
+#selz.v2 .iCard .bgc{inset:0;background:linear-gradient(160deg,rgba(var(--cr),.16),rgba(12,13,34,.82) 45%,rgba(6,7,20,.92));border:1px solid rgba(255,255,255,.08);transition:background .4s}
+#selz.v2 .iCard .bgc::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.14) 45%,transparent 55%);transform:translateX(-120%)}
+#selz.v2 .iCard.on .bgc{background:linear-gradient(160deg,rgba(var(--cr),.42),rgba(var(--cr),.08) 40%,rgba(8,9,26,.9) 75%)}
+#selz.v2 .iCard.on .bgc::after{animation:iSheen 2.8s ease-in-out infinite}
+@keyframes iSheen{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+#selz.v2 .iCard:not(.on):hover .bgc{background:linear-gradient(160deg,rgba(var(--cr),.26),rgba(12,13,34,.82) 45%,rgba(6,7,20,.92))}
+#selz.v2 .iCard:focus-visible .bgc,body.pad #selz.v2 .iCard:focus .bgc{outline:3px solid var(--c);outline-offset:-3px}
+#selz.v2 .iCard .edge{left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--c),var(--c2));opacity:.35;transition:opacity .3s,height .3s}
+#selz.v2 .iCard.on .edge{opacity:1;height:7px;box-shadow:0 0 30px rgba(var(--cr),.9)}
+#selz.v2 .iCard .mq{left:0;top:50%;transform:translateY(-58%) rotate(-7deg);white-space:nowrap;pointer-events:none;font:400 clamp(70px,13vw,210px)/1 var(--disp);color:transparent;-webkit-text-stroke:1.5px rgba(var(--cr),.22);animation:iMq 14s linear infinite}
+#selz.v2 .iCard.on .mq{-webkit-text-stroke:2px rgba(var(--cr),.35);animation-duration:6s}
+@keyframes iMq{to{transform:translateY(-58%) rotate(-7deg) translateX(-50%)}}
+#selz.v2 .iCard .num{left:12%;top:clamp(10px,2.4vh,22px);font:400 clamp(13px,1.3vw,16px) var(--disp);letter-spacing:.18em;color:var(--c)}
+#selz.v2 .iCard .num b{display:block;font:700 10.5px var(--body);letter-spacing:.32em;color:rgba(255,255,255,.55);margin-top:3px}
+#selz.v2 .iCard .pick{right:9%;top:clamp(10px,2.4vh,22px);font:700 10px var(--body);letter-spacing:.28em;padding:5px 10px;border-radius:999px;background:var(--c);color:#0a0b1c;opacity:0;transform:translateY(-8px);transition:.3s}
+#selz.v2 .iCard.on .pick{opacity:1;transform:none}
+#selz.v2 .iCard .stage{left:0;right:0;top:12%;bottom:30%;display:grid;place-items:center;font-size:clamp(60px,9vw,130px)}
+#selz.v2 .iCard .info{left:8%;right:10%;bottom:clamp(14px,3vh,30px)}
+#selz.v2 .iCard .info>span{display:block}
+#selz.v2 .iCard .kind{font:700 11px var(--body);letter-spacing:.3em;text-transform:uppercase;color:var(--c);margin-bottom:6px}
+#selz.v2 .iCard .name{font:400 clamp(22px,2.9vw,46px)/1 var(--disp);letter-spacing:.02em;transform:skewX(-8deg);white-space:nowrap;text-shadow:0 4px 24px rgba(var(--cr),.5)}
+#selz.v2 .iCard .name span{display:inline-block;animation:iNm .55s cubic-bezier(.2,1.4,.4,1) both;animation-delay:calc(var(--i)*35ms)}
+@keyframes iNm{from{opacity:0;transform:translateX(.8em) skewX(-30deg);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+#selz.v2 .iCard .stats{display:grid!important;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;margin-top:12px;max-height:0;opacity:0;overflow:hidden;transition:max-height .5s,opacity .4s}
+#selz.v2 .iCard.on .stats{max-height:120px;opacity:1}
+#selz.v2 .iCard .stats>span:not(.b){font:700 10px var(--body);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+#selz.v2 .iCard .stats .b{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;transform:skewX(-20deg)}
+#selz.v2 .iCard .stats .b i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c2),var(--c));box-shadow:0 0 12px rgba(var(--cr),.7);transition:width .9s cubic-bezier(.2,1,.3,1) .15s}
+#selz.v2 .iCard.on .stats .b i{width:var(--v)}
+#selz.v2 .iCard.on{flex-grow:2.3}
+
+#selz.v2 .iFoot{position:relative;z-index:6;display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 16px clamp(8px,1.8vh,18px)}
+#selz.v2 #iPct{font:700 10.5px var(--body);letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.6);min-height:0}
+#selz.v2 #iPct:empty{display:none}
+html body #selz.v2 #selzJugar{position:relative;border:0;cursor:pointer;color:#0a0b1c;padding:0;background:none;box-shadow:none;border-radius:0;transform:skewX(-10deg);animation:iCardIn .8s .8s both;font:inherit}
+#selz.v2 #selzJugar .in{display:flex;align-items:center;gap:16px;padding:clamp(12px,2vh,18px) clamp(30px,4vw,56px);background:linear-gradient(135deg,var(--acc2),var(--acc) 55%,color-mix(in srgb,var(--acc) 70%,#000));border-radius:6px;
+ box-shadow:0 12px 40px rgba(var(--accRGB),.55),inset 0 1px 0 rgba(255,255,255,.4);transition:background .5s,box-shadow .5s,transform .15s;animation:iPulse 2s ease-in-out infinite}
+#selz.v2 #selzJugar:hover .in{transform:scale(1.04)}#selz.v2 #selzJugar:active .in{transform:scale(.97)}
+#selz.v2 #selzJugar:disabled{opacity:.6;cursor:wait}
+#selz.v2 #selzJugar:focus-visible,body.pad #selz.v2 #selzJugar:focus{outline:3px solid #fff;outline-offset:6px}
+@keyframes iPulse{50%{box-shadow:0 12px 60px rgba(var(--accRGB),.85),inset 0 1px 0 rgba(255,255,255,.4)}}
+#selz.v2 #selzJugar .tri{width:0;height:0;border-left:22px solid #0a0b1c;border-top:14px solid transparent;border-bottom:14px solid transparent}
+#selz.v2 #selzJugar .tx{text-align:left}
+#selz.v2 #selzJugar .tx b{display:block;font:400 clamp(24px,3vw,36px)/1 var(--disp);letter-spacing:.06em}
+#selz.v2 #selzJugar .tx small{display:block;font:700 11px var(--body);letter-spacing:.24em;text-transform:uppercase;opacity:.75;margin-top:3px}
+#selz.v2 .iAlt{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+html body #selz.v2 .iAlt button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:6px;padding:9px 16px;font:400 13px/1.2 var(--disp);letter-spacing:.06em;cursor:pointer;transform:skewX(-10deg);box-shadow:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .2s,transform .2s}
+html body #selz.v2 .iAlt button:hover{background:rgba(255,255,255,.16);transform:skewX(-10deg) translateY(-2px);filter:none}
+html body #selz.v2 .iAlt #selzNavidad{background:linear-gradient(135deg,#c4161f,#8e0f1a);border-color:#ffd24a}
+#selz.v2 .iHint{font:600 10.5px var(--body);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.38)}
+#selz.v2 .iTick{position:relative;z-index:6;overflow:hidden;white-space:nowrap;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.35);font:400 11px/26px var(--disp);letter-spacing:.3em;color:rgba(255,255,255,.45)}
+#selz.v2 .iTick div{display:inline-block;animation:iTick 40s linear infinite}
+#selz.v2 .iTick em{font-style:normal;color:var(--acc)}
+@keyframes iTick{to{transform:translateX(-50%)}}
+#selz.v2 #iSnd{position:absolute;z-index:8;top:calc(10px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:17px;cursor:pointer;padding:0}
+
+#selz.v2 #iMapa{position:absolute;inset:0;z-index:12;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,6,18,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#selz.v2 #iMapa[hidden]{display:none}
+#selz.v2 #iMapa .c{display:flex;flex-direction:column;gap:10px;align-items:center;max-width:100%}
+#selz.v2 #iMapa .h{display:flex;justify-content:space-between;align-items:center;width:100%;gap:12px}
+#selz.v2 #iMapa .h b{font:400 clamp(22px,3vw,32px) var(--disp);transform:skewX(-8deg)}
+html body #selz.v2 #iMapa .menu{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:700 18px var(--body);cursor:pointer;padding:0}
+#selz.v2 #iMapa .s{align-self:flex-start;color:rgba(255,255,255,.7);font:500 13px var(--body)}
+#selz.v2 #iMapa .s span{color:var(--acc);font-weight:700}
+html body #selz.v2 #selzMap{width:min(92vw,72vh,620px);box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 3px rgba(var(--accRGB),.5)}
+
+/* arranque */
+#iGo{position:fixed;inset:0;z-index:40;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(var(--accRGB),.35),rgba(7,8,26,.9) 70%);animation:iGoBg 1.5s ease forwards}
+#iGo b{display:block;font:400 clamp(60px,14vw,180px)/1 "Russo One","Arial Black",Impact,system-ui,sans-serif;transform:skewX(-10deg);color:#fff;text-shadow:-.08em 0 0 rgb(var(--accRGB)),-.2em 0 0 rgba(var(--accRGB),.4),0 0 60px rgba(var(--accRGB),.8);animation:iGoTx 1.5s cubic-bezier(.2,1.3,.3,1) forwards}
+#iGo small{display:block;text-align:center;font:700 13px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.3em;margin-top:14px;color:#fff;opacity:.85}
+@keyframes iGoTx{0%{transform:scale(3) skewX(-10deg);opacity:0;filter:blur(12px)}25%{transform:scale(1) skewX(-10deg);opacity:1;filter:none}80%{opacity:1}100%{transform:scale(.9) translateX(-40vw) skewX(-25deg);opacity:0}}
+@keyframes iGoBg{0%{opacity:0}15%,75%{opacity:1}100%{opacity:0}}
+
+/* móvil en vertical: tarjetas en columna y la elegida grande */
+@media (orientation:portrait) and (max-width:900px){
+ #selz.v2 .iT{font-size:clamp(54px,18vw,120px)}
+ #selz.v2 .iTag{letter-spacing:.26em;font-size:10px}#selz.v2 .iTag i{width:16px}
+ #selz.v2 #iSel{flex-direction:column;padding:10px 14px}
+ #selz.v2 .iCard{clip-path:polygon(0 0,100% 0,100% 78%,95% 100%,0 100%)}
+ #selz.v2 .iCard.on{flex-grow:3.4}
+ #selz.v2 .iCard:not(.on) .stage{left:46%;right:2%;top:2%;bottom:2%;font-size:40px}
+ #selz.v2 .iCard:not(.on) .info{left:6%;right:auto;bottom:50%;transform:translateY(50%)}
+ #selz.v2 .iCard:not(.on) .name{font-size:clamp(18px,5.4vw,26px)}
+ #selz.v2 .iCard:not(.on) .num{display:none}
+ #selz.v2 .iCard .num{left:6%}
+ #selz.v2 .iCard.on .stage{top:13%;bottom:34%}
+ #selz.v2 .iCard .info{left:6%}
+ #selz.v2 .iCard .mq{font-size:clamp(60px,24vw,150px)}
+ #selz.v2 .iCard.on .name{font-size:clamp(28px,8.5vw,44px)}
+ #selz.v2 .iHint{display:none}
+ html body #selz.v2 #selzJugar{width:100%;max-width:440px}#selz.v2 #selzJugar .in{justify-content:center}
+ #selz.v2 #iSnd{width:34px;height:34px;font-size:14px}
+}
+@media (orientation:landscape) and (max-height:520px){
+ #selz.v2 .iHead{padding-top:6px}#selz.v2 .iT{font-size:clamp(40px,9vh,70px)}#selz.v2 .iTag{display:none}
+ #selz.v2 #iSel{padding:6px 16px}#selz.v2 .iHint{display:none}#selz.v2 .iCard .stats{display:none!important}
+ #selz.v2 .iFoot{flex-direction:row;justify-content:center;gap:14px;padding-bottom:6px}#selz.v2 #selzJugar .in{padding:8px 26px}
+ #selz.v2 .iTick{display:none}
+}
+@media (prefers-reduced-motion:reduce){#selz.v2 *,#iGo,#iGo b{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+<script>
+// ===== Pantalla de inicio v2 (interfaz). Los modelos 3D van en inicio3d.js =====
+(function(){
+const SZ=document.getElementById('selz');if(!SZ||!SZ.classList.contains('v2'))return;
+const V={
+ coche:{acc:'#ff5a36',acc2:'#ffb03a',rgb:'255,90,54',verbo:'Conducir el',go:'¡ARRANCA!',btn:'bCoche',txt:'coche'},
+ moto:{acc:'#22d3ee',acc2:'#a5f3fc',rgb:'34,211,238',verbo:'Pilotar la',go:'¡A RODAR!',btn:'bMotoC',txt:'moto'},
+ heli:{acc:'#c6f432',acc2:'#fff59d',rgb:'198,244,50',verbo:'Volar el',go:'¡DESPEGUE!',btn:'bHeli',txt:'helicóptero'}};
+const cards=[...SZ.querySelectorAll('.iCard')],$=id=>document.getElementById(id),mapa=$('iMapa');
+let cur=0,sndOn=false,ac=null;
+const visible=()=>!SZ.hidden&&SZ.getClientRects().length>0;
+const letras=(el,t)=>{el.innerHTML=[...t].map((c,i)=>`<span style="--i:${i}">${c===' '?'&nbsp;':c}</span>`).join('')};
+cards.forEach(c=>{const n=c.querySelector('.name');letras(n,n.dataset.n)});
+function sel(i,quiet){
+ cur=(i+cards.length)%cards.length;
+ cards.forEach((c,k)=>{const on=k===cur;c.classList.toggle('on',on);c.setAttribute('aria-checked',on)});
+ const c=cards[cur],v=V[c.dataset.v],n=c.querySelector('.name');
+ SZ.style.setProperty('--acc',v.acc);SZ.style.setProperty('--acc2',v.acc2);SZ.style.setProperty('--accRGB',v.rgb);SZ.style.setProperty('--gx',[22,50,78][cur]+'%');
+ letras(n,n.dataset.n);$('iSub').textContent=v.verbo+' '+n.dataset.n;$('iMapaV').textContent=v.txt;
+ try{localStorage.setItem('gtvigo_veh',c.dataset.v)}catch(e){}
+ if(!quiet)vroom(c.dataset.v);
+}
+window.GTV_INICIO={get vehiculo(){return cards[cur].dataset.v},sel};
+cards.forEach((c,i)=>{
+ c.addEventListener('click',()=>{if(i===cur)$('selzJugar').click();else sel(i)});
+ c.addEventListener('focus',()=>{if(i!==cur&&document.body.classList.contains('pad'))sel(i)});
+});
+// teclado: flechas para elegir, Enter para jugar (solo con el menú a la vista, sin el mapa ni la carrera encima)
+document.addEventListener('keydown',e=>{
+ if(!visible())return;
+ if(!mapa.hidden){if(e.key==='Escape'){mapa.hidden=true;e.stopImmediatePropagation()}return}
+ const sc=$('selCar');if(sc&&!sc.hidden)return;
+ if(e.key==='ArrowRight'||e.key==='ArrowDown'){sel(cur+1);e.preventDefault();e.stopImmediatePropagation()}
+ else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){sel(cur-1);e.preventDefault();e.stopImmediatePropagation()}
+ else if(e.key==='Enter'){const a=document.activeElement;if(a&&a.tagName==='BUTTON'&&SZ.contains(a)&&!a.classList.contains('iCard'))return;$('selzJugar').click();e.preventDefault();e.stopImmediatePropagation()}
+},true);
+// deslizar en el móvil
+{let x0=null,y0=null;const el=$('iSel');
+ el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+ el.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))sel(cur+(dx<0?1:-1));x0=null},{passive:true})}
+
+// sonido del menú (sintetizado): motor o rotor al elegir
+function vroom(k){
+ if(!sndOn)return;try{if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){return}
+ const a=ac,t=a.currentTime,g=a.createGain(),f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=k==='moto'?2200:1200;g.connect(a.destination);f.connect(g);
+ if(k==='heli'){g.gain.value=.5;for(let i=0;i<7;i++){const o=a.createOscillator(),gg=a.createGain();o.type='triangle';o.frequency.value=70;o.connect(gg);gg.connect(f);
+  gg.gain.setValueAtTime(0,t+i*.08);gg.gain.linearRampToValueAtTime(.5,t+i*.08+.01);gg.gain.exponentialRampToValueAtTime(.001,t+i*.08+.07);o.start(t+i*.08);o.stop(t+i*.08+.08)}return}
+ const o=a.createOscillator(),o2=a.createOscillator(),b=k==='moto'?110:60;o.type='sawtooth';o2.type='square';
+ o.frequency.setValueAtTime(b,t);o.frequency.exponentialRampToValueAtTime(b*3.2,t+.35);o.frequency.exponentialRampToValueAtTime(b*1.6,t+.7);
+ o2.frequency.setValueAtTime(b/2,t);o2.frequency.exponentialRampToValueAtTime(b*1.6,t+.35);
+ o.connect(f);o2.connect(f);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.05);g.gain.exponentialRampToValueAtTime(.001,t+.8);
+ o.start(t);o2.start(t);o.stop(t+.8);o2.stop(t+.8)}
+$('iSnd').onclick=()=>{sndOn=!sndOn;$('iSnd').textContent=sndOn?'🔊':'🔈';try{localStorage.setItem('gtvigo_menusnd',sndOn?'1':'0')}catch(e){}if(sndOn)vroom(cards[cur].dataset.v)};
+
+// mapa para elegir dónde empezar (el juego dibuja en #selzMap y arranca con su clic)
+const abrirMapa=()=>{mapa.hidden=false;$('iMapaX').focus({preventScroll:true})};
+$('iMapaB').onclick=abrirMapa;$('iMapaX').onclick=()=>{mapa.hidden=true};
+mapa.addEventListener('click',e=>{if(e.target===mapa)mapa.hidden=true});
+
+// al jugar: animación y, en cuanto la ciudad está cargada, se monta en el vehículo elegido
+let arm=0;
+function cartel(k){const v=V[k],g=document.createElement('div');g.id='iGo';g.style.setProperty('--accRGB',v.rgb);
+ g.innerHTML=`<div><b>${v.go}</b><small>${(v.verbo+' '+cards[cur].querySelector('.name').dataset.n).toUpperCase()}</small></div>`;
+ document.querySelector('#iGo')?.remove();document.body.appendChild(g);setTimeout(()=>g.remove(),1600)}
+function arrancar(){
+ const k=cards[cur].dataset.v,id=++arm,t0=performance.now();cartel(k);vroom(k);
+ const paso=()=>{if(id!==arm||visible())return;
+  const listo=window.msgOff===true&&$('load').hidden;
+  if(!listo){if(performance.now()-t0<180000)setTimeout(paso,250);return}
+  setTimeout(()=>{if(id!==arm||visible())return;
+   if(k==='coche'&&document.body.classList.contains('drive'))return;
+   const b=$(V[k].btn);b&&b.click()},450)};
+ setTimeout(paso,300);
+}
+$('selzJugar').addEventListener('click',()=>{if(!$('selzJugar').disabled)setTimeout(()=>{if(!visible())arrancar()},0)});
+$('selzMap').addEventListener('click',()=>setTimeout(()=>{if(!visible()){mapa.hidden=true;arrancar()}},0));
+['selzCarrera','selzNavidad'].forEach(id=>$(id).addEventListener('click',()=>{arm++;mapa.hidden=true}));
+// el botón «🗺️ Mapa» del juego vuelve a este menú con el mapa abierto
+document.addEventListener('DOMContentLoaded',()=>{const b=$('bZonas');b&&b.addEventListener('click',()=>{arm++;setTimeout(()=>{if(visible())abrirMapa()},0)})});
+
+const L=['SAMIL','BOUZAS','MONTE DO CASTRO','GRAN VÍA','PRAZA DE AMÉRICA','PUENTE DE RANDE','CASCO VELLO','TORALLA','O AREAL','CASTRELOS','CÍES'];
+const tk=L.map(l=>l+' <em>◆</em> ').join('');$('iTk').innerHTML=tk+tk;
+let ini=0;try{ini=Math.max(0,['coche','moto','heli'].indexOf(localStorage.getItem('gtvigo_veh')));sndOn=localStorage.getItem('gtvigo_menusnd')==='1';$('iSnd').textContent=sndOn?'🔊':'🔈'}catch(e){}
+sel(ini,true);
+})();
+</script>
+<script type="module">
+// ===== Pantalla de inicio v2: coche, moto y helicóptero en 3D (renderer propio, solo mientras se ve el menú) =====
+(async()=>{const SZ=document.getElementById('selz');
+if(SZ&&SZ.classList.contains('v2')&&!window.SOLO_CARRERA){
+const emojis=()=>{const E={coche:'🚗',moto:'🏍️',heli:'🚁'};SZ.querySelectorAll('.iCard').forEach(c=>{c.querySelector('.stage').textContent=E[c.dataset.v]})};
+let THREE,RoomEnvironment;
+try{THREE=await import('three');({RoomEnvironment}=await import('three/addons/environments/RoomEnvironment.js'))}catch(e){emojis();THREE=null}
+if(THREE){
+const visible=()=>!SZ.hidden&&SZ.getClientRects().length>0;
+let rd=null,views=null,env=null,last=0,parado=true;
+const cv=document.getElementById('iGl');
+const M=(c,o={})=>new THREE.MeshStandardMaterial({color:c,metalness:.55,roughness:.3,...o});
+const mesh=(g,m,x=0,y=0,z=0)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);return o};
+const ext=(pts,depth,m,bev=.06)=>{const s=new THREE.Shape(pts.map(p=>new THREE.Vector2(p[0],p[1])));
+ const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:bev>0,bevelThickness:bev,bevelSize:bev,bevelSegments:3,curveSegments:12});g.translate(0,0,-depth/2);return new THREE.Mesh(g,m)};
+function mats(){return{glass:M(0x0b1020,{metalness:.9,roughness:.06}),black:M(0x111114,{metalness:.1,roughness:.75}),chrome:M(0xdfe3ea,{metalness:1,roughness:.12})}}
+function coche(){
+ const {glass,black,chrome}=mats(),g=new THREE.Group(),paint=M(0xff4a26,{metalness:.7,roughness:.22,envMapIntensity:1.4});
+ g.add(ext([[-2.1,.38],[2.05,.38],[2.18,.62],[2.12,.82],[1.85,.95],[.9,1.02],[.3,1.42],[-.95,1.45],[-1.65,1.06],[-2.15,1.0]],1.62,paint,.09));
+ g.add(ext([[.82,1.05],[.3,1.44],[-.92,1.47],[-1.55,1.08]],1.86,glass,0));
+ const st=M(0x111114,{metalness:.4,roughness:.4});
+ g.add(mesh(new THREE.BoxGeometry(.34,.05,1.9),st,-1.95,1.32,0));
+ [-.6,.6].forEach(z=>g.add(mesh(new THREE.BoxGeometry(.08,.26,.06),st,-1.92,1.18,z)));
+ [-.58,.58].forEach(z=>{g.add(mesh(new THREE.BoxGeometry(.06,.12,.42),M(0xffffff,{emissive:0xfff3d0,emissiveIntensity:2.5}),2.2,.74,z));
+  g.add(mesh(new THREE.BoxGeometry(.06,.1,.5),M(0xff0010,{emissive:0xff1020,emissiveIntensity:2.5}),-2.2,.86,z))});
+ g.add(mesh(new THREE.BoxGeometry(.1,.16,1.2),black,2.18,.5,0));
+ const wheels=[];
+ [[1.35,.82],[1.35,-.82],[-1.38,.82],[-1.38,-.82]].forEach(([x,z])=>{const w=new THREE.Group();w.position.set(x,.44,z);
+  const t=mesh(new THREE.CylinderGeometry(.44,.44,.34,28),black);t.rotation.x=Math.PI/2;w.add(t);
+  const r=mesh(new THREE.CylinderGeometry(.29,.29,.36,6),chrome);r.rotation.x=Math.PI/2;w.add(r);
+  const h=mesh(new THREE.CylinderGeometry(.08,.08,.38,12),M(0xff5a36,{emissive:0x5a1000}));h.rotation.x=Math.PI/2;w.add(h);
+  g.add(w);wheels.push(w)});
+ g.userData.tick=(t,dt,on)=>{wheels.forEach(w=>w.rotation.z-=dt*(on?9:2.5));g.position.y=on?Math.sin(t*14)*.008:0};
+ return g}
+function moto(){
+ const {black,chrome}=mats(),g=new THREE.Group(),paint=M(0x16c5e6,{metalness:.7,roughness:.22,envMapIntensity:1.4}),wheels=[];
+ [.82,-.82].forEach(x=>{const w=new THREE.Group();w.position.set(x,.46,0);w.add(mesh(new THREE.TorusGeometry(.36,.11,14,32),black));
+  const d=mesh(new THREE.CylinderGeometry(.27,.27,.06,7),chrome);d.rotation.x=Math.PI/2;w.add(d);g.add(w);wheels.push(w)});
+ g.add(ext([[-.55,.62],[.42,.6],[.82,.98],[.72,1.22],[.42,1.2],[.1,1.08],[-.35,1.08],[-.8,1.2],[-1.0,1.1],[-.72,.78]],.34,paint,.06));
+ g.add(mesh(new THREE.BoxGeometry(.62,.1,.32),black,-.38,1.17,0));
+ g.add(mesh(new THREE.BoxGeometry(.5,.36,.3),M(0x2a2d36,{metalness:.8,roughness:.35}),-.05,.58,0));
+ const f=mesh(new THREE.CylinderGeometry(.04,.04,1.0,10),chrome,.7,.88,0);f.rotation.z=.42;[-.12,.12].forEach(z=>{const c=f.clone();c.position.z=z;g.add(c)});
+ const hb=mesh(new THREE.CylinderGeometry(.03,.03,.8,10),black,.54,1.32,0);hb.rotation.x=Math.PI/2;g.add(hb);
+ const ws=mesh(new THREE.BoxGeometry(.04,.26,.3),M(0x3a5a70,{transparent:true,opacity:.6,metalness:.9,roughness:.05}),.72,1.34,0);ws.rotation.z=-.5;g.add(ws);
+ g.add(mesh(new THREE.SphereGeometry(.09,16,12),M(0xffffff,{emissive:0xe8fbff,emissiveIntensity:3}),.86,1.1,0));
+ const ex=mesh(new THREE.CylinderGeometry(.06,.08,.7,12),chrome,-.7,.62,.2);ex.rotation.z=1.35;g.add(ex);
+ g.add(mesh(new THREE.BoxGeometry(.05,.06,.18),M(0xff0010,{emissive:0xff1020,emissiveIntensity:2.5}),-1.03,1.1,0));
+ g.scale.setScalar(1.85);
+ g.userData.tick=(t,dt,on)=>{wheels.forEach(w=>w.rotation.z-=dt*(on?12:3));g.rotation.x=on?Math.sin(t*1.6)*.14:0};
+ return g}
+function heli(){
+ const {glass,chrome}=mats(),g=new THREE.Group(),paint=M(0xb8e62a,{metalness:.6,roughness:.25,envMapIntensity:1.4}),dk=M(0x1b1e26,{metalness:.6,roughness:.35});
+ const b=mesh(new THREE.SphereGeometry(1,36,24),paint,.35,1.35,0);b.scale.set(1.35,.9,.82);g.add(b);
+ const c=mesh(new THREE.SphereGeometry(1,36,24),glass,.95,1.48,0);c.scale.set(.82,.66,.7);g.add(c);
+ const tb=mesh(new THREE.CylinderGeometry(.11,.3,2.7,16),paint,-1.95,1.55,0);tb.rotation.z=Math.PI/2+.06;g.add(tb);
+ const fin=mesh(new THREE.BoxGeometry(.45,.85,.07),paint,-3.2,1.9,0);fin.rotation.z=-.35;g.add(fin);
+ g.add(mesh(new THREE.BoxGeometry(.35,.05,1.0),paint,-2.75,1.52,0));
+ [-.62,.62].forEach(z=>{const s=mesh(new THREE.CylinderGeometry(.05,.05,2.7,10),chrome,.3,.28,z);s.rotation.z=Math.PI/2;g.add(s);
+  [-.35,.95].forEach(x=>{const p=mesh(new THREE.CylinderGeometry(.04,.04,.6,8),dk,x,.55,z*.85);p.rotation.x=z>0?-.35:.35;g.add(p)})});
+ g.add(mesh(new THREE.CylinderGeometry(.1,.14,.4,12),dk,.35,2.3,0));
+ g.add(mesh(new THREE.BoxGeometry(.7,.22,.6),dk,.2,2.12,0));
+ const rot=new THREE.Group();rot.position.set(.35,2.5,0);
+ for(let i=0;i<4;i++){const p=new THREE.Group();p.rotation.y=i*Math.PI/2;p.add(mesh(new THREE.BoxGeometry(2.3,.035,.2),dk,1.15,0,0));rot.add(p)}
+ rot.add(mesh(new THREE.CylinderGeometry(.14,.14,.12,12),chrome));g.add(rot);
+ const tr=new THREE.Group();tr.position.set(-3.25,2.0,.1);
+ for(let i=0;i<2;i++){const p=new THREE.Group();p.rotation.z=i*Math.PI/2;p.add(mesh(new THREE.BoxGeometry(.06,.75,.03),dk));tr.add(p)}g.add(tr);
+ g.add(mesh(new THREE.SphereGeometry(.07,10,8),M(0xff0010,{emissive:0xff2020,emissiveIntensity:3}),-.4,.92,.75));
+ g.add(mesh(new THREE.SphereGeometry(.07,10,8),M(0x00ff40,{emissive:0x20ff40,emissiveIntensity:3}),-.4,.92,-.75));
+ g.scale.setScalar(.95);g.position.x=.35;
+ g.userData.tick=(t,dt,on)=>{rot.rotation.y+=dt*(on?28:6);tr.rotation.z+=dt*(on?40:9);g.position.y=Math.sin(t*(on?2.2:1.2))*(on?.18:.06)+(on?.25:0);g.rotation.z=on?Math.sin(t*1.3)*.05:0};
+ return g}
+function glowTex(hex){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+ const gr=x.createRadialGradient(128,128,0,128,128,128);gr.addColorStop(0,hex+'cc');gr.addColorStop(.45,hex+'44');gr.addColorStop(1,hex+'00');
+ x.fillStyle=gr;x.fillRect(0,0,256,256);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+function crear(){
+ try{rd=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'low-power'})}catch(e){emojis();return false}
+ rd.setPixelRatio(Math.min(devicePixelRatio,matchMedia('(pointer:coarse)').matches?1.5:2));
+ rd.toneMapping=THREE.ACESFilmicToneMapping;rd.toneMappingExposure=1.05;rd.outputColorSpace=THREE.SRGBColorSpace;rd.setClearColor(0,0);rd.autoClear=false;
+ env=new THREE.PMREMGenerator(rd).fromScene(new RoomEnvironment(),.04).texture;
+ const B={coche,moto,heli},C={coche:'#ff5a36',moto:'#22d3ee',heli:'#c6f432'};
+ views=[...SZ.querySelectorAll('.iCard')].map(card=>{
+  const k=card.dataset.v,sc=new THREE.Scene();sc.environment=env;
+  sc.add(new THREE.HemisphereLight(0xbfc8ff,0x201028,.6));
+  const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(4,6,5);sc.add(key);
+  const rim=new THREE.DirectionalLight(new THREE.Color(C[k]),3.5);rim.position.set(-5,2,-4);sc.add(rim);
+  const piv=new THREE.Group();sc.add(piv);const model=B[k]();piv.add(model);
+  const gm=new THREE.Mesh(new THREE.PlaneGeometry(7,7),new THREE.MeshBasicMaterial({map:glowTex(C[k]),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));gm.rotation.x=-Math.PI/2;gm.position.y=.01;sc.add(gm);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(2.75,2.82,96),new THREE.MeshBasicMaterial({color:C[k],transparent:true,opacity:.6,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.02;sc.add(ring);
+  const sh=new THREE.Mesh(new THREE.CircleGeometry(2.2,48),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.45,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.scale.set(1,.55,1);sh.position.y=.015;sc.add(sh);
+  return{card,stage:card.querySelector('.stage'),sc,cam:new THREE.PerspectiveCamera(30,1,.1,100),piv,model,ring,gm,s:.85,a:Math.random()*6}});
+ return true}
+function frame(now){
+ if(!visible()){parado=true;return}
+ requestAnimationFrame(frame);
+ const dt=Math.min(.05,(now-last)/1000||0),t=now/1000;last=now;
+ const R=SZ.getBoundingClientRect(),W=Math.round(R.width),H=Math.round(R.height);
+ const sz=rd.getSize(new THREE.Vector2());if(sz.x!==W||sz.y!==H)rd.setSize(W,H,false);
+ rd.setScissorTest(false);rd.clear();rd.setScissorTest(true);
+ const mapaAbierto=!document.getElementById('iMapa').hidden;
+ for(const v of views){
+  const r=v.stage.getBoundingClientRect();if(mapaAbierto||r.width<4||r.height<4)continue;
+  const on=v.card.classList.contains('on');
+  v.s+=((on?1:.82)-v.s)*Math.min(1,dt*6);v.piv.scale.setScalar(v.s);
+  v.a+=dt*(on?.7:.25);v.piv.rotation.y=v.a;v.model.userData.tick(t,dt,on);
+  v.ring.material.opacity=on?.55+Math.sin(t*4)*.3:.18;v.ring.scale.setScalar(on?1+Math.sin(t*2)*.03:1);v.gm.material.opacity=on?1:.45;
+  const asp=r.width/r.height,d=10.5*Math.max(1,1.55/asp);
+  v.cam.aspect=asp;v.cam.position.set(0,d*.32,d);v.cam.lookAt(0,1.05,0);v.cam.updateProjectionMatrix();
+  const x=r.left-R.left,y=R.bottom-r.bottom;rd.setViewport(x,y,r.width,r.height);rd.setScissor(x,y,r.width,r.height);rd.render(v.sc,v.cam);
+ }
+}
+function despierta(){if(!visible()||!parado)return;if(!rd&&!crear())return;parado=false;last=performance.now();requestAnimationFrame(frame)}
+new MutationObserver(despierta).observe(SZ,{attributes:true,attributeFilter:['hidden','class','style']});
+addEventListener('resize',despierta);setInterval(despierta,1000);despierta();
+}}})();
+</script>
 <div id="selCar" hidden><div class="c"><h3>🏁 Gran Premio de Vigo</h3><p class="sub">Gran Vía · Coia · Avenida de Europa · Samil · Bouzas · Beiramar</p>
 <div class="car"><button class="prev" aria-label="Coche anterior">◀</button><canvas id="carPrev" width="360" height="220" aria-label="Vista previa del coche"></canvas><button class="next" aria-label="Coche siguiente">▶</button></div>
 <div class="nom"></div><div class="cols"></div><div class="stats"></div>
@@ -628,7 +1015,7 @@ async function leerProg(r,id,i){const tot=+r.headers.get('content-length')||0;if
 async function finLeer(rd,o,n,v,id,i){let out=o;out.set(v,n);n+=v.length;for(;;){const{done,value}=await rd.read();if(done)break;if(n+value.length>out.length){const o2=new Uint8Array((n+value.length)*2);o2.set(out.subarray(0,n));out=o2}out.set(value,n);n+=value.length}return out.buffer.slice(0,n)}
 function dlPct(id){const D=DLP[id];if(!D)return null;let g=0,t=0;for(const k in D.t){g+=D.g[k];t+=D.t[k]}return t?Math.min(100,Math.round(g/t*100)):null}
 let _dlT=0;function dlPinta(id){const now=performance.now();if(now-_dlT<150)return;_dlT=now;const p=dlPct(id);if(p==null)return;
- const bJ=document.getElementById('selzJugar');if(id==='centro'&&bJ&&!document.getElementById('selz').hidden)bJ.textContent=p<100?'▶ Mundo abierto · '+p+'%':'▶ Mundo abierto';
+ const bJ=document.getElementById('selzJugar');if(id==='centro'&&bJ&&!document.getElementById('selz').hidden){const ip=document.getElementById('iPct');if(ip)ip.textContent=p<100?'Cargando Vigo · '+p+'%':''};
  const st=document.getElementById('stream');if(st&&!st.hidden&&/^Cargando/.test(st.textContent))st.textContent=st.textContent.replace(/ · \d+%$/,'').replace(/…$/,'')+'… · '+p+'%';
  const lm=document.getElementById('load');if(lm&&!lm.hidden&&/^Cargando|^Descargando/.test(lm.textContent||''))lm.textContent=(lm.textContent||'').replace(/ · \d+%$/,'')+' · '+p+'%'}
 const PRE={};function precargar(id){if(PRE[id])return PRE[id];if(!PREI[id])PREI[id]=fetch(id+'_inst.json').then(r=>r.ok?r.json():null).catch(()=>null);return PRE[id]=(async()=>{const pj=await (await fetch(id+'_partes.json',{cache:'no-store'})).json();if(pj.formato!=='png')return {pj};
