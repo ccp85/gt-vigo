@@ -1386,6 +1386,18 @@ addEventListener('DOMContentLoaded',pintaLim);setTimeout(()=>{pintaLim();const b
 addEventListener('keydown',e=>{if(driving&&!RACE.on&&MODO==='coche'&&e.code==='KeyL'&&!e.repeat)cambiaLim()});
 {const ghost=new THREE.MeshBasicMaterial({color:0xf08a6a,depthTest:true,depthFunc:THREE.GreaterDepth,depthWrite:false});
  const g=new THREE.Group();car.children.filter(m=>m.name!=='haz').forEach(m=>{const c=new THREE.Mesh(m.geometry,ghost);c.position.copy(m.position);c.rotation.copy(m.rotation);c.renderOrder=1;g.add(c)});car.add(g);car.children.forEach(m=>{if(m.isMesh)m.renderOrder=2})}car.visible=false;scene.add(car);const CAR0=car.clone(true);CAR0.userData={tipo:'clasico'};
+new GLTFLoader().load('coche500.glb',gl=>{let src=null;gl.scene.traverse(o=>{if(o.isMesh&&!src)src=o});if(!src)return;const q=src.material;
+ const m=new THREE.MeshPhysicalMaterial({map:q.map,normalMap:q.normalMap,normalScale:q.normalScale.clone(),roughnessMap:q.roughnessMap,metalnessMap:q.metalnessMap,roughness:1,metalness:.6,clearcoat:.7,clearcoatRoughness:.12,envMapIntensity:1});
+ m.userData.pintura=1;REFLEJAN.add(m);if(ENVC.tex)m.envMap=ENVC.tex;
+ const mod=new THREE.Mesh(src.geometry,m);mod.name='modelo';mod.castShadow=true;
+ const GF=new THREE.CylinderGeometry(.0055,.0055,.004,14),GP=new THREE.BoxGeometry(.004,.012,.006);
+ for(const c of [...CAR0.children]){const fa=c.isMesh&&c.material&&c.material.userData&&c.material.userData.faro;
+  if(fa==='f'){const sz=Math.sign(c.position.z);c.geometry=GF;c.position.set(.0705,.032,sz*.0245);c.rotation.set(0,-sz*.3,Math.PI/2,'YXZ')}
+  else if(fa==='p'){const sz=Math.sign(c.position.z);c.geometry=GP;c.position.set(-.0715,.04,sz*.027);c.rotation.set(0,sz*.45,0)}
+  else if(!(c.isMesh&&(c.name==='sombra'||c.name==='haz')))CAR0.remove(c)}
+ CAR0.add(mod);CAR0.userData.modelo500=true;
+ try{const sp=COCHES.find(c=>c.t==='clasico');if(sp){sp.col=[0xb3202a];sp.n='Cinquecento'}}catch(e){}
+ if(!P.vestidoMoto&&(car.userData.tipo===undefined||car.userData.tipo==='clasico'))vestirCoche(CAR0,'clasico')},undefined,e=>console.warn('coche500.glb',e));
 const P={x:0,y:0,a:0,v:0};window.P=P;let CAMC=0;try{CAMC=(+localStorage.getItem('gtvigo_cam')||0)===1?1:0}catch(e){}let CZ=1;
 // ---------- vehículos: coche, moto de agua y a pie ----------
 let MODO='coche';window.modo=()=>MODO;
