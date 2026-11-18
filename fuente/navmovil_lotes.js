@@ -164,15 +164,16 @@ if(window.LITE)(()=>{
   if(n)o.geometry=n}
 
  // ---- calidad automática: si el móvil no llega a ~22 imágenes por segundo, se baja un escalón (nunca se vuelve a subir)
- // 1: menos resolución · 2: aún menos resolución y se ve menos lejos (más niebla) · 3: además se quita el público de las aceras
+ // 1: se ve menos lejos (más niebla) y resolución 1,15 como mucho · 2: aún menos lejos y resolución 1 · 3: además se quita el público de las aceras
+ // (la resolución ya no baja de 1: por debajo se veía pixelado; lo que se recorta es la distancia)
  const NV={n:0,t:performance.now()+12000,f0:R.info.render.frame,malos:0,pr:9,lejos:99};
  {const sp=R.setPixelRatio.bind(R);R.setPixelRatio=v=>sp(Math.min(v,NV.pr))}
  {let fv=pcam.far;Object.defineProperty(pcam,'far',{configurable:true,get(){return Math.min(fv,NV.lejos)},set(v){fv=v}})}
  const nieblaCorta=()=>{for(const F of [scene.fog,typeof FOG!=='undefined'?FOG:null])if(F&&F.isFog&&!F.__nv){F.__nv=1;let fv=F.far,nv=F.near;
    Object.defineProperty(F,'far',{configurable:true,get(){return Math.min(fv,NV.lejos-1.5)},set(v){fv=v}});
    Object.defineProperty(F,'near',{configurable:true,get(){return Math.min(nv,(NV.lejos-1.5)*.35)},set(v){nv=v}})}};
- function escalon(){NV.n++;if(NV.n===1){NV.pr=.7}else if(NV.n===2){NV.pr=.55;NV.lejos=11;nieblaCorta();pcam.updateProjectionMatrix()}
-  else if(NV.n===3){scene.traverse(o=>{if(o.isInstancedMesh&&o.count>1500&&o.frustumCulled===false)o.layers.mask=HID})}
+ function escalon(){NV.n++;if(NV.n===1){NV.pr=1.15;NV.lejos=14;nieblaCorta();pcam.updateProjectionMatrix()}else if(NV.n===2){NV.pr=1;NV.lejos=11;pcam.updateProjectionMatrix()}
+  else if(NV.n===3){NV.lejos=9.5;pcam.updateProjectionMatrix();scene.traverse(o=>{if(o.isInstancedMesh&&o.count>1500&&o.frustumCulled===false)o.layers.mask=HID})}
   R.setPixelRatio(R.getPixelRatio()>NV.pr?NV.pr:R.getPixelRatio());window.dispatchEvent(new Event('resize'))}
  setInterval(()=>{const a=performance.now(),fr=R.info.render.frame;if(document.hidden||!driving){NV.t=a;NV.f0=fr;return}
   if(a-NV.t<2500)return;const fps=(fr-NV.f0)*1000/(a-NV.t);NV.t=a;NV.f0=fr;NV.fps=fps;
