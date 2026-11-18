@@ -1,0 +1,2 @@
+#!/bin/bash
+for f in index nav gp navm navskate; do ( echo '<meta charset="utf-8">'; sed 's#<script type="importmap">[^<]*#<script type="importmap">{"imports":{"three":"/three/build/three.module.min.js","three/addons/":"/three/examples/jsm/","three-mesh-bvh":"/bvh/build/index.module.js","fflate":"/ff/esm/browser.js"}}#' /home/claude/work/vigo/visor/$f.html ) > /tmp/claude-0/srv/vg/${f}2.html; done
