@@ -18,6 +18,10 @@ r("const lejos=cerca+(matchMedia('(pointer:coarse)').matches?8:16);","const lejo
 r('<script type="module">\nconst ZONA=',leer('mundomovil_salto.html')+'<script type="module">\nconst ZONA=')
 # 3) Botones y paneles del mundo abierto en el móvil (mundomovil.css)
 s=s.replace('</style>',leer('mundomovil.css')+'</style>',1)
+# 5) pantalla de inicio (inicio3d.js tiene su propio motor gráfico): en el móvil, a resolución 1 y, al entrar al juego, se libera
+#    entero (modelos, texturas y búfer de imagen); si se vuelve al menú se crea de nuevo. Así no quedan dos motores ocupando la gráfica.
+r("rd.setPixelRatio(Math.min(devicePixelRatio,matchMedia('(pointer:coarse)').matches?1.5:2));","rd.setPixelRatio(window.LITE?1:Math.min(devicePixelRatio,matchMedia('(pointer:coarse)').matches?1.5:2));")
+r(" if(!visible()){parado=true;return}"," if(!visible()){parado=true;if(window.LITE&&rd){try{for(const v of views||[])v.sc.traverse(o=>{if(o.geometry)o.geometry.dispose();const m=o.material;if(m)for(const x of (Array.isArray(m)?m:[m])){if(x.map)x.map.dispose();x.dispose()}});if(env)env.dispose();rd.setSize(1,1,false);rd.dispose()}catch(e){}rd=null;views=null;env=null}return}")
 open(f,'w',encoding='utf8').write(s)
 # 4) indexm.html: el mismo juego con window.LITE=1 (antes de que arranque el código del juego)
 L=s.split('\n');i=[k for k,l in enumerate(L) if l.startswith('<script>addEventListener("error"')]

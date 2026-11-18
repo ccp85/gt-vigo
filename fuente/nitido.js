@@ -1,7 +1,6 @@
 // ---------- MÓVIL NÍTIDO (window.LITE) ----------
-// Antes, para ir fluido, el móvil dibujaba a muy poca resolución (1 punto de imagen por cada 3 de pantalla, y si iba justo, la mitad):
-// se veía pixelado. Ahora la resolución no baja de 1 (y sube hasta 1,5 si hay margen) con antialias, y el coste se recorta en los
-// materiales: las superficies de las zonas pasan de material «físico» (brillos y reflejos calculados en cada punto) a uno mate
+// Antes, si el móvil iba justo, la resolución bajaba hasta 0,55 y se veía pixelado. Ahora no baja de 0,75 y sube hasta 1,5 si hay
+// margen; el coste se recorta en los materiales: las superficies de las zonas pasan de material «físico» (brillos y reflejos calculados en cada punto) a uno mate
 // (MeshLambertMaterial), que cuesta mucho menos por punto y en esta maqueta de colores planos se ve casi igual.
 // · Solo piezas de las zonas, sus extras y los lotes (no coches ni personajes). No se tocan materiales con su propio sombreado
 //   de brillo (asfalto mojado, charcos), ni los que llevan mapa de luz o de reflejo.
@@ -10,8 +9,6 @@
 // · Texturas muy grandes (más de 1536 px de lado, p. ej. el plano de la maqueta) se reducen a 1536: menos memoria.
 if(window.LITE)(()=>{
  const T=THREE,MATE=new WeakMap(),NO=new WeakSet(),TEXOK=new WeakSet();
- // sin comprobar cada sombreado al compilarlo: esa comprobación obliga a esperar a la GPU y da tirones al entrar en zonas nuevas
- R.debug.checkShaderErrors=false;
  const BRILLO=/pud|wW|lights_physical|clearcoat/;
  const COMP=['opacity','transparent','visible','emissiveIntensity','map','alphaMap','aoMap','alphaTest','side','depthWrite','depthTest','vertexColors','flatShading','fog','polygonOffset','polygonOffsetFactor','polygonOffsetUnits','toneMapped','blending','colorWrite','wireframe','name'];
  function apto(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||NO.has(m))return false;
