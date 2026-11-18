@@ -716,8 +716,8 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {computeBoundsTree,acceleratedRaycast} from 'three-mesh-bvh';
 THREE.BufferGeometry.prototype.computeBoundsTree=computeBoundsTree;THREE.Mesh.prototype.raycast=acceleratedRaycast;
 const cv=document.getElementById('c');
-const R=new THREE.WebGLRenderer({canvas:cv,antialias:!window.LITE,alpha:true,logarithmicDepthBuffer:!window.LITE,powerPreference:'high-performance'});{const r0=R.render.bind(R);R.render=(sc,c)=>{const O=window.__CAMV;if(O&&c===window.pcam){c.up.set(0,1,0);c.position.set(...O.p);c.lookAt(...O.l);c.fov=O.f||55;c.updateProjectionMatrix();c.updateMatrixWorld()}return r0(sc,c)}}window.__dbg={rm:(x,y)=>repMallas(x,y),ra:(x,y,m)=>repAltura(x,y,m),cell:(x,y)=>cell(x,y),g:(x,y)=>groundMap(x,y),s:(x,z)=>sueloRap(x,z),top:(x,z)=>{const rc=new THREE.Raycaster(new THREE.Vector3(x,4,z),new THREE.Vector3(0,-1,0),0,8);const h=rc.intersectObjects(scene.children,true).filter(i=>i.object.isMesh&&!i.object.isInstancedMesh&&i.object.visible&&!(window.__PSOL&&__PSOL.G&&__PSOL.G.children.includes(i.object))&&!(window.__ECU&&__ECU.G&&__ECU.G.children.includes(i.object)));return h.length?[h[0].point.y,h[0].object.name||h[0].object.parent&&h[0].object.parent.name]:null}};
-R.setPixelRatio(window.LITE?Math.min(1,devicePixelRatio):Math.min(1.5,devicePixelRatio));R.shadowMap.enabled=!window.LITE;R.shadowMap.type=THREE.PCFSoftShadowMap;
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,logarithmicDepthBuffer:!window.LITE,powerPreference:'high-performance'});{const r0=R.render.bind(R);R.render=(sc,c)=>{const O=window.__CAMV;if(O&&c===window.pcam){c.up.set(0,1,0);c.position.set(...O.p);c.lookAt(...O.l);c.fov=O.f||55;c.updateProjectionMatrix();c.updateMatrixWorld()}return r0(sc,c)}}window.__dbg={rm:(x,y)=>repMallas(x,y),ra:(x,y,m)=>repAltura(x,y,m),cell:(x,y)=>cell(x,y),g:(x,y)=>groundMap(x,y),s:(x,z)=>sueloRap(x,z),top:(x,z)=>{const rc=new THREE.Raycaster(new THREE.Vector3(x,4,z),new THREE.Vector3(0,-1,0),0,8);const h=rc.intersectObjects(scene.children,true).filter(i=>i.object.isMesh&&!i.object.isInstancedMesh&&i.object.visible&&!(window.__PSOL&&__PSOL.G&&__PSOL.G.children.includes(i.object))&&!(window.__ECU&&__ECU.G&&__ECU.G.children.includes(i.object)));return h.length?[h[0].point.y,h[0].object.name||h[0].object.parent&&h[0].object.parent.name]:null}};
+R.setPixelRatio(window.LITE?Math.min(1.25,devicePixelRatio):Math.min(1.5,devicePixelRatio));R.shadowMap.enabled=!window.LITE;R.shadowMap.type=THREE.PCFSoftShadowMap;
 R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
 const scene=new THREE.Scene();window.__scene=scene;setTimeout(()=>{window.__R=R},0);
 const cam=new THREE.OrthographicCamera(-1,1,1,-1,-500,500);
@@ -3282,9 +3282,9 @@ function riaTick(dt,t){if(!RIA.ok)return;const vis=!driving||true;
  for(const g of RIA.gav){let cx,cy,cz;if(g.sig&&g.sig.g.visible){cx=g.sig.x;cy=g.sig.y;cz=-.03}else{if(!g.c||Math.random()<.0005){const b=RIA.barcos[Math.floor(Math.random()*RIA.barcos.length)];if(!b)continue;const[x,y]=posLinea(b,Math.random()*b.tot*.9);g.c=[x,y]}[cx,cy]=g.c;cz=0}
   const an=t*g.w*.6+g.ph;const x=cx+Math.cos(an)*g.r,y=cy+Math.sin(an)*g.r;g.m.position.set(x,cz+g.h+Math.sin(t*.7+g.ph)*.05,y);g.m.rotation.set(0,-an-(g.w>0?0:Math.PI)+Math.PI/2*Math.sign(g.w),Math.sin(t*9+g.ph)*.5);
   g.m.scale.set(2.6,2.6,2.6);g.m.visible=enZona(x,y)&&(driving||cam.zoom>2.5)}}
-const PRmax=window.LITE?Math.min(1.1,devicePixelRatio):matchMedia('(pointer:coarse)').matches?Math.min(1.5,devicePixelRatio):Math.min(2,devicePixelRatio);let prAct=window.LITE?Math.min(1,PRmax):Math.min(1.5,PRmax),ftAcc=0,ftN=0;
+const PRmax=window.LITE?Math.min(1.5,devicePixelRatio):matchMedia('(pointer:coarse)').matches?Math.min(1.5,devicePixelRatio):Math.min(2,devicePixelRatio);let prAct=window.LITE?Math.min(1.25,PRmax):Math.min(1.5,PRmax),ftAcc=0,ftN=0;
 let QF=window.LITE?.5:1;window.QF=()=>QF;   // calidad 1 (máx.) … .5: recorta distancia de dibujado, árboles y gente
-function resolucionAdaptativa(dt){if(window.__TRAILER)return;ftAcc+=dt;ftN++;if(ftAcc<1.2)return;const ft=ftAcc/ftN;ftAcc=0;ftN=0;let nv=prAct;const PRmin=window.LITE?Math.min(.9,devicePixelRatio):matchMedia('(pointer:coarse)').matches?.6:.7,QMAX=window.LITE?.8:1;
+function resolucionAdaptativa(dt){if(window.__TRAILER)return;ftAcc+=dt;ftN++;if(ftAcc<1.2)return;const ft=ftAcc/ftN;ftAcc=0;ftN=0;let nv=prAct;const PRmin=window.LITE?Math.min(1,devicePixelRatio):matchMedia('(pointer:coarse)').matches?.6:.7,QMAX=window.LITE?.8:1;
  if(window.NOADAPT){}else if(window.LITE){if(ft>1/27){if(QF>.35)QF=Math.max(.35,QF-.1);else if(prAct>PRmin)nv=Math.max(PRmin,prAct-.125)}else if(ft<1/31){if(prAct<PRmax)nv=Math.min(PRmax,prAct+.125);else if(QF<QMAX)QF=Math.min(QMAX,QF+.05)}}else if(ft>1/34){if(prAct>PRmin)nv=Math.max(PRmin,prAct-.2);else QF=Math.max(.5,QF-.15)}else if(ft<1/52){if(QF<1)QF=Math.min(1,QF+.1);else if(prAct<PRmax)nv=Math.min(PRmax,prAct+.2)}
  if(nv!==prAct){prAct=nv;R.setPixelRatio(nv);frame()}}
 // ---------- CARRERA: minijuego arcade en circuito cerrado (Gran Vía → Coia → Avenida de Europa → Samil → Bouzas → Beiramar → Gran Vía)
@@ -3938,6 +3938,47 @@ if(window.LITE)(()=>{
  ctl.minZoom=1.3;
 })();
 
+// ---------- MÓVIL NÍTIDO (window.LITE) ----------
+// Antes, para ir fluido, el móvil dibujaba a muy poca resolución (1 punto de imagen por cada 3 de pantalla, y si iba justo, la mitad):
+// se veía pixelado. Ahora la resolución no baja de 1 (y sube hasta 1,5 si hay margen) con antialias, y el coste se recorta en los
+// materiales: las superficies de las zonas pasan de material «físico» (brillos y reflejos calculados en cada punto) a uno mate
+// (MeshLambertMaterial), que cuesta mucho menos por punto y en esta maqueta de colores planos se ve casi igual.
+// · Solo piezas de las zonas, sus extras y los lotes (no coches ni personajes). No se tocan materiales con su propio sombreado
+//   de brillo (asfalto mojado, charcos), ni los que llevan mapa de luz o de reflejo.
+// · El material mate comparte con el original color, brillo propio, opacidad, textura…: lo que el juego cambie en el original
+//   (luces de noche, parpadeos) se ve igual. Si el original se descarta, el mate también.
+// · Texturas muy grandes (más de 1536 px de lado, p. ej. el plano de la maqueta) se reducen a 1536: menos memoria.
+if(window.LITE)(()=>{
+ const T=THREE,MATE=new WeakMap(),NO=new WeakSet(),TEXOK=new WeakSet();
+ const BRILLO=/pud|roughness|metalness|lights_physical|clearcoat|wW/;
+ const COMP=['opacity','transparent','visible','emissiveIntensity','map','alphaMap','aoMap','alphaTest','side','depthWrite','depthTest','vertexColors','flatShading','fog','polygonOffset','polygonOffsetFactor','polygonOffsetUnits','toneMapped','blending','colorWrite','wireframe','name'];
+ function apto(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||NO.has(m))return false;
+  if(m.lightMap||m.envMap||m.userData&&m.userData.noMate)return false;
+  if(Object.prototype.hasOwnProperty.call(m,'onBeforeCompile')&&BRILLO.test(m.onBeforeCompile.toString())){NO.add(m);return false}return true}
+ function mate(m){let l=MATE.get(m);if(l)return l;
+  l=new T.MeshLambertMaterial();l.color=m.color;l.emissive=m.emissive;l.userData=m.userData;
+  if(m.defines){const d={...m.defines};delete d.STANDARD;delete d.PHYSICAL;if(Object.keys(d).length)l.defines=d}
+  for(const k of COMP)Object.defineProperty(l,k,{configurable:true,enumerable:true,get(){return m[k]},set(v){m[k]=v}});
+  // needsUpdate del original también recompila el mate
+  let pv=0;Object.defineProperty(l,'version',{configurable:true,get(){return m.version+pv},set(v){pv=v-m.version}});
+  if(Object.prototype.hasOwnProperty.call(m,'onBeforeCompile'))l.onBeforeCompile=m.onBeforeCompile;
+  if(Object.prototype.hasOwnProperty.call(m,'customProgramCacheKey'))l.customProgramCacheKey=m.customProgramCacheKey;
+  m.addEventListener('dispose',()=>l.dispose());MATE.set(m,l);return l}
+ const conv=m=>apto(m)?mate(m):m;
+ function tex(t){if(!t||TEXOK.has(t))return;TEXOK.add(t);const im=t.image;if(!im||t.isRenderTargetTexture||t.isDataTexture||t.isCompressedTexture||t.isVideoTexture||t.isCanvasTexture)return;
+  const w=im.width,h=im.height;if(!(w>1536||h>1536))return;const k=1536/Math.max(w,h);
+  try{const c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);t.image=c;t.needsUpdate=true}catch(e){}}
+ function pasa(o){if(!o.material||o.isSprite||o.isPoints||o.isLine)return;
+  if(Array.isArray(o.material)){let c=false;const a=o.material.map(m=>{const n=conv(m);if(n!==m)c=true;tex(m.map);return n});if(c)o.material=a}
+  else{tex(o.material.map);const n=conv(o.material);if(n!==o.material)o.material=n}}
+ function raices(){const L=ZROOTS.map(z=>z.root||z);for(const c of scene.children)if(/_extras$|^lite_lotes$/.test(c.name||''))L.push(c);return L}
+ // poco a poco: unas zonas cada vez, sin parones
+ let cola=[],ci=0;
+ setInterval(()=>{const t0=performance.now();if(ci>=cola.length){cola=[];for(const r of raices())if(r&&r.traverse)r.traverse(o=>{if(o.material)cola.push(o)});ci=0}
+  while(ci<cola.length&&performance.now()-t0<4)pasa(cola[ci++])},250);
+ window.__NITIDO=()=>({pr:+R.getPixelRatio().toFixed(2),aa:R.getContext().getContextAttributes().antialias});
+})();
+
 // ---------- MÓVIL (window.LITE): agrupar en lotes lo que no se mueve ----------
 // En el móvil lo que más cuesta no son los triángulos sino el número de piezas que se dibujan por separado (más de 1.000 por
 // imagen en el centro). Aquí se juntan en una sola malla, por zonas de la ciudad de unos 400 m, todas las piezas quietas que
@@ -4104,15 +4145,16 @@ if(window.LITE)(()=>{
   if(n)o.geometry=n}
 
  // ---- calidad automática: si el móvil no llega a ~22 imágenes por segundo, se baja un escalón (nunca se vuelve a subir)
- // 1: menos resolución · 2: aún menos resolución y se ve menos lejos (más niebla) · 3: además se quita el público de las aceras
+ // 1: se ve menos lejos (más niebla) y resolución 1,15 como mucho · 2: aún menos lejos y resolución 1 · 3: además se quita el público de las aceras
+ // (la resolución ya no baja de 1: por debajo se veía pixelado; lo que se recorta es la distancia)
  const NV={n:0,t:performance.now()+12000,f0:R.info.render.frame,malos:0,pr:9,lejos:99};
  {const sp=R.setPixelRatio.bind(R);R.setPixelRatio=v=>sp(Math.min(v,NV.pr))}
  {let fv=pcam.far;Object.defineProperty(pcam,'far',{configurable:true,get(){return Math.min(fv,NV.lejos)},set(v){fv=v}})}
  const nieblaCorta=()=>{for(const F of [scene.fog,typeof FOG!=='undefined'?FOG:null])if(F&&F.isFog&&!F.__nv){F.__nv=1;let fv=F.far,nv=F.near;
    Object.defineProperty(F,'far',{configurable:true,get(){return Math.min(fv,NV.lejos-1.5)},set(v){fv=v}});
    Object.defineProperty(F,'near',{configurable:true,get(){return Math.min(nv,(NV.lejos-1.5)*.35)},set(v){nv=v}})}};
- function escalon(){NV.n++;if(NV.n===1){NV.pr=.7}else if(NV.n===2){NV.pr=.55;NV.lejos=11;nieblaCorta();pcam.updateProjectionMatrix()}
-  else if(NV.n===3){scene.traverse(o=>{if(o.isInstancedMesh&&o.count>1500&&o.frustumCulled===false)o.layers.mask=HID})}
+ function escalon(){NV.n++;if(NV.n===1){NV.pr=1.15;NV.lejos=14;nieblaCorta();pcam.updateProjectionMatrix()}else if(NV.n===2){NV.pr=1;NV.lejos=11;pcam.updateProjectionMatrix()}
+  else if(NV.n===3){NV.lejos=9.5;pcam.updateProjectionMatrix();scene.traverse(o=>{if(o.isInstancedMesh&&o.count>1500&&o.frustumCulled===false)o.layers.mask=HID})}
   R.setPixelRatio(R.getPixelRatio()>NV.pr?NV.pr:R.getPixelRatio());window.dispatchEvent(new Event('resize'))}
  setInterval(()=>{const a=performance.now(),fr=R.info.render.frame;if(document.hidden||!driving){NV.t=a;NV.f0=fr;return}
   if(a-NV.t<2500)return;const fps=(fr-NV.f0)*1000/(a-NV.t);NV.t=a;NV.f0=fr;NV.fps=fps;
