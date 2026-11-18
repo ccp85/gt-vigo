@@ -1415,7 +1415,16 @@ function mkPersona(){const g=new THREE.Group();   // protagonista: vaqueros, zap
  for(const z of[-.0032,.0032]){const o=new THREE.Mesh(new THREE.SphereGeometry(.0011,6,4),MS(0x15171c));o.position.set(.0081,.071,z);g.add(o)}
  const nar=new THREE.Mesh(new THREE.SphereGeometry(.0014,6,4),MS(0xdca07a));nar.position.set(.0089,.0685,0);g.add(nar);
  for(const z of[-.0088,.0088]){const ore=new THREE.Mesh(new THREE.SphereGeometry(.0018,6,4),MS(PIEL));ore.scale.set(.6,1,.5);ore.position.set(-.0005,.069,z);g.add(ore)}
- g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
+ g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.userData.viejo=[];g.traverse(o=>{if(o.isMesh)g.userData.viejo.push(o)});PROTA.lista.push(g);protaPon(g);return g}
+const PROTA={lista:[],m:null,S:.08};window.PROTA=PROTA;
+function protaPon(g){const M=PROTA.m;if(!M||g.userData.prota)return;g.userData.prota=true;
+ for(const o of g.userData.viejo)if(o.parent)o.parent.remove(o);
+ const pon=(o,par,x,y,z)=>{const m=new THREE.Mesh(o.geometry,o.material);m.scale.setScalar(PROTA.S);m.position.set(x,y,z);m.castShadow=true;par.add(m)};
+ pon(M.cuerpo,g,0,0,0);
+ const pi=g.userData.piernas.children;pon(M.piernaA,pi[0],0,-.03,-pi[0].position.z);pon(M.piernaB,pi[1],0,-.03,-pi[1].position.z);
+ const br=g.userData.brazos.children;for(const[k,n]of[[0,'brazoA'],[1,'brazoB']]){const b=br[k];pon(M[n],b,-b.position.x,-b.position.y,-b.position.z)}}
+new GLTFLoader().load('protagonista.glb',gl=>{const M={};gl.scene.traverse(o=>{if(o.isMesh){o.material.metalness=0;o.material.roughness=.7;M[o.name]=o}});
+ if(!M.cuerpo||!M.piernaA||!M.brazoB)return;PROTA.m=M;PROTA.lista.forEach(protaPon)},undefined,e=>console.warn('protagonista.glb',e));
 function mkMoto(conPiloto){const g=new THREE.Group();   // moto de agua: casco con proa afilada, cubierta, sillín, manillar, estribos y chorro
  const BLA=MS(0xf6f4ef),ROJ=MS(0xe0553a),AZU=MS(0x22244f),NEG=MS(0x1a1b20),GRI=MS(0x8e939a),CRI=new THREE.MeshStandardMaterial({color:0x2a3a55,roughness:.15,metalness:.2,transparent:true,opacity:.75});
  const ext=(pts,h,mat,y)=>{const sh=new THREE.Shape();sh.moveTo(pts[0][0],pts[0][1]);for(const p of pts.slice(1))sh.lineTo(p[0],p[1]);const ge=new THREE.ExtrudeGeometry(sh,{depth:h,bevelEnabled:true,bevelThickness:.002,bevelSize:.002,bevelSegments:2});ge.rotateX(-Math.PI/2);const m=new THREE.Mesh(ge,mat);m.position.y=y;g.add(m);return m};
