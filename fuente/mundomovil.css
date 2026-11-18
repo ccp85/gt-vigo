@@ -1,0 +1,11 @@
+/* ---- Mundo abierto móvil (body.mundom, indexm.html): en la maqueta los botones van en una sola fila que se desliza, abajo,
+   y el texto de presentación se esconde, para que se vea la ciudad. En horizontal la pantalla es muy baja. ---- */
+body.mundom:not(.drive) .bar{flex-wrap:nowrap!important;overflow-x:auto;justify-content:flex-start!important;max-width:calc(100% - 16px)!important;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;left:8px!important;right:8px!important;transform:none!important}
+body.mundom:not(.drive) .bar::-webkit-scrollbar{display:none}
+body.mundom:not(.drive) .bar>*{flex:0 0 auto}
+body.mundom:not(.drive) .bar button{padding:8px 12px}
+body.mundom header p,body.mundom .hint{display:none!important}
+@media (max-height:500px){
+ body.mundom header h1{font-size:22px!important;margin:0!important}
+ body.mundom:not(.drive) .bar button{padding:6px 10px;font-size:12px}
+}
