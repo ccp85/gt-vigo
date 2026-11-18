@@ -6,7 +6,7 @@ Juego 3D en el navegador (three.js) ambientado en Vigo y su ría: calles de Open
 
 | Archivo | Qué es |
 |---|---|
-| `index.html` | Mundo abierto: coche, moto de agua, lancha, helicóptero y a pie por todo Vigo |
+| `index.html` | Mundo abierto: coche, moto de agua, lancha, helicóptero y a pie por todo Vigo. Empieza en la pantalla de inicio, donde eliges coche, moto o helicóptero |
 | `gp.html` | Gran Premio: carreras por un circuito urbano |
 | `nav.html` | Reparto de Navidad (PC, gráficos completos; en el móvil salta solo a `navm.html`) |
 | `navm.html` | Reparto de Navidad para móvil (versión LITE: sin sombras ni efectos, 30 fps, piezas quietas agrupadas en lotes y botones adaptados al móvil en vertical) |
@@ -33,6 +33,7 @@ Los `.html` se generan a partir de una base y una cadena de scripts de edición:
 - `index_base.html`: base reconstruida con todas las ediciones antiguas ya aplicadas.
 - `edit_*.py`: cada script añade o cambia una parte del juego (Samil, Castrelos, Monte do Castro, entrada por la AP-9, coche de policía, lancha, misión de skate, etc.). Se aplican en el orden de la lista `NUEVAS` de `build.sh`. **No reutilizar el nombre de un script existente** al añadir uno nuevo.
 - `edit_navmovil.py` con `navmovil_lotes.js`, `navmovil.css` y `navmovil_cabecera.html`: versión móvil. Añade la cabecera de móvil a todas las páginas (codificación y ancho de pantalla) y el menú de carroza a dos columnas con el móvil en horizontal; solo en `navm.html`, junta en lotes las piezas que no se mueven para dibujar muchas menos cosas por imagen (en el centro, de unas 1.100 a unas 350) y ajusta los botones en vertical. También trocea los suelos de cada zona para dibujar solo lo que se ve, simplifica las figuras repetidas miles de veces y baja la calidad sola si el móvil no llega a unas 22 imágenes por segundo. Con `?fps=1` muestra en pantalla imágenes por segundo, nivel de calidad, dibujos y triángulos. Con `navmovil_salto.html`, en un móvil `nav.html` y el botón «🎄 Navidad 2026» del juego completo llevan solos a `navm.html` (con `?pc=1` en la dirección se queda la versión de gráficos completos).
+- `edit_inicio.py` con `inicio.html`, `inicio.css`, `inicio.js` e `inicio3d.js`: pantalla de inicio. «GT VIGO» con letras animadas y tres tarjetas grandes con el coche, la moto y el helicóptero en 3D (se eligen con un toque, deslizando, con ◀ ▶ o con el mando). El vehículo elegido es con el que arrancas en el mundo abierto, tanto con JUGAR como al tocar un sitio en «🗺️ Elegir lugar». El botón «🗺️ Mapa» del juego vuelve a este menú con el mapa abierto. Recuerda el último vehículo elegido. Los modelos del menú usan su propio dibujo, que solo funciona mientras se ve el menú.
 - `build.sh`: copia la base, aplica los scripts en orden y genera `index.html`, `gp.html`, `nav.html` y `navm.html` (el último script, `edit_skatetest.py`, produce las variantes; también crea un `navskate.html` de pruebas que no se incluye aquí).
 - `syn.js`: comprobación rápida de sintaxis de los HTML generados.
 
