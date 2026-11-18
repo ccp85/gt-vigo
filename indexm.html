@@ -1042,7 +1042,7 @@ const enZonaC=(x,y)=>ZONAS_C.some(Z=>x>Z[0]&&x<Z[2]&&y>Z[1]&&y<Z[3]);
 // paleta observada: [prob. acumulada, r,g,b, tipo] tipo 2 = enlucido, 3 = granito (sillería)
 const ZPAL=[[.30,.93,.9,.84,2],[.52,.97,.96,.92,2],[.80,.82,.8,.76,3],[.90,.9,.83,.69,2],[.96,.87,.78,.72,2],[1.01,.74,.73,.71,3]];
 const SUBE={cola:[],on:false,n:0};window.__SUBE=SUBE;
-function subeZonas(){psolChk();ecuChk();samChk();casChk();cstChk();apChk();if(!RAMPA.celdas&&MAPA&&MI)rampaCeldas();for(const z of ZROOTS){const rt=z.root;if(rt.parent&&!rt.userData.rampaV){rt.userData.rampaV=1;setTimeout(()=>{try{rampaOculta(rt)}catch(e){console.warn('rampaO',e)}},180)}}if(!RAMPA.hecha&&sueloRap(93.95,29.52)!=null&&sueloRap(95.6,25.78)!=null&&sueloRap(96.72,23.29)!=null){RAMPA.hecha=1;setTimeout(()=>{try{rampaGV()}catch(e){console.warn('rampa',e);RAMPA.hecha=0}},500)}for(const z of ZROOTS){const rt=z.root;if(rt.parent&&!rt.userData.casaV){rt.userData.casaV=1;setTimeout(()=>{try{casaArtes(rt)}catch(e){console.warn('casaArtes',e)}},150)}if(rt.parent&&!rt.userData.tejZ){rt.userData.tejZ=1;rt.traverse(o=>{if(o.isMesh&&!o.isInstancedMesh&&o.material&&!Array.isArray(o.material)&&o.material.userData.tej)tejadoZona(o)})}if(rt.parent&&rt.name==='centro'&&!rt.userData.fachC){rt.userData.fachC=1;setTimeout(()=>{try{centroFachadas(rt)}catch(e){console.warn('centroFachadas',e)}},200)}if(!rt.parent||rt.userData.sube)continue;rt.userData.sube=1;
+function subeZonas(){psolChk();ecuChk();teisChk();nauChk();coiaChk();samChk();casChk();cstChk();apChk();if(!RAMPA.celdas&&MAPA&&MI)rampaCeldas();for(const z of ZROOTS){const rt=z.root;if(rt.parent&&!rt.userData.rampaV){rt.userData.rampaV=1;setTimeout(()=>{try{rampaOculta(rt)}catch(e){console.warn('rampaO',e)}},180)}}if(!RAMPA.hecha&&sueloRap(93.95,29.52)!=null&&sueloRap(95.6,25.78)!=null&&sueloRap(96.72,23.29)!=null){RAMPA.hecha=1;setTimeout(()=>{try{rampaGV()}catch(e){console.warn('rampa',e);RAMPA.hecha=0}},500)}for(const z of ZROOTS){const rt=z.root;if(rt.parent&&!rt.userData.casaV){rt.userData.casaV=1;setTimeout(()=>{try{casaArtes(rt)}catch(e){console.warn('casaArtes',e)}},150)}if(rt.parent&&!rt.userData.tejZ){rt.userData.tejZ=1;rt.traverse(o=>{if(o.isMesh&&!o.isInstancedMesh&&o.material&&!Array.isArray(o.material)&&o.material.userData.tej)tejadoZona(o)})}if(rt.parent&&rt.name==='centro'&&!rt.userData.fachC){rt.userData.fachC=1;setTimeout(()=>{try{centroFachadas(rt)}catch(e){console.warn('centroFachadas',e)}},200)}if(!rt.parent||rt.userData.sube)continue;rt.userData.sube=1;
   rt.traverse(o=>{if(o.isMesh&&!o.isInstancedMesh){const m=o.material;if(!Array.isArray(m)&&m&&m.userData.real)SUBE.cola.push(o)}})}
  if(SUBE.cola.length&&!SUBE.on){SUBE.on=true;setTimeout(subePaso,30)}}
 function centroFachadas(rt){const L=[],a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3(),e1=new THREE.Vector3(),e2=new THREE.Vector3();
@@ -1626,6 +1626,165 @@ function apCrea(){const LT=!!window.LITE;
    g.position.set(x,z,y);// de cara a los que llegan por la autopista (desde el noreste)
    g.rotation.y=Math.atan2(1,-.6);g.traverse(o=>{if(o.isMesh){o.castShadow=!LT;o.receiveShadow=true}});AP.G.add(g)}}
  if(nuevos)AP.trozos=(AP.trozos||0)+nuevos}
+const COIA={hecha:0,X0:56,X1:73.5,Y0:46,Y1:55.6};window.__COIA=COIA;
+setInterval(()=>{if(!COIA.hecha)coiaChk()},3000);// subeZonas solo se llama al cargar zonas; las calles pueden llegar después
+function coiaChk(){if(COIA.hecha||!MAPA||!MI||!CALLES)return;if(sueloRap(64.6,51.6)==null||sueloRap(60,52.2)==null||sueloRap(68,51.2)==null)return;COIA.hecha=1;setTimeout(()=>{try{coiaCrea()}catch(e){console.warn('coia',e);COIA.err=String(e)}},1200)}
+function coiaCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='coia';const t=(x,y)=>cell(x,y).t,gy=(x,y)=>sueloRap(x,y);
+ let rs=17;const rn=()=>(rs=(rs*16807)%2147483647)/2147483647;
+ const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.85},o));
+ const HIE=M(0x3a3f46,{metalness:.5,roughness:.45}),LUZ=M(0xfff2cc,{emissive:0xffd88a,emissiveIntensity:.9}),TRO=M(0x6b4a32),
+  CES=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:1,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),
+  BICI=new THREE.MeshStandardMaterial({color:0x3f9a63,roughness:.9,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3,side:THREE.DoubleSide}),RAYA=M(0xf4f4f0,{polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4});
+ const PARTS=new Map(),add=(geo,mat,x,y,z,ry=0)=>{const g=geo.index?geo.toNonIndexed():geo.clone();if(g.attributes.uv)g.deleteAttribute('uv');g.rotateY(ry);g.translate(x,y,z);if(!PARTS.has(mat))PARTS.set(mat,[]);PARTS.get(mat).push(g)};
+ const TR=[];// árboles: [x,y,tipo,escala]
+ // distancia a calzada (2) y a edificio (3) en el mapa de celdas, muestreando en anillos
+ const cerca=(x,y,tt,r)=>{for(let a=0;a<6.283;a+=.785){if(t(x+Math.cos(a)*r,y+Math.sin(a)*r)===tt)return true}return t(x,y)===tt};
+ // 1) Avenida de Castelao: árboles y farolas en las aceras, carril bici en el lado norte
+ const L=[];for(const[nm,c,ls]of CALLES){if(nm!=='Avenida de Castelao')continue;for(const l of ls){const P=[];for(let i=0;i+1<l.length;i+=2)P.push([l[i],l[i+1]]);if(P.length<2)continue;const Q=[P[0]];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],d=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.round(d/.05));for(let k=1;k<=n;k++)Q.push([a[0]+(b[0]-a[0])*k/n,a[1]+(b[1]-a[1])*k/n])}if(Q.length>6)L.push(Q)}}
+ let nAv=0,nF=0;const bici=[];
+ for(const Q of L)for(let i=1;i<Q.length-1;i++){const a=Q[i-1],b=Q[i+1],l=Math.hypot(b[0]-a[0],b[1]-a[1])||1,tx=(b[0]-a[0])/l,ty=(b[1]-a[1])/l,nx=-ty,ny=tx,[x,y]=Q[i];
+  for(const sd of[1,-1]){let d=.02;for(;d<.26;d+=.01)if(t(x+nx*sd*d,y+ny*sd*d)!==2)break;if(d>=.26)continue;const ex=x+nx*sd*d,ey=y+ny*sd*d;const tt=t(ex,ey);if(tt===0||tt===3)continue;
+   // acera: el árbol a 2 m del bordillo, si no hay otra calle ni edificio pegados
+   const px=ex+nx*sd*.028,py=ey+ny*sd*.028;
+   if(i%3===0&&t(px,py)!==2&&t(px,py)!==3&&!cerca(px,py,3,.025)&&t(px+tx*.05,py+ty*.05)!==2&&t(px-tx*.05,py-ty*.05)!==2){TR.push([px,py,0,.85+rn()*.3]);nAv++}
+   if(i%7===3){const lx=ex+nx*sd*.012,ly=ey+ny*sd*.012,lz=gy(lx,ly);if(lz!=null&&t(lx,ly)!==2){add(new THREE.CylinderGeometry(.0011,.0015,.055,6),HIE,lx,lz+.0275,ly);add(new THREE.BoxGeometry(.016,.0016,.0016),HIE,lx-nx*sd*.007,lz+.055,ly-ny*sd*.007,-Math.atan2(ny,nx));add(new THREE.BoxGeometry(.008,.003,.005),LUZ,lx-nx*sd*.014,lz+.0535,ly-ny*sd*.014,-Math.atan2(ny,nx));nF++}}
+   // carril bici sobre la acera del lado norte (normal hacia y menor)
+   if(ny*sd<-.3){const bx=ex+nx*sd*.05,by=ey+ny*sd*.05;bici.push([bx,by,nx*sd,ny*sd,t(bx,by)!==2&&t(bx,by)!==3])}}}
+ // cinta verde del carril bici (tramos continuos)
+ {let cur=[];const flush=()=>{if(cur.length>3){const pos=[],idx=[],W=.011;for(let k=0;k<cur.length;k++){const[x,y,nx,ny]=cur[k];const z1=gy(x+nx*W,y+ny*W),z2=gy(x-nx*W,y-ny*W);if(z1==null||z2==null)return;pos.push(x+nx*W,z1+.003,y+ny*W,x-nx*W,z2+.003,y-ny*W);if(k<cur.length-1){const q=k*2;idx.push(q,q+1,q+2,q+1,q+3,q+2)}}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();const m=new THREE.Mesh(g,BICI);m.receiveShadow=true;G.add(m);COIA.bici=(COIA.bici||0)+cur.length}cur=[]};
+  for(const p of bici){if(p[4])cur.push(p);else flush()}flush()}
+ COIA.av=nAv;COIA.farolas=nF;
+ // 2) Coia: césped y árboles en los espacios libres entre bloques (lejos de calles y fachadas)
+ const st=.05,pos=[],col=[],c0=new THREE.Color(0x7fb35a),c1=new THREE.Color(0x6aa64b),cc=new THREE.Color();let nC=0;
+ const libre=(x,y)=>t(x,y)===1&&!cerca(x,y,2,.06)&&!cerca(x,y,3,.03)&&!cerca(x,y,0,.05);
+ const H=new Map(),hz=(i,j)=>{const k=i+','+j;if(!H.has(k))H.set(k,gy(i*st,j*st));return H.get(k)};
+ for(let i=Math.floor(COIA.X0/st);i<COIA.X1/st;i++)for(let j=Math.floor(COIA.Y0/st);j<COIA.Y1/st;j++){const x=(i+.5)*st,y=(j+.5)*st;if(!libre(x,y))continue;
+  const za=hz(i,j),zb=hz(i+1,j),zc=hz(i+1,j+1),zd=hz(i,j+1);if(za==null||zb==null||zc==null||zd==null)continue;
+  const A=[i*st,za+.004,j*st],B=[(i+1)*st,zb+.004,j*st],C=[(i+1)*st,zc+.004,(j+1)*st],D=[i*st,zd+.004,(j+1)*st];
+  pos.push(...A,...D,...C,...A,...C,...B);const n=.5+.5*Math.sin(x*7.3+Math.sin(y*5.1)*2);cc.copy(c0).lerp(c1,n);for(let k=0;k<6;k++)col.push(cc.r,cc.g,cc.b);nC++;
+  if(rn()<(LT?.06:.11)){const ox=x+(rn()-.5)*st*.8,oy=y+(rn()-.5)*st*.8;if(libre(ox,oy))TR.push([ox,oy,rn()<.7?1:2,.8+rn()*.5])}}
+ if(pos.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();const m=new THREE.Mesh(g,CES);m.receiveShadow=true;G.add(m)}
+ COIA.cesped=nC;
+ // árboles instanciados: plátanos de sombra (avenida), frondosos y pinos (zonas verdes)
+ {const esp=[{tr:new THREE.CylinderGeometry(.0022,.003,1,5).translate(0,.5,0),cp:new THREE.IcosahedronGeometry(1,1),h:.05,r:.02,sy:1.25,cy:.95,col:[0x4f8f3a,0x5a9a44,0x467f35]},
+   {tr:new THREE.CylinderGeometry(.0025,.0035,1,5).translate(0,.5,0),cp:new THREE.IcosahedronGeometry(1,0),h:.045,r:.022,sy:.95,cy:.85,col:[0x3f7d34,0x4c8f3a,0x356b2c]},
+   {tr:new THREE.CylinderGeometry(.002,.003,1,5).translate(0,.5,0),cp:new THREE.ConeGeometry(1,1.8,7).translate(0,.9,0),h:.03,r:.016,sy:1,cy:.5,col:[0x2a5a2e,0x315f34]}];
+  const trM=new THREE.MeshStandardMaterial({color:0x6b4a32,roughness:1}),cpM=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,flatShading:true});
+  const mm=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),co=new THREE.Color();
+  esp.forEach((E,si)=>{const Ls=TR.filter(p=>p[2]===si);if(!Ls.length)return;const it=new THREE.InstancedMesh(E.tr,trM,Ls.length),ic=new THREE.InstancedMesh(E.cp,cpM,Ls.length);
+   Ls.forEach(([x,y,,s_],i)=>{const z=(gy(x,y)??0)-.002,h=E.h*s_,r_=E.r*s_;e.set(0,rn()*6.28,0);q.setFromEuler(e);
+    mm.compose(new THREE.Vector3(x,z,y),q,new THREE.Vector3(1,h,1));it.setMatrixAt(i,mm);
+    mm.compose(new THREE.Vector3(x,z+h*E.cy,y),q,new THREE.Vector3(r_,si===2?h*.7:r_*E.sy,r_));ic.setMatrixAt(i,mm);co.setHex(E.col[(rn()*E.col.length)|0]).offsetHSL(0,0,(rn()-.5)*.06);ic.setColorAt(i,co)});
+   it.castShadow=ic.castShadow=!LT;ic.receiveShadow=true;G.add(it,ic)})}
+ COIA.arboles=TR.length;
+ for(const[mat,gs]of PARTS){const m=new THREE.Mesh(mergeGeometries(gs),mat);m.castShadow=!LT&&mat!==LUZ;m.receiveShadow=true;G.add(m)}
+ scene.add(G);COIA.G=G}
+const NAU={hecha:0,X0:86.3,X1:95.6,Y0:10,Y1:13.2};window.__NAU=NAU;
+setInterval(()=>{if(!NAU.hecha)nauChk()},3000);
+function nauChk(){if(NAU.hecha||!MAPA||!MI)return;if(sueloRap(90.6,12.9)==null)return;NAU.hecha=1;setTimeout(()=>{try{nauCrea()}catch(e){console.warn('nautico',e);NAU.err=String(e)}},900)}
+function nauCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='nautico';const t=(x,y)=>cell(x,y).t,gy=(x,y)=>sueloRap(x,y);
+ let rs=23;const rn=()=>(rs=(rs*16807)%2147483647)/2147483647;const WY=-.032;
+ // 1) huecos de amarre: borde de pantalán (5) o muelle (1) con agua delante; el barco entra de proa hacia el agua
+ const st=.02,SP=[];for(let x=NAU.X0;x<NAU.X1;x+=st)for(let y=NAU.Y0;y<NAU.Y1;y+=st){const c=t(x,y);if(c!==5)continue;
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){if(t(x+dx*st,y+dy*st)!==0)continue;let ok=true;for(let k=1;k<=7&&ok;k++)for(const w of[-.022,0,.022]){if(t(x+dx*(.02+k*.02)-dy*w,y+dy*(.02+k*.02)+dx*w)!==0){ok=false;break}}if(ok)SP.push([x+dx*.012,y+dy*.012,dx,dy])}}
+ // separación entre barcos ~0.045
+ const PL=[];for(const p of SP){if(PL.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<.044))continue;PL.push(p)}
+ NAU.huecos=PL.length;
+ // 2) modelos: velero con la vela recogida y lancha (la del juego, más pequeña), juntados por material para instanciarlos
+ const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.6},o));
+ const vel=(()=>{const L=.12,B=.036,P=new Map(),add=(g,m)=>{if(!P.has(m))P.set(m,[]);g=g.index?g.toNonIndexed():g;if(g.attributes.uv)g.deleteAttribute('uv');P.get(m).push(g)};
+  const plan=k=>{const sh=new THREE.Shape();sh.moveTo(-L/2*k,-B/2*k);sh.lineTo(L*.2*k,-B/2*k);sh.quadraticCurveTo(L*.42*k,-B*.32*k,L/2*k,0);sh.quadraticCurveTo(L*.42*k,B*.32*k,L*.2*k,B/2*k);sh.lineTo(-L/2*k,B/2*k);sh.lineTo(-L/2*k,-B/2*k);return sh};
+  const ex=(k,h,y0)=>{const g=new THREE.ExtrudeGeometry(plan(k),{depth:h,bevelEnabled:false,curveSegments:4});g.rotateX(-Math.PI/2);g.translate(0,y0,0);return g};
+  const W=M(0xf6f6f2),Nv=M(0x1f3557),T=M(0xd9c7a2,{roughness:.8}),Gl=M(0x223247,{roughness:.2}),S=M(0xb9bec6,{metalness:.6,roughness:.35}),C=[M(0x1f5fa8),M(0x2a7a4f),M(0x9a2a2a)];
+  add(ex(1,.016,-.008),W);add(ex(1.01,.004,-.006),Nv);add(ex(.9,.001,.008),T);
+  const cab=new THREE.BoxGeometry(.04,.009,.024);cab.translate(-.008,.0125,0);add(cab,W);const vi=new THREE.BoxGeometry(.041,.004,.025);vi.translate(-.008,.013,0);add(vi,Gl);
+  const ms=new THREE.CylinderGeometry(.0009,.0012,.17,5);ms.translate(.012,.093,0);add(ms,S);const bo=new THREE.BoxGeometry(.055,.0016,.0016);bo.translate(-.014,.03,0);add(bo,S);
+  const fo=new THREE.BoxGeometry(.05,.005,.005);fo.translate(-.012,.0335,0);
+  // tres versiones del toldo de la vela (azul, verde, granate)
+  return {P,fo,C}})();
+ const lan=(()=>{const g=mkLanchaM(false,false);const P=new Map();g.traverse(o=>{if(!o.isMesh||o.userData.est)return;const q=o.geometry.clone().applyMatrix4(o.matrixWorld);q.scale(.55,.55,.55);if(q.attributes.uv)q.deleteAttribute('uv');if(!P.has(o.material))P.set(o.material,[]);P.get(o.material).push(q.index?q.toNonIndexed():q)});return P})();
+ const mm=new THREE.Matrix4(),qq=new THREE.Quaternion(),e=new THREE.Euler(),V=new THREE.Vector3(),S1=new THREE.Vector3(1,1,1);
+ const VL=[],LN=[];for(const p of PL){(rn()<.62?VL:LN).push(p)}
+ const inst=(geoMap,lista,len)=>{for(const[mat,gs]of geoMap){const g=mergeGeometries(gs);const im=new THREE.InstancedMesh(g,mat,lista.length);lista.forEach(([x,y,dx,dy],i)=>{const cx=x+dx*(len/2),cy=y+dy*(len/2);e.set(0,Math.atan2(-dy,dx)+(rn()-.5)*.05,0);qq.setFromEuler(e);V.set(cx,WY,cy);im.setMatrixAt(i,mm.compose(V,qq,S1))});im.castShadow=!LT;im.receiveShadow=true;G.add(im)}};
+ if(VL.length){inst(vel.P,VL,.12);// toldos de colores
+  const grp=[[],[],[]];VL.forEach((p,i)=>grp[i%3].push(p));grp.forEach((L_,k)=>{if(!L_.length)return;const im=new THREE.InstancedMesh(vel.fo,vel.C[k],L_.length);L_.forEach(([x,y,dx,dy],i)=>{e.set(0,Math.atan2(-dy,dx),0);qq.setFromEuler(e);V.set(x+dx*.06,WY,y+dy*.06);im.setMatrixAt(i,mm.compose(V,qq,S1))});G.add(im)})}
+ if(LN.length)inst(lan,LN,.11);
+ NAU.veleros=VL.length;NAU.lanchas=LN.length;
+ // 3) club náutico: edificio blanco de dos plantas en el muelle, cerca de la dársena
+ // (el edificio del club ya existe en el mapa, el del catastro con fachada curva: no se duplica)
+ if(false){const libreR=(cx,cy,w,d)=>{for(let a=-w/2;a<=w/2;a+=.03)for(let b=-d/2;b<=d/2;b+=.03){const c=t(cx+a,cy+b);if(c!==1&&c!==5)return false;const ms=repMallas(cx+a,cy+b);if(ms.length&&repAltura(cx+a,cy+b,ms)>(gy(cx+a,cy+b)??0)+.02)return false}return true};
+  let best=null;for(let r=0;r<1.2&&!best;r+=.04)for(let a=0;a<6.283;a+=.35){const x=90.6+Math.cos(a)*r,y=12.75+Math.sin(a)*r;if(libreR(x,y,.32,.16)){best=[x,y];break}}
+  if(best){NAU.club=best;const[x,y]=best,z=gy(x,y)??0,W=.28,D=.12,H1=.032,H2=.028;const B=M(0xf7f7f3,{roughness:.55}),GL=M(0x1d3a5f,{roughness:.15,metalness:.2}),AZ=M(0x1f4fa3),BAR=M(0xdfe3e8,{metalness:.5,roughness:.3});
+   const g=new THREE.Group();g.position.set(x,z,y);const bx=(w,h,d,m,px,py,pz)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(px,py,pz);o.castShadow=!LT;o.receiveShadow=true;g.add(o);return o};
+   const cy_=(r_,h,m,px,py,pz)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r_,r_,h,24,1,false,0,Math.PI),m);o.position.set(px,py,pz);o.rotation.y=Math.PI/2;o.castShadow=!LT;g.add(o);return o};
+   // planta baja y primera, con la proa redondeada hacia el mar (este)
+   bx(W,H1,D,B,0,H1/2,0);cy_(D/2,H1,B,W/2,H1/2,0);bx(W-.01,H1*.5,D+.002,GL,0,H1*.55,0);bx(W+.002,H1*.5,D-.01,GL,0,H1*.55,0);cy_(D/2+.001,H1*.5,GL,W/2,H1*.55,0);
+   bx(W*.82,H2,D*.85,B,-.02,H1+H2/2,0);cy_(D*.425,H2,B,W*.41-.02,H1+H2/2,0);bx(W*.82-.01,H2*.5,D*.85+.002,GL,-.02,H1+H2*.55,0);cy_(D*.425+.001,H2*.5,GL,W*.41-.02,H1+H2*.55,0);
+   bx(W*.86,.004,D*.9,B,-.02,H1+H2+.002,0);bx(W+.004,.005,D+.004,AZ,0,H1+.0025,0);
+   // terraza en la cubierta de la planta baja (la parte que no tapa la primera planta) con barandilla
+   for(const sd of[-1,1])bx(W,.0012,.0012,BAR,0,H1+.012,sd*(D/2-.002));bx(.0012,.0012,D,BAR,-W/2+.002,H1+.012,0);
+   // mástil de señales con verga y banderas
+   const mx=W/2+.02,mast=new THREE.Mesh(new THREE.CylinderGeometry(.0012,.0016,.16,6),BAR);mast.position.set(mx,H1+.08,0);g.add(mast);bx(.0012,.0012,.07,BAR,mx,H1+.13,0);
+   const fl=[0xd8402e,0xf2c230,0x1f4fa3,0xf6f6f2,0x2a7a4f];fl.forEach((c,i)=>{const sd=i%2?1:-1,k=Math.floor(i/2);const f_=new THREE.Mesh(new THREE.PlaneGeometry(.014,.009),new THREE.MeshStandardMaterial({color:c,side:THREE.DoubleSide}));f_.position.set(mx,H1+.124-k*.016,sd*(.012+k*.008));f_.rotation.y=Math.PI/2;g.add(f_)});
+   // rótulo
+   const cv=document.createElement('canvas');cv.width=512;cv.height=96;const k=cv.getContext('2d');k.fillStyle='#f7f7f3';k.fillRect(0,0,512,96);k.fillStyle='#1f4fa3';k.font='bold 62px "Russo One",Arial,sans-serif';k.textAlign='center';k.textBaseline='middle';k.fillText('NÁUTICO',256,52);
+   const tx=new THREE.CanvasTexture(cv);tx.colorSpace=THREE.SRGBColorSpace;for(const sd of[-1,1]){const p=new THREE.Mesh(new THREE.PlaneGeometry(.12,.022),new THREE.MeshStandardMaterial({map:tx,roughness:.6}));p.position.set(-.02,H1+H2+.016,sd*(D*.45+.0015));p.rotation.y=sd>0?0:Math.PI;g.add(p);const sp=new THREE.Mesh(new THREE.BoxGeometry(.12,.024,.002),B);sp.position.set(-.02,H1+H2+.016,sd*D*.45);g.add(sp)}
+   G.add(g)}}
+ scene.add(G);NAU.G=G}
+const TEIS={ast:new Set(),erm:0,CAS:[[111.756, -4.16, -0.03, 1.4, 0.26, 0.13, -3.107], [112.278, -6.412, -0.03, 1.2, 0.24, 0.13, 0.947], [129.072, -13.976, -0.03, 1.0, 0.2, 0.13, 1.385], [126.632, -12.32, -0.03, 0.8, 0.18, 0.13, 1.74]]};window.__TEIS=TEIS;
+setInterval(()=>{teisChk()},3000);
+function teisChk(){if(!MAPA||!MI)return;try{
+ // astilleros: cada barco se monta cuando su zona está cargada (el suelo junto al casco existe)
+ TEIS.CAS.forEach((c,i)=>{if(TEIS.ast.has(i))return;const[x,y]=c;let ok=false;for(let r_=.3;r_<=1.6&&!ok;r_+=.4)for(let a_=0;a_<6.28;a_+=.79)if(sueloRap(x+Math.cos(a_)*r_,y+Math.sin(a_)*r_)!=null){ok=true;break}if(!ok)return;TEIS.ast.add(i);setTimeout(()=>{try{astillero(c)}catch(e){console.warn('astillero',e);TEIS.err=String(e)}},400)});
+ if(!TEIS.erm&&sueloRap(117,-9.2)!=null){TEIS.erm=1;setTimeout(()=>{try{ermidaGuia()}catch(e){console.warn('guia',e);TEIS.err2=String(e)}},700)}}catch(e){}}
+function astillero([x,y,z,L,B,H,ang]){const LT=!!window.LITE,G=new THREE.Group();G.name='astillero';G.position.set(x,0,y);G.rotation.y=ang;
+ const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.6},o));
+ const AM=M(0xf2b630,{metalness:.3}),RO=M(0xc8382a,{metalness:.3}),GR=M(0x9aa0a8,{metalness:.5,roughness:.4}),IM=M(0x8a8f96,{roughness:.8}),MI_=M(0xa0452e,{roughness:.85}),AND=M(0xb8bcc2,{metalness:.6,roughness:.35}),LU=M(0xfff2cc,{emissive:0xffd88a,emissiveIntensity:.8});
+ const P=new Map(),add=(w,h,d,m,px,py,pz,ry=0)=>{const g=new THREE.BoxGeometry(w,h,d);g.rotateY(ry);g.translate(px,py,pz);if(g.attributes.uv)g.deleteAttribute('uv');if(!P.has(m))P.set(m,[]);P.get(m).push(g)};
+ const top=z+H*.5+.04;// cubierta aproximada del casco
+ // 1) pórtico grúa (tipo Goliath) que cruza el barco por la mitad
+ {const SP=B/2+.12,HH=Math.max(.55,top+.38),gx=-L*.08;
+  for(const sd of[-1,1]){add(.03,HH+.06,.03,AM,gx-.06,HH/2-.03,sd*SP);add(.03,HH+.06,.03,AM,gx+.06,HH/2-.03,sd*SP);add(.16,.025,.035,AM,gx,-.02,sd*SP);add(.15,.012,.012,AM,gx,HH*.5,sd*SP)}
+  add(.05,.05,SP*2+.08,RO,gx-.035,HH+.01,0);add(.05,.05,SP*2+.08,RO,gx+.035,HH+.01,0);add(.13,.012,SP*2+.08,AM,gx,HH+.04,0);
+  add(.08,.035,.06,AM,gx,HH-.03,B*.15);add(.006,HH-.04-top-.03,.006,GR,gx,(HH-.04+top+.03)/2,B*.15);
+  // letrero y luces en la viga
+  for(const sd of[-1,1])add(.012,.008,.012,LU,gx,HH-.022,sd*SP*.6)}
+ // 2) andamios por los dos costados
+ {const sx=L/2-.08,n=Math.max(4,Math.round((L-.25)/.06));for(const sd of[-1,1]){const zz=sd*(B/2+.018);
+   for(let k=0;k<=n;k++){const px=-sx+.12+k*(2*sx-.12)/n;add(.004,top+.07,.004,AND,px,(top+.07)/2-.03,zz)}
+   for(let lv=0;lv<4;lv++){const hy=.0+lv*(top+.02)/3;add(2*sx-.12,.004,.004,AND,.06,hy,zz);add(2*sx-.12,.0025,.018,AM,.06,hy-.003,zz-sd*.006)}}}
+ // 3) superestructura a medio montar hacia la popa (bloques de acero en imprimación)
+ {const px=-L/2+.16;add(.2,.06,B*.8,IM,px,top+.03,0);add(.14,.05,B*.7,MI_,px-.02,top+.085,0);add(.07,.045,B*.5,IM,px-.04,top+.13,-B*.08);
+  add(.05,.05,.05,MI_,-L*.05,top+.025,B*.2);add(.06,.04,.05,IM,L*.12,top+.02,-B*.18);add(.04,.13,.04,GR,px+.08,top+.1,B*.32)}
+ for(const[m,gs]of P){const me=new THREE.Mesh(mergeGeometries(gs),m);me.castShadow=!LT&&m!==LU;me.receiveShadow=true;G.add(me)}
+ scene.add(G)}
+function ermidaGuia(){const LT=!!window.LITE,t=(x,y)=>cell(x,y).t,gy=(x,y)=>sueloRap(x,y);
+ // sitio libre lo más alto posible cerca de la cima
+ let best=null,bh=-9;for(let r=0;r<.55;r+=.03)for(let a=0;a<6.283;a+=.4){const x=117+Math.cos(a)*r,y=-9.2+Math.sin(a)*r;let ok=true;
+  for(let u=-.13;u<=.13&&ok;u+=.04)for(let v=-.1;v<=.1;v+=.04){const c=t(x+u,y+v);if(c!==1){ok=false;break}}if(!ok)continue;const h=gy(x,y);if(h!=null&&h>bh){bh=h;best=[x,y]}}
+ if(!best)return;TEIS.ermida=best;const[x,y]=best,z=bh;const G=new THREE.Group();G.position.set(x,z,y);G.name='ermidaGuia';
+ const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.75},o));
+ const BL=M(0xf4f2ea),PI_=M(0xbdb4a2,{roughness:.95}),TE=M(0xb5512f),HI=M(0x2a2d33,{metalness:.5,roughness:.45}),MA=M(0x7a5232),GR=M(0x9a9184,{roughness:1});
+ const bx=(w,h,d,m,px,py,pz,ry=0)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(px,py,pz);o.rotation.y=ry;o.castShadow=!LT;o.receiveShadow=true;G.add(o);return o};
+ // explanada de piedra
+ {const g=new THREE.CylinderGeometry(.2,.21,.012,32);const o=new THREE.Mesh(g,PI_);o.position.y=.0;o.receiveShadow=true;G.add(o)}
+ // nave con tejado a dos aguas, cabecera y pórtico
+ bx(.13,.05,.07,BL,0,.03,0);
+ {const sh=new THREE.Shape();sh.moveTo(-.04,0);sh.lineTo(0,.028);sh.lineTo(.04,0);sh.lineTo(-.04,0);const g=new THREE.ExtrudeGeometry(sh,{depth:.14,bevelEnabled:false});g.translate(0,0,-.07);g.rotateY(Math.PI/2);const o=new THREE.Mesh(g,TE);o.position.set(0,.055,0);o.castShadow=!LT;G.add(o)}
+ bx(.03,.07,.05,BL,-.07,.04,0);// cabecera
+ // espadaña en la fachada (oeste) con dos campanas
+ bx(.012,.11,.06,BL,.072,.06,0);bx(.014,.012,.066,PI_,.072,.115,0);
+ for(const s of[-1,1]){const c=new THREE.Mesh(new THREE.SphereGeometry(.0065,8,6,0,6.283,0,Math.PI*.6),M(0xa0742a,{metalness:.6,roughness:.35}));c.position.set(.072,.085,s*.014);c.rotation.x=Math.PI;G.add(c)}
+ {const cr=new THREE.Group();cr.add(new THREE.Mesh(new THREE.BoxGeometry(.003,.02,.003),PI_));const b=new THREE.Mesh(new THREE.BoxGeometry(.003,.003,.012),PI_);b.position.y=.004;cr.add(b);cr.position.set(.072,.13,0);G.add(cr)}
+ bx(.004,.03,.018,MA,.0785,.02,0);// puerta
+ for(const s of[-1,1])bx(.06,.012,.004,M(0x30486b,{roughness:.3}),-.005,.04,s*.0352);// ventanas
+ // cruceiro de piedra y bancos alrededor
+ {const cx=.13,cz=.08;bx(.03,.012,.03,GR,cx,.006,cz);bx(.007,.07,.007,GR,cx,.045,cz);bx(.007,.007,.026,GR,cx,.07,cz)}
+ for(let k=0;k<5;k++){const a=Math.PI*.6+k*.35,bx_=Math.cos(a)*.17,bz=Math.sin(a)*.17;bx(.03,.004,.009,MA,bx_,.01,bz,-a+Math.PI/2);bx(.03,.008,.002,MA,bx_+Math.cos(a)*.004,.015,bz+Math.sin(a)*.004,-a+Math.PI/2)}
+ // barandilla del mirador en el borde norte de la explanada
+ for(let k=0;k<=18;k++){const a=-Math.PI*.95+k/18*Math.PI*.9,px=Math.cos(a)*.195,pz=Math.sin(a)*.195;bx(.0018,.018,.0018,HI,px,.015,pz);if(k<18){const a2=a+Math.PI*.9/18,qx=Math.cos(a2)*.195,qz=Math.sin(a2)*.195;bx(Math.hypot(qx-px,qz-pz),.0018,.0018,HI,(px+qx)/2,.024,(pz+qz)/2,-Math.atan2(qz-pz,qx-px))}}
+ scene.add(G)}
 const ECU={hecha:0,L:[98.922,25.675,96.119,24.85,95.785,24.764,92.891,23.775,89.352,22.495,89.179,22.328],PZ:[93.37,24.97],PATIO:[93.2,23.3]};window.__ECU=ECU;
 function ecuChk(){if(ECU.hecha||!MAPA||!MI)return;for(const[x,y]of[[93.37,24.97],[93.2,23.3],[90.54,22.92],[97.0,25.11],[92.42,23.6]])if(sueloRap(x,y)==null)return;
  if(!repMallas(92.42,23.75).length&&!repMallas(92.42,23.45).length)return;ECU.hecha=1;setTimeout(()=>{try{ecuCrea()}catch(e){console.warn('ecuador',e);ECU.err=String(e)}},800)}
