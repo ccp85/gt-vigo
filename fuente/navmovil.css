@@ -1,0 +1,9 @@
+/* ---- Navidad Móvil (body.lite): en vertical, botones de arriba en una sola fila con su icono y avisos dentro de la pantalla ---- */
+@media (max-width:520px){
+ body.lite.drive .bar{flex-wrap:nowrap!important;gap:4px!important;left:auto!important}
+ body.lite.drive .bar button[data-ico]{font-size:0!important;min-width:40px;width:40px;height:38px;padding:0!important;display:inline-grid;place-items:center}
+ body.lite.drive .bar button[data-ico]::before{content:attr(data-ico);font-size:18px;line-height:1}
+ body.lite #aviso{max-width:calc(100vw - 24px);white-space:normal;text-align:center;box-sizing:border-box;border-radius:16px}
+ body.lite.drive #vel{top:auto!important;bottom:calc(150px + env(safe-area-inset-bottom,0px));color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+ body.lite #radioOSD{top:calc(150px + env(safe-area-inset-top,0px))!important}
+}
