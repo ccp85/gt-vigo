@@ -1788,9 +1788,9 @@ function mojado(m,k){if(!m||m.userData.mo)return;m.userData.mo=1;const prev=m.on
    .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
     if(uK>.95){vec2 q=vWm.xz;float fw=length(fwidth(q));
      float man=nM(q*7.)*.55+nM(q*23.)*.45;                                   // manchas y parches de reasfaltado
-     float grano=(hM(floor(q*420.))-.5)*(1.-smoothstep(.003,.012,fw))+(nM(q*150.)-.5)*1.4*(1.-smoothstep(.006,.025,fw));float gf=1.;  // árido fino (se difumina de lejos)
+     ${window.LITE?'float grano=0.;float gf=0.;':'float grano=(hM(floor(q*420.))-.5)*(1.-smoothstep(.003,.012,fw))+(nM(q*150.)-.5)*1.4*(1.-smoothstep(.006,.025,fw));float gf=1.;'}  // árido fino (se difumina de lejos)
      float par=smoothstep(.70,.74,nM(q*5.3+17.));                             // parches nuevos más oscuros
-     float gri=smoothstep(.985,1.,nM(q*90.+3.))*(1.-smoothstep(.002,.008,fw));// grietas
+     ${window.LITE?'float gri=0.;':'float gri=smoothstep(.985,1.,nM(q*90.+3.))*(1.-smoothstep(.002,.008,fw));'}// grietas
      diffuseColor.rgb*=(.78+.36*man)*(1.+.3*grano*gf)*(1.-.2*par)*(1.-.4*gri);
      roughnessFactor=clamp(roughnessFactor*.86-.08*man+.06*grano*gf,.42,.95);}
     float wW=uWet*uK;float pud=0.;
@@ -1948,7 +1948,7 @@ function envCoches(){if(!ENVC.pm){ENVC.pm=new THREE.PMREMGenerator(R);ENVC.sc=ne
  const U=ENVC.mat.uniforms;U.uZen.value.copy(SKYU.uZen.value);U.uHor.value.copy(SKYU.uHor.value);U.uSun.value.copy(SKYU.uSun.value);U.uSunC.value.copy(sun.color).multiplyScalar(sun.intensity*.5);U.uSuelo.value.setRGB(.12,.12,.14).multiplyScalar(1-.6*CIELO.nf);
  const rt=ENVC.pm.fromScene(ENVC.sc,0.02);const prim=!ENVC.tex;if(ENVC.rt)ENVC.rt.dispose();ENVC.rt=rt;ENVC.tex=rt.texture;
  for(const m of REFLEJAN){const nuevo=!m.envMap;m.envMap=ENVC.tex;if(nuevo)m.needsUpdate=true}}
-function reflejosCoches(){if(!driving)return;const t=performance.now()/1000;if(t-ENVC.t<4)return;ENVC.t=t;try{envCoches()}catch(e){console.warn(e)}}
+function reflejosCoches(){if(!driving)return;const t=performance.now()/1000;if(t-ENVC.t<(window.LITE?60:4))return;ENVC.t=t;try{envCoches()}catch(e){console.warn(e)}}
 const car=new THREE.Group();
 {const M=(c,r=.45,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
  // utilitario pequeño y redondeado, granate (estilo cinquecento)
@@ -3893,7 +3893,9 @@ window.__carreraTick=carreraTick;window.__PUB2=()=>RACE.pub.P.map((p,k)=>[+Math.
 // · Texturas muy grandes (más de 1536 px de lado, p. ej. el plano de la maqueta) se reducen a 1536: menos memoria.
 if(window.LITE)(()=>{
  const T=THREE,MATE=new WeakMap(),NO=new WeakSet(),TEXOK=new WeakSet();
- const BRILLO=/pud|roughness|metalness|lights_physical|clearcoat|wW/;
+ // sin comprobar cada sombreado al compilarlo: esa comprobación obliga a esperar a la GPU y da tirones al entrar en zonas nuevas
+ R.debug.checkShaderErrors=false;
+ const BRILLO=/pud|wW|lights_physical|clearcoat/;
  const COMP=['opacity','transparent','visible','emissiveIntensity','map','alphaMap','aoMap','alphaTest','side','depthWrite','depthTest','vertexColors','flatShading','fog','polygonOffset','polygonOffsetFactor','polygonOffsetUnits','toneMapped','blending','colorWrite','wireframe','name'];
  function apto(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||NO.has(m))return false;
   if(m.lightMap||m.envMap||m.userData&&m.userData.noMate)return false;
@@ -4343,7 +4345,7 @@ function fachSegShift(i){if(FSEG.has(i))return FSEG.get(i);const[ax,ay,bx,by,nx,
 function fachSube(t){if(!GROUND.length)return;let ok=true;const M4=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();
  for(const im of t.g.children){const A=im.userData.A;if(!A)continue;A.forEach(([pp,qq,ss,col,sg],i)=>{const d=fachSegShift(sg);if(d==null){ok=false;return}if(d<.002)return;p.copy(pp);p.y+=d;M4.compose(p,qq,ss);im.setMatrixAt(i,M4)});im.instanceMatrix.needsUpdate=true}
  t.sub=ok}
-function fachadasTick(){if(!FACH.ok)return;FACH.t=(FACH.t||0)+1;if(FACH.t%15)return;const fx=driving?P.x:ctl.target.x,fy=driving?P.y:ctl.target.z,R_=driving?6:(cam.zoom>6?7:0);
+function fachadasTick(){if(!FACH.ok)return;FACH.t=(FACH.t||0)+1;if(FACH.t%15)return;const fx=driving?P.x:ctl.target.x,fy=driving?P.y:ctl.target.z,R_=driving?(window.LITE?4:6):(cam.zoom>6?7:0);
  for(const t of FACH.trozos){const v=R_>0&&Math.abs(t.x-fx)<R_&&Math.abs(t.y-fy)<R_&&enZona(t.x,t.y,.5);t.g.visible=v;if(v&&!t.sub)fachSube(t)}
  const nf=THREE.MathUtils.smoothstep(CIELO.nf,.3,.75);FACH.mats.esc.emissiveIntensity=1.6*nf;FACH.mats.gal.emissiveIntensity=.5*nf}
 // ---------- gaviotas: bandadas que planean en círculo sobre Samil, el puerto, Bouzas, Beiramar y el Museo do Mar; aleteo en el shader

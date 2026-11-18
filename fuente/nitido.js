@@ -10,7 +10,9 @@
 // · Texturas muy grandes (más de 1536 px de lado, p. ej. el plano de la maqueta) se reducen a 1536: menos memoria.
 if(window.LITE)(()=>{
  const T=THREE,MATE=new WeakMap(),NO=new WeakSet(),TEXOK=new WeakSet();
- const BRILLO=/pud|roughness|metalness|lights_physical|clearcoat|wW/;
+ // sin comprobar cada sombreado al compilarlo: esa comprobación obliga a esperar a la GPU y da tirones al entrar en zonas nuevas
+ R.debug.checkShaderErrors=false;
+ const BRILLO=/pud|wW|lights_physical|clearcoat/;
  const COMP=['opacity','transparent','visible','emissiveIntensity','map','alphaMap','aoMap','alphaTest','side','depthWrite','depthTest','vertexColors','flatShading','fog','polygonOffset','polygonOffsetFactor','polygonOffsetUnits','toneMapped','blending','colorWrite','wireframe','name'];
  function apto(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||NO.has(m))return false;
   if(m.lightMap||m.envMap||m.userData&&m.userData.noMate)return false;

@@ -15,5 +15,15 @@ r("let prAct=window.LITE?Math.min(1,PRmax):","let prAct=window.LITE?Math.min(1.2
 r("const PRmin=window.LITE?Math.min(.9,devicePixelRatio):","const PRmin=window.LITE?Math.min(1,devicePixelRatio):")
 # 3) materiales mates y texturas grandes reducidas (nitido.js)
 r("window.CIRT=()=>CIR;","window.CIRT=()=>CIR;\n"+open(os.path.join(D,'nitido.js'),encoding='utf8').read())
+# 4) asfalto: en el móvil sin el grano fino ni las grietas (de lejos ya se difuminaban; a la resolución del móvil solo eran ruido),
+#    se quedan las manchas y los parches: 3 cálculos de ruido menos por cada punto de calzada
+a="float grano=(hM(floor(q*420.))-.5)*(1.-smoothstep(.003,.012,fw))+(nM(q*150.)-.5)*1.4*(1.-smoothstep(.006,.025,fw));float gf=1.;"
+r(a,"${window.LITE?'float grano=0.;float gf=0.;':'"+a+"'}")
+a="float gri=smoothstep(.985,1.,nM(q*90.+3.))*(1.-smoothstep(.002,.008,fw));"
+r(a,"${window.LITE?'float gri=0.;':'"+a+"'}")
+# 5) reflejo del cielo en los coches: en el ordenador se rehace cada 4 s; en el móvil cada 60 s (cada vez son decenas de pasadas de GPU: tirón)
+r("if(t-ENVC.t<4)return;","if(t-ENVC.t<(window.LITE?60:4))return;")
+# 6) detalles de fachada (balcones, marcos) al conducir: en el móvil hasta 4 de distancia en vez de 6 (con la niebla del móvil apenas se veían más allá)
+r("R_=driving?6:(cam.zoom>6?7:0);","R_=driving?(window.LITE?4:6):(cam.zoom>6?7:0);")
 open(f,'w',encoding='utf8').write(s)
 print('ok nitido')
