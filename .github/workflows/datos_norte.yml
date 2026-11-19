@@ -1,0 +1,18 @@
+name: datos-norte
+on:
+  push:
+    branches: [datos-pontevedra]
+    paths: [datos_norte/bajar.py]
+permissions:
+  contents: write
+jobs:
+  bajar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: datos-pontevedra, fetch-depth: 1}
+      - run: python3 datos_norte/bajar.py
+      - run: |
+          git config user.name "gt-vigo datos"; git config user.email "datos@users.noreply.github.com"
+          git add datos_norte && git commit -m "Datos OSM y relieve de Rande a Pontevedra" && git push
