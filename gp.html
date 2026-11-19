@@ -3879,7 +3879,7 @@ function musTick(){if(!MUS.run||!AC)return;if(window.SOLO_NAVIDAD){if(MUS.g)MUS.
 function musCambia(){MUS.on=!MUS.on;try{localStorage.setItem('gtvigo_mus',MUS.on?'1':'0')}catch(e){}const b=document.getElementById('rMus');b.classList.toggle('off',!MUS.on);aviso(MUS.on?'🎵 Música':'🔇 Música apagada',1,'peq')}
 // ---------- Radio Vigo
 const RADIO={i:0,on:true,run:false,k:0,t:0,g:null};window.__RADIO=RADIO;
-try{const v=localStorage.getItem('gtvigo_radio');if(v==='off')RADIO.on=false;else if(v!==null)RADIO.i=(+v||0)%10}catch(e){}
+try{const v=localStorage.getItem(window.SOLO_NAVIDAD?'gtvigo_nav_radio':'gtvigo_radio');if(v==='off')RADIO.on=false;else if(v!==null)RADIO.i=(+v||0)%10}catch(e){}
 function radNodos(){if(RADIO.g||!AC||!master)return;const Q=RADIO;Q.g=AC.createGain();Q.g.gain.value=0;Q.g.connect(master);
  Q.duck=AC.createGain();Q.duck.connect(Q.g);Q.lp=AC.createBiquadFilter();Q.lp.type='lowpass';Q.lp.frequency.value=3200;Q.lp.Q.value=2;Q.lp.connect(Q.duck);
  Q.dl=AC.createDelay(1);Q.fb=AC.createGain();Q.fb.gain.value=.3;Q.wet=AC.createGain();Q.wet.gain.value=.25;Q.lp.connect(Q.dl);Q.dl.connect(Q.fb);Q.fb.connect(Q.dl);Q.dl.connect(Q.wet);Q.wet.connect(Q.g);
@@ -3909,7 +3909,7 @@ const CANCIONES=[
   if(!intro&&s%2===0)musNota('sawtooth',mf(r_-12+(s%4===2?7:0)),t,sm*1.7,.11,Q.duck);              // baixo: raíz e quinta
   if(s===0&&b%2===0){musNota('sawtooth',mf(50),t,sm*32,.03,Q.gai,-4);musNota('sawtooth',mf(57),t,sm*32,.024,Q.gai,4)}   // ronco da gaita
   if(b>=2&&s%2===0){const G=GAITA[b%4][s/2];if(G){musNota('square',mf(G),t,sm*1.9,.042,Q.gai);musNota('sawtooth',mf(G),t,sm*1.9,.028,Q.gai,8)}}}}];
-function radioGuarda(){try{localStorage.setItem('gtvigo_radio',RADIO.on?String(RADIO.i):'off')}catch(e){}const b=document.getElementById('bRadio');if(b)b.classList.toggle('off',!RADIO.on)}
+function radioGuarda(){try{localStorage.setItem(window.SOLO_NAVIDAD?'gtvigo_nav_radio':'gtvigo_radio',RADIO.on?String(RADIO.i):'off')}catch(e){}const b=document.getElementById('bRadio');if(b)b.classList.toggle('off',!RADIO.on)}
 const VIGO3=CANCIONES.slice(0,3);
 // villancicos con arreglo arcade (chiptune): melodía de onda cuadrada con eco, arpegios rápidos, bajo de triángulo y batería de ruido
 function villancico(nom,bpm,spb,pick,mel,ch){let tot=0;const EV=new Map();{let p=0;for(const[n,l]of mel){if(n)EV.set(p,[n,l]);p+=l}tot=p}
@@ -3977,8 +3977,8 @@ const REGGAE=[
 CANCIONES.push(...REGGAE);
 const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎄 Radio Navidad',c:VILLANCICOS},{nom:'🌴 Vigo Reggae',c:REGGAE}]:[{nom:'📻 Radio Vigo',c:VIGO3},{nom:'🌴 Vigo Reggae',c:REGGAE}];
 function emisoraPon(e,i,callado){RADIO.e=Math.max(0,Math.min(EMISORAS.length-1,e|0));CANCIONES.length=0;CANCIONES.push(...EMISORAS[RADIO.e].c);RADIO.i=Math.max(0,(i|0)%CANCIONES.length);RADIO.on=true;RADIO.run=false;
- try{localStorage.setItem('gtvigo_emisora',String(RADIO.e))}catch(_){}radioGuarda();if(!callado)radioAviso();radioPanelPinta()}
-{let e=0;try{e=+localStorage.getItem('gtvigo_emisora')||0}catch(_){}const on=RADIO.on;emisoraPon(e,RADIO.i,true);RADIO.on=on}
+ try{localStorage.setItem(window.SOLO_NAVIDAD?'gtvigo_nav_emisora':'gtvigo_emisora',String(RADIO.e))}catch(_){}radioGuarda();if(!callado)radioAviso();radioPanelPinta()}
+{let e=0;try{e=window.SOLO_NAVIDAD?0:(+localStorage.getItem('gtvigo_emisora')||0)}catch(_){}const on=RADIO.on;emisoraPon(e,RADIO.i,true);RADIO.on=on}
 function radioPanelPinta(){const P_=document.getElementById('radioPanel');if(!P_||P_.hidden)return;const E=EMISORAS[RADIO.e];
  P_.querySelector('.em').innerHTML=EMISORAS.map((x,k)=>`<button data-e="${k}" class="${k===RADIO.e?'sel':''}">${x.nom}</button>`).join('');
  P_.querySelector('.ca').innerHTML=E.c.map((x,k)=>`<button data-i="${k}" class="${RADIO.on&&k===RADIO.i?'sel':''}">${RADIO.on&&k===RADIO.i?'🔊':'▶'} ${x.nom}</button>`).join('')+`<button data-off="1" class="${RADIO.on?'':'sel'}">⏻ Apagar la radio</button>`;
