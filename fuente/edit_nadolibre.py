@@ -60,4 +60,12 @@ for f in FILES:
       "if(camBajo){B.oculta=B.oculta||[];for(const o of scene.children)if(o.visible&&!o.isLight&&!o.isCamera&&o!==B.W&&o!==B.nad&&!(B.reg&&o===B.reg.g)){o.visible=false;if(!B.oculta.includes(o))B.oculta.push(o)}}else if(B.oculta){for(const o of B.oculta)o.visible=true;B.oculta=null}"
       "if(B.W){B.esf.visible=camBajo;B.esf.position.copy(pcam.position);B.part.visible=camBajo;for(const m of B.rayos)m.visible=camBajo;B.sup.visible=camBajo}")
     r("function buceoLimpia(sube){const B=BUC;","function buceoLimpia(sube){const B=BUC;if(B.oculta){for(const o of B.oculta)o.visible=true;B.oculta=null}")
+    # acción (E): salir a la orilla
+    r("function buceoObjetivo(){","function buceoObjetivo(){if(BUC.libre){if(MODO==='nado'&&P.z>BUC.WY-.05&&nadoOrilla()){objetivo={k:'buceo'};return '🚶 Salir del agua'}objetivo=null;return null}")
+    r("function buceoAccion(){","function buceoAccion(){if(BUC.libre){if(MODO==='nado'){const o=P.z>BUC.WY-.05?nadoOrilla():null;if(o)nadoSale(o[0],o[1]);else mostrar(P.z>BUC.WY-.05?'Nada hasta la orilla para salir':'Sube a la superficie (Q) para salir del agua')}return true}")
+    # cambiar de modo por menú, lugar o vehículo mientras nadas: se recoge todo
+    r("function cambiarModo(m){","function cambiarModo(m){if(BUC.libre&&m!=='nado')nadoFin();")
+    # a pie: caminar hacia el mar te mete en el agua
+    r(" let dx_=Math.cos(P.a)*P.v*dt,dy_=-Math.sin(P.a)*P.v*dt;",
+      " if(PIE&&P.v>.05&&!BUC.on&&!REP.on&&!P.tun&&!P.ferry){const ax=P.x+Math.cos(P.a)*.022,ay=P.y-Math.sin(P.a)*.022;if(cell(ax,ay).t===0&&cell(ax+Math.cos(P.a)*.04,ay-Math.sin(P.a)*.04).t===0){nadoEntra(ax,ay);return}}\n let dx_=Math.cos(P.a)*P.v*dt,dy_=-Math.sin(P.a)*P.v*dt;")
     open(f,'w',encoding='utf8').write(s);print('ok nadolibre',f)
