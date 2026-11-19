@@ -1,0 +1,4 @@
+<script>/* móvil: el mundo abierto con gráficos completos salta solo a la versión móvil (indexm.html); con ?pc=1 se queda aquí */
+(()=>{if(window.LITE||window.SOLO_CARRERA||/[?&]pc=1/.test(location.search))return;
+ const movil=matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<=820;if(!movil)return;
+ location.replace('indexm.html'+location.search+location.hash)})();</script>
