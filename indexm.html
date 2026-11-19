@@ -3156,9 +3156,9 @@ const P={x:0,y:0,a:0,v:0};window.P=P;let CAMC=0;try{CAMC=(+localStorage.getItem(
 // ---------- vehículos: coche, moto de agua y a pie ----------
 let MODO='coche';window.modo=()=>MODO;
 const MS=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55});
-function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.py): cartoon pulido · sudadera roja con capucha, vaqueros, zapatillas, cara expresiva
+function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.py): cartoon pulido · camiseta blanca, vaqueros, zapatillas, ojos de punto y pelo corto castaño
  // mira hacia +x · pies en y=0 · userData.piernas/brazos con dos hijos cada uno (los usan andar, nadar y la moto)
- const C={PIEL:0xf0bf94,PIEL2:0xe2a47c,ROPA:0xe2483a,ROPA2:0xb8322a,PANT:0x2f5596,PANT2:0x4a74b8,ZAP:0xf4f3ee,SUELA:0x2a2c33,FRANJA:0x2b8fd6,PELO:0x4a3022,PELO2:0x5e3d2b,OJO:0x3b2414,BLANCO:0xffffff,CORDON:0xf2efe8,MEJ:0xf28c8c};
+ const C={PIEL:0xf0bf94,PIEL2:0xe2a47c,ROPA:0xf6f5f1,ROPA2:0xdcdad4,PANT:0x2f5596,PANT2:0x4a74b8,ZAP:0xf4f3ee,SUELA:0x2a2c33,FRANJA:0x2b8fd6,PELO:0x6b4426,PELO2:0x7a4e2c,OJO:0x3b2414,BLANCO:0xffffff,CORDON:0xf2efe8,MEJ:0xf28c8c};
  const MC={};const M=(c,r=.62,x={})=>{const k=c+'|'+r+'|'+JSON.stringify(x);return MC[k]||(MC[k]=new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r,metalness:0},x)))};
  const add=(par,geo,mat,x=0,y=0,z=0,rx=0,ry=0,rz=0,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.scale.set(sx,sy,sz);par.add(m);return m};
  const CAP=(r,l,s=10)=>new THREE.CapsuleGeometry(r,l,4,s),ESF=(r,a=14,b=10)=>new THREE.SphereGeometry(r,a,b),CIL=(a,b,h,s=14)=>new THREE.CylinderGeometry(a,b,h,s);
@@ -3179,48 +3179,37 @@ function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.p
  const T0=.031,tronco=new THREE.Group();tronco.position.y=T0;g.add(tronco);g.userData.tronco=tronco;
  add(tronco,CAP(.0058,.0098),M(C.PANT,.8),0,.0004,0,Math.PI/2,0,0,.82,1,1);  // cadera
  const perfil=[[.0001,.0012],[.0099,.0012],[.0109,.0045],[.0115,.011],[.0117,.017],[.0114,.0225],[.0101,.0258],[.0076,.0281],[.0045,.0293],[.0001,.0296]].map(([r,y])=>new THREE.Vector2(r,y));
- add(tronco,new THREE.LatheGeometry(perfil,20),M(C.ROPA,.75),0,0,0,0,0,0,.68,1,1);                 // sudadera
- add(tronco,CIL(.0104,.0101,.003,20),M(C.ROPA2,.8),0,.0026,0,0,0,0,.7,1,1);                       // puño elástico de la cintura
- add(tronco,CAP(.0034,.0072,10),M(C.ROPA2,.8),.0068,.0085,0,Math.PI/2,0,0,.42,1,1.04);            // bolsillo canguro
- add(tronco,new THREE.TorusGeometry(.0052,.0023,8,18),M(C.ROPA,.75),-.0006,.0282,0,Math.PI/2,0,0,.95,1.12,1);  // capucha alrededor del cuello
- add(tronco,ESF(.0072,14,10),M(C.ROPA,.75),-.0058,.0246,0,0,0,.35,.55,.8,1);                      // capucha caída a la espalda
- add(tronco,ESF(.0052,12,8),M(C.ROPA2,.85),-.0074,.0232,0,0,0,.35,.35,.62,.78);                    // interior de la capucha
- for(const z of[-.0024,.0024]){add(tronco,CIL(.00045,.00045,.0085,6),M(C.CORDON,.5),.0072,.0218,z,0,0,-.12);   // cordones
-  add(tronco,CIL(.0007,.0007,.0018,6),M(C.CORDON,.4),.0077,.0168,z,0,0,-.12)}
+ add(tronco,new THREE.LatheGeometry(perfil,20),M(C.ROPA,.75),0,0,0,0,0,0,.68,1,1);                 // camiseta
+ add(tronco,CIL(.0104,.0101,.003,20),M(C.ROPA2,.8),0,.0026,0,0,0,0,.7,1,1);                       // bajo de la camiseta
+ add(tronco,new THREE.TorusGeometry(.0042,.0009,8,20),M(C.ROPA2,.8),0,.0287,0,Math.PI/2,0,0,.95,1.15,1);   // cuello redondo
  // ---- brazos: hombro → codo → puño con mano redonda y pulgar
  const brazos=new THREE.Group();tronco.add(brazos);
  for(const z of[-.0128,.0128]){const b=new THREE.Group();b.position.set(0,.0247,z);b.rotation.x=z<0?.13:-.13;brazos.add(b);
-  add(b,ESF(.0041,12,8),M(C.ROPA,.75),0,-.0004,0);                          // hombro
-  add(b,CAP(.0035,.0068),M(C.ROPA,.75),0,-.0056,0);                         // brazo
+  add(b,ESF(.0041,18,12),M(C.ROPA,.75),0,-.0004,0);                          // hombro
+  add(b,CAP(.0039,.0036),M(C.ROPA,.75),0,-.0036,0);                         // manga corta
+  add(b,CIL(.004,.0041,.0016),M(C.ROPA2,.8),0,-.0072,0);                    // borde de la manga
+  add(b,CAP(.0029,.0072),M(C.PIEL,.55),0,-.0068,0);                         // brazo
   const codo=new THREE.Group();codo.position.y=-.0108;b.add(codo);b.userData.codo=codo;
-  add(codo,CAP(.0031,.0062),M(C.ROPA,.75),0,-.0046,0);                      // antebrazo
-  add(codo,CIL(.0031,.0032,.0024),M(C.ROPA2,.8),0,-.0093,0);                // puño elástico
+  add(codo,CAP(.0027,.0062),M(C.PIEL,.55),0,-.0046,0);                      // antebrazo
   add(codo,ESF(.0031,12,8),M(C.PIEL,.55),.0002,-.0125,0,0,0,0,.92,1.08,.88);   // mano
   add(codo,ESF(.0012,8,6),M(C.PIEL,.55),.0024,-.0113,z<0?.0011:-.0011)}     // pulgar
  g.userData.brazos=brazos;
- // ---- cabeza (pivota en el cuello): grande y redonda, ojos con brillo, cejas, sonrisa, mofletes y tupé
+ // ---- cabeza (pivota en el cuello): grande y redonda, dos puntos negros de ojos, mofletes y pelo corto
  add(tronco,CIL(.0031,.0034,.005,12),M(C.PIEL,.55),0,.03,0);                 // cuello
  const cab=new THREE.Group();cab.position.y=.0315;tronco.add(cab);g.userData.cabeza=cab;const H=.0094;   // centro de la cara en y=H (relativo al cuello)
  add(cab,ESF(.0098,22,16),M(C.PIEL,.55),0,H,0,0,0,0,.96,1,1);
  for(const s of[-1,1]){const z=s*.0034;
-  add(cab,ESF(.0022,14,10),M(C.BLANCO,.25),.0081,H+.0008,z,0,0,0,.55,1.12,.9);   // ojo
-  add(cab,ESF(.00145,12,8),M(C.OJO,.2),.0091,H+.0006,z*.98,0,0,0,.5,1.1,.95);    // iris
-  add(cab,ESF(.0008,8,6),M(0x0d0806,.2),.0096,H+.0006,z*.98,0,0,0,.5,1.1,1);    // pupila
-  add(cab,ESF(.00042,6,4),M(C.BLANCO,.1,{emissive:0xffffff,emissiveIntensity:.6}),.0098,H+.0013,z*.98-.0004);   // brillo
-  add(cab,CAP(.00052,.0026,6),M(C.PELO,.8),.0081,H+.0044,z*1.02,Math.PI/2+s*.18,0,0);   // ceja
+  add(cab,ESF(.00125,10,8),M(0x14110f,.3),.0088,H+.0012,z,0,0,0,.6,1.15,1);   // ojo: punto negro
   add(cab,ESF(.0016,10,6),M(C.MEJ,.7,{transparent:true,opacity:.55}),.0074,H-.0025,s*.0058,0,0,0,.35,.7,1);   // moflete
   add(cab,ESF(.0022,10,8),M(C.PIEL,.55),-.0004,H,s*.0094,0,0,0,.65,1,.5);    // oreja
   add(cab,ESF(.0011,8,6),M(C.PIEL2,.6),.0001,H,s*.0101,0,0,0,.5,.8,.4)}
  add(cab,ESF(.0016,10,8),M(C.PIEL2,.55),.0099,H-.001,0,0,0,0,1,.9,1);                              // nariz
- add(cab,new THREE.TorusGeometry(.0022,.00048,6,14,Math.PI),M(0x8a3b2c,.5),.0084,H-.0036,0,0,Math.PI/2,Math.PI,.85,.85,.6);   // sonrisa
- // pelo: casquete con raya, tupé y mechones
- add(cab,new THREE.SphereGeometry(.0104,22,12,0,Math.PI*2,0,Math.PI*.56),M(C.PELO,.75),-.0013,H+.0004,0,0,0,.42);
- add(cab,ESF(.0055,14,10),M(C.PELO,.75),-.0064,H-.0012,0,0,0,0,.7,1.1,1.45);           // nuca
- for(const[z,ry]of[[-.0046,.35],[-.0016,.1],[.0014,-.1],[.0044,-.35]])
-  add(cab,ESF(.0036,12,8),M(C.PELO2,.7),.0062,H+.0062,z,0,ry,-.75,.55,.75,.95);       // flequillo
- add(cab,ESF(.0048,14,10),M(C.PELO2,.7),.0028,H+.0088,0,0,0,-.45,1.2,.6,1.1);           // tupé
- add(cab,new THREE.ConeGeometry(.0015,.0052,8),M(C.PELO2,.7),-.0018,H+.0112,.0006,0,0,.55);   // remolino
- for(const s of[-1,1])add(cab,ESF(.0034,10,8),M(C.PELO,.75),.0004,H+.0028,s*.0083,0,0,0,.9,1.25,.45);   // patillas sobre las orejas
+ // pelo corto castaño: casquete pegado a la cabeza, flequillo corto y nuca rapada
+ add(cab,new THREE.SphereGeometry(.01015,32,16,0,Math.PI*2,0,Math.PI*.54),M(C.PELO,.8),-.0008,H+.0003,0,0,0,.36);
+ add(cab,ESF(.0058,14,10),M(C.PELO,.8),-.0052,H-.0004,0,0,0,0,.62,1,1.5);           // nuca
+ for(const[z,ry]of[[-.0036,.3],[0,0],[.0036,-.3]])
+  add(cab,ESF(.0032,14,10),M(C.PELO2,.8),.0064,H+.0064,z,0,ry,-.95,.42,.55,1);       // flequillo corto
+ for(const s of[-1,1])add(cab,ESF(.003,10,8),M(C.PELO,.8),.0008,H+.0028,s*.0086,0,0,0,.8,1.1,.4);   // patillas
  g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
 // animación al andar (o quieto, respirando): piernas con rodilla, brazos con codo, tronco y cabeza
 function animPersona(p,t,amp){const ud=p.userData,ph=t*14,s=Math.sin(ph),c=Math.cos(ph);

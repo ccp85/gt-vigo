@@ -1,6 +1,6 @@
 # Protagonista a pie pulido (muneco.js) y media vuelta al andar hacia atrás, en las cinco páginas.
-#  - mkPersona nuevo: mismo estilo cartoon pero acabado (cabeza grande con ojos con brillo, cejas, sonrisa y mofletes,
-#    flequillo y tupé, sudadera con capucha, bolsillo y cordones, vaqueros con dobladillo, zapatillas redondeadas).
+#  - mkPersona nuevo: mismo estilo cartoon pero acabado (cabeza grande con dos puntos negros de ojos, nariz y mofletes,
+#    pelo corto castaño, camiseta blanca de manga corta, vaqueros con dobladillo, zapatillas redondeadas).
 #    Mantiene userData.piernas/brazos con dos hijos (los usan nadar, la moto de agua y el ferry) y añade rodillas,
 #    codos, tronco y cabeza articulados (animPersona).
 #  - a pie, ↓ ya no anda de espaldas: el muñeco se da la vuelta y camina hacia la cámara, que se queda detrás,
@@ -11,11 +11,12 @@ FILES=sys.argv[1:] or [f for f in ['index.html','indexm.html','gp.html','nav.htm
 JS=open(os.path.join(D,'muneco.js'),encoding='utf8').read().strip('\n')+'\n'
 for f in FILES:
     s=open(f,encoding='utf8').read()
-    if 'function animPersona(' in s:print('ya estaba',f);continue
+    a=s.index('function mkPersona(){');b=s.index('function mkMoto(')
+    if 'function animPersona(' in s:   # ya aplicado: solo se actualiza el muñeco
+        s=s[:a]+JS+s[b:];open(f,'w',encoding='utf8').write(s);print('actualizado muneco',f);continue
     def r(a,b):
         global s
         assert s.count(a)==1,(f,s.count(a),a[:90]); s=s.replace(a,b)
-    a=s.index('function mkPersona(){');b=s.index('function mkMoto(')
     s=s[:a]+JS+s[b:]
     # hacia atrás: misma velocidad que un paso tranquilo hacia delante (antes -.1 de espaldas)
     r("if(PIE){const tgt=keys.up?.24:keys.down?-.1:0;","if(PIE){const tgt=keys.up?.24:keys.down?-.17:0;")
