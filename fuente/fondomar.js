@@ -126,7 +126,8 @@ function pulpoGeo(LT){const P=[],K=[],T=[],A=[],U=[],C=[],I=[];
   for(let i=0;i<S;i++)for(let k=0;k<RS;k++){const q=b+i*RS+k,q2=b+i*RS+(k+1)%RS;I.push(q,q2,q+RS,q2,q2+RS,q+RS)}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aC',new THREE.Float32BufferAttribute(C,3));
  for(const[n,v]of[['aK',K],['aT',T],['aA',A],['aU',U]])g.setAttribute(n,new THREE.Float32BufferAttribute(v,1));g.setIndex(I);g.computeVertexNormals();return g}
-function buceoMundo(D,WY){const B=BUC,G=new THREE.Group();G.name='fondoMar';B.uT=B.uT||{value:0};const LT=!!window.LITE,RZ=1.35,DEP=.32;let sd=7;const rn=()=>(sd=(sd*16807)%2147483647)/2147483647;
+function burbujaTex(){if(burbujaTex.t)return burbujaTex.t;const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d'),g=x.createRadialGradient(16,16,1,16,16,15);g.addColorStop(0,'rgba(255,255,255,.15)');g.addColorStop(.65,'rgba(255,255,255,.3)');g.addColorStop(.85,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,32,32);return burbujaTex.t=new THREE.CanvasTexture(c)}
+function buceoMundo(D,WY){const B=BUC,G=new THREE.Group();G.name='fondoMar';B.uT=B.uT||{value:0};const LT=!!window.LITE,RZ=1.35,DEP=.32;let sd=7+Math.floor(Math.abs(D[0]*131+D[1]*71))%9973;const rn=()=>(sd=(sd*16807)%2147483647)/2147483647;
  B.FU={uT:B.uT,uWY:{value:WY},uNf:SKYU.uNight,uSun:SKYU.uSun,uO:{value:new THREE.Vector3(D[0],0,D[1])}};
  const hs=(x,y)=>{const s=Math.sin(x*127.1+y*311.7)*43758.5453;return s-Math.floor(s)};
  const vn=(x,y)=>{const i=Math.floor(x),j=Math.floor(y),u=x-i,v=y-j,a=hs(i,j),b=hs(i+1,j),c=hs(i,j+1),d=hs(i+1,j+1),uu=u*u*(3-2*u),vv=v*v*(3-2*v);return a+(b-a)*uu+(c-a)*vv+(a-b-c+d)*uu*vv};
@@ -253,7 +254,7 @@ function buceoMundo(D,WY){const B=BUC,G=new THREE.Group();G.name='fondoMar';B.uT
     vec4 mv=viewMatrix*vec4(p,1.);vD=-mv.z;gl_Position=projectionMatrix*mv;if(p.y>uWY-.004)gl_Position=vec4(2.,2.,2.,1.);gl_PointSize=max(1.,aS*uPS/max(vD,.01));}`,
    fragmentShader:`uniform float uNf;varying float vD;void main(){float r=length(gl_PointCoord-.5);float a=smoothstep(.5,.15,r)*smoothstep(.015,.05,vD)*(1.-smoothstep(.12,.5,vD))*.4;gl_FragColor=vec4(vec3(.78,.92,.86)*(1.-uNf*.8),a);}`});
   const pt=new THREE.Points(ge,pm);pt.frustumCulled=false;G.add(pt);B.part=pt;
-  const NB=60,bg=new THREE.BufferGeometry(),bp=new Float32Array(NB*3);for(let k=0;k<NB;k++)bp[k*3+1]=-99;bg.setAttribute('position',new THREE.BufferAttribute(bp,3));const bu=new THREE.Points(bg,new THREE.PointsMaterial({color:0xeaffff,size:.008,transparent:true,opacity:.75,depthWrite:false}));bu.frustumCulled=false;G.add(bu);B.burb={bu,bp,NB,k:0,v:new Float32Array(NB)}}
+  const NB=60,bg=new THREE.BufferGeometry(),bp=new Float32Array(NB*3);for(let k=0;k<NB;k++)bp[k*3+1]=-99;bg.setAttribute('position',new THREE.BufferAttribute(bp,3));const bu=new THREE.Points(bg,new THREE.PointsMaterial({color:0xeaffff,size:.008,transparent:true,opacity:.85,depthWrite:false,map:burbujaTex()}));bu.frustumCulled=false;G.add(bu);B.burb={bu,bp,NB,k:0,v:new Float32Array(NB)}}
  // esfera de niebla (tapa el cielo cuando la cámara está bajo el agua)
  {const fm=new THREE.MeshBasicMaterial({color:0x0b3f44,side:THREE.BackSide,depthWrite:false,fog:false});const fs=new THREE.Mesh(new THREE.SphereGeometry(1.6,24,16),fm);fs.renderOrder=-5;fs.visible=false;G.add(fs);B.esf=fs}
  scene.add(G);B.W=G;B.RZ=RZ;B.D0=D}

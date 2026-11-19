@@ -2477,7 +2477,7 @@ function ponerMotos(){if(motosListas||!MAPA)return;motosListas=true;
    const ln=(APARC.filter(q=>q.tipo==='moto').length%2)===1;const g=ln?mkLanchaM(false,false):mkMoto(false);g.visible=false;scene.add(g);APARC.push({tipo:'moto',g,x:best[0],y:best[1],a,lancha:ln})}}
  for(const [hx,hy,ha] of [[45.3,31.8,2.4],[108.5,5.4,3.9],[23.9,75.6,1.6],[61.9,26.6,2.0],[83.6,51.5,1.2],[86.6,28.6,2.0]]){if(!pieOK(cell(hx,hy).t))continue;const g=mkHeli();g.visible=false;scene.add(g);APARC.push({tipo:'heli',g,x:hx,y:hy,a:ha,z:groundY(hx,hy)})}}
 const pieOK=t=>t===1||t===2||t===4||t===5;   // el jugador a pie va por donde quiera (los peatones del juego, solo por acera y pasos de cebra)
-function cambiarModo(m){document.body.classList.toggle('conLim',m==='coche');if(P.ferry){P.ferry.v=P.ferry.v0||P.ferry.v;P.ferry=null}if(P.tun){P.tun=null;tunelVer(false);fantasma(true)}MODO=m;car.visible=driving&&m==='coche';moto.visible=driving&&m==='moto';persona.visible=driving&&m==='pie';heli.visible=driving&&m==='heli';document.body.classList.toggle('heli',driving&&m==='heli');document.body.classList.toggle('nado',driving&&m==='nado');if(m!=='heli')FOG.far=20;P.turn=null;P.stuck=0;P.chk=null;window.CD=undefined}
+function cambiarModo(m){if(BUC.libre&&m!=='nado')nadoFin();document.body.classList.toggle('conLim',m==='coche');if(P.ferry){P.ferry.v=P.ferry.v0||P.ferry.v;P.ferry=null}if(P.tun){P.tun=null;tunelVer(false);fantasma(true)}MODO=m;car.visible=driving&&m==='coche';moto.visible=driving&&m==='moto';persona.visible=driving&&m==='pie';heli.visible=driving&&m==='heli';document.body.classList.toggle('heli',driving&&m==='heli');document.body.classList.toggle('nado',driving&&m==='nado');if(m!=='heli')FOG.far=20;P.turn=null;P.stuck=0;P.chk=null;window.CD=undefined}
 let avisoT=0,objetivo=null;
 function buscarObjetivo(){objetivo=null;if(SKC.on&&MODO==='skate')return null;if(SKT.on){if(SKT.fase==='ir'&&MODO==='coche'&&SKT.cerca){objetivo={k:'skate'};return '🛹 Subir al tejado'}if(MODO==='skate'){objetivo={k:'skate'};return '⤒ Saltar'}}if(APG.on&&APG.fase==='lucha'){objetivo={k:'apagon'};return '🥊 ¡Forcejea!'}if(CASM.on){const t_=casaObjetivo();if(t_!==undefined)return t_}if(BUC.on){const t_=buceoObjetivo();if(t_!==undefined)return t_}
  if(MODO==='pie'){let bd=1e9;if(P.ferry){objetivo=null;return null}{const fb=ferryCerca();if(fb){objetivo={k:'ferry',b:fb,txt:'⛴ Subir al ferry '+(fb.s<fb.tot/2?(fb.n==='Cíes'?'a las Cíes':'a '+fb.n):'a Vigo')};return objetivo.txt}}
@@ -3070,6 +3070,7 @@ function updateCar(dt){if(MODO==='heli'){updateHeli(dt);return}if(MODO==='nado')
  if(!PIE&&!MOTO&&!P.turn&&P.v>.08){const la=.05+.07*Math.min(1,P.v),fx=Math.cos(P.a),fy=-Math.sin(P.a),lx=Math.cos(P.a+1.5708),ly=-Math.sin(P.a+1.5708);let bl=0,br=0;
   for(const w of[.03,.045]){if(blocked(P.x+fx*la+lx*w,P.y+fy*la+ly*w))bl++;if(blocked(P.x+fx*la-lx*w,P.y+fy*la-ly*w))br++}
   if(bl!==br)P.a+=(br>bl?1:-1)*1.3*dt*Math.min(1,P.v*2)}
+ if(PIE&&P.v>.05&&!BUC.on&&!REP.on&&!P.tun&&!P.ferry){const ax=P.x+Math.cos(P.a)*.022,ay=P.y-Math.sin(P.a)*.022;if(cell(ax,ay).t===0&&cell(ax+Math.cos(P.a)*.04,ay-Math.sin(P.a)*.04).t===0){nadoEntra(ax,ay);return}}
  let dx_=Math.cos(P.a)*P.v*dt,dy_=-Math.sin(P.a)*P.v*dt;
  // colisión con dos círculos (morro y cola): se desliza a lo largo de las paredes
  const R=PIE?.012:MOTO?.026:.022,OFF=PIE?0:MOTO?.018:.02,N=12;
@@ -5769,8 +5770,8 @@ function buceoInicio(m,pu,k){const mo=(FERRY_DEST['Moaña']||[[0,0],[76.26,-35.5
  b.position.set(D[0]+.12,moto.position.y,D[1]);scene.add(b);REP.objs.push(b);BUC.boya=b;
  campDestino(['🤿 Medio de la Ría',D[0],D[1]]);
  aviso('🌊 Misión '+(k+1)+' · ¡Regalo perdido en el mar!',2.2,'cuenta');setTimeout(()=>{if(REP.on&&!REP.fin)mostrar('Navega hasta la boya en medio de la Ría: allí se cayó un regalo al fondo del mar')},2400);return true}
-function buceoObjetivo(){if(BUC.fase==='saltar'&&MODO==='moto'){objetivo={k:'buceo'};return '🤿 Tirarse al agua'}if(MODO==='nado'){const d=BUC.moto?Math.hypot(BUC.moto.position.x-P.x,BUC.moto.position.z-P.y):9;if(d<.16&&P.z>BUC.WY-.05){objetivo={k:'buceo'};return 'Subir a la moto'}objetivo=null;return null}}
-function buceoAccion(){if(BUC.fase==='saltar'&&MODO==='moto'){buceoSalta();return true}
+function buceoObjetivo(){if(BUC.libre){if(MODO==='nado'&&P.z>BUC.WY-.05&&nadoOrilla()){objetivo={k:'buceo'};return '🚶 Salir del agua'}objetivo=null;return null}if(BUC.fase==='saltar'&&MODO==='moto'){objetivo={k:'buceo'};return '🤿 Tirarse al agua'}if(MODO==='nado'){const d=BUC.moto?Math.hypot(BUC.moto.position.x-P.x,BUC.moto.position.z-P.y):9;if(d<.16&&P.z>BUC.WY-.05){objetivo={k:'buceo'};return 'Subir a la moto'}objetivo=null;return null}}
+function buceoAccion(){if(BUC.libre){if(MODO==='nado'){const o=P.z>BUC.WY-.05?nadoOrilla():null;if(o)nadoSale(o[0],o[1]);else mostrar(P.z>BUC.WY-.05?'Nada hasta la orilla para salir':'Sube a la superficie (Q) para salir del agua')}return true}if(BUC.fase==='saltar'&&MODO==='moto'){buceoSalta();return true}
  if(MODO==='nado'){const d=Math.hypot(BUC.moto.position.x-P.x,BUC.moto.position.z-P.y);if(d<.16&&P.z>BUC.WY-.05){if(BUC.tiene)buceoSube();else mostrar('Primero encuentra el regalo perdido en el fondo');return true}mostrar(P.z>BUC.WY-.05?'⤓ Z / LB para bucear · busca el brillo dorado en el fondo':'Nada hasta la moto para subir');return true}return false}
 function buceoTick(dt){const B=BUC;B.t+=dt;if(MODO==='nado'&&B.tiene&&B.moto&&Math.hypot(B.moto.position.x-P.x,B.moto.position.z-P.y)<.16&&P.z>B.WY-.05){buceoSube();return}if(B.boya){B.boya.position.y=(B.WY||moto.position.y)+Math.sin(B.t*2.2)*.006;B.boya.rotation.z=Math.sin(B.t*1.7)*.12}
  if(B.W)buceoMundoTick(dt);
@@ -5907,7 +5908,8 @@ function pulpoGeo(LT){const P=[],K=[],T=[],A=[],U=[],C=[],I=[];
   for(let i=0;i<S;i++)for(let k=0;k<RS;k++){const q=b+i*RS+k,q2=b+i*RS+(k+1)%RS;I.push(q,q2,q+RS,q2,q2+RS,q+RS)}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aC',new THREE.Float32BufferAttribute(C,3));
  for(const[n,v]of[['aK',K],['aT',T],['aA',A],['aU',U]])g.setAttribute(n,new THREE.Float32BufferAttribute(v,1));g.setIndex(I);g.computeVertexNormals();return g}
-function buceoMundo(D,WY){const B=BUC,G=new THREE.Group();G.name='fondoMar';B.uT=B.uT||{value:0};const LT=!!window.LITE,RZ=1.35,DEP=.32;let sd=7;const rn=()=>(sd=(sd*16807)%2147483647)/2147483647;
+function burbujaTex(){if(burbujaTex.t)return burbujaTex.t;const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d'),g=x.createRadialGradient(16,16,1,16,16,15);g.addColorStop(0,'rgba(255,255,255,.15)');g.addColorStop(.65,'rgba(255,255,255,.3)');g.addColorStop(.85,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,32,32);return burbujaTex.t=new THREE.CanvasTexture(c)}
+function buceoMundo(D,WY){const B=BUC,G=new THREE.Group();G.name='fondoMar';B.uT=B.uT||{value:0};const LT=!!window.LITE,RZ=1.35,DEP=.32;let sd=7+Math.floor(Math.abs(D[0]*131+D[1]*71))%9973;const rn=()=>(sd=(sd*16807)%2147483647)/2147483647;
  B.FU={uT:B.uT,uWY:{value:WY},uNf:SKYU.uNight,uSun:SKYU.uSun,uO:{value:new THREE.Vector3(D[0],0,D[1])}};
  const hs=(x,y)=>{const s=Math.sin(x*127.1+y*311.7)*43758.5453;return s-Math.floor(s)};
  const vn=(x,y)=>{const i=Math.floor(x),j=Math.floor(y),u=x-i,v=y-j,a=hs(i,j),b=hs(i+1,j),c=hs(i,j+1),d=hs(i+1,j+1),uu=u*u*(3-2*u),vv=v*v*(3-2*v);return a+(b-a)*uu+(c-a)*vv+(a-b-c+d)*uu*vv};
@@ -6034,7 +6036,7 @@ function buceoMundo(D,WY){const B=BUC,G=new THREE.Group();G.name='fondoMar';B.uT
     vec4 mv=viewMatrix*vec4(p,1.);vD=-mv.z;gl_Position=projectionMatrix*mv;if(p.y>uWY-.004)gl_Position=vec4(2.,2.,2.,1.);gl_PointSize=max(1.,aS*uPS/max(vD,.01));}`,
    fragmentShader:`uniform float uNf;varying float vD;void main(){float r=length(gl_PointCoord-.5);float a=smoothstep(.5,.15,r)*smoothstep(.015,.05,vD)*(1.-smoothstep(.12,.5,vD))*.4;gl_FragColor=vec4(vec3(.78,.92,.86)*(1.-uNf*.8),a);}`});
   const pt=new THREE.Points(ge,pm);pt.frustumCulled=false;G.add(pt);B.part=pt;
-  const NB=60,bg=new THREE.BufferGeometry(),bp=new Float32Array(NB*3);for(let k=0;k<NB;k++)bp[k*3+1]=-99;bg.setAttribute('position',new THREE.BufferAttribute(bp,3));const bu=new THREE.Points(bg,new THREE.PointsMaterial({color:0xeaffff,size:.008,transparent:true,opacity:.75,depthWrite:false}));bu.frustumCulled=false;G.add(bu);B.burb={bu,bp,NB,k:0,v:new Float32Array(NB)}}
+  const NB=60,bg=new THREE.BufferGeometry(),bp=new Float32Array(NB*3);for(let k=0;k<NB;k++)bp[k*3+1]=-99;bg.setAttribute('position',new THREE.BufferAttribute(bp,3));const bu=new THREE.Points(bg,new THREE.PointsMaterial({color:0xeaffff,size:.008,transparent:true,opacity:.85,depthWrite:false,map:burbujaTex()}));bu.frustumCulled=false;G.add(bu);B.burb={bu,bp,NB,k:0,v:new Float32Array(NB)}}
  // esfera de niebla (tapa el cielo cuando la cámara está bajo el agua)
  {const fm=new THREE.MeshBasicMaterial({color:0x0b3f44,side:THREE.BackSide,depthWrite:false,fog:false});const fs=new THREE.Mesh(new THREE.SphereGeometry(1.6,24,16),fm);fs.renderOrder=-5;fs.visible=false;G.add(fs);B.esf=fs}
  scene.add(G);B.W=G;B.RZ=RZ;B.D0=D}
@@ -6075,12 +6077,26 @@ function buceoSalta(){const B=BUC;B.WY=moto.position.y;if(!B.W)buceoMundo(B.D,B.
  const px=P.x,py=P.y;cambiarModo('nado');document.body.classList.add('heli');P.x=px+Math.sin(P.a)*.06;P.y=py+Math.cos(P.a)*.06;P.z=B.WY-.012;P.v=0;P.vz=0;camInit=false;B.fase='nado';B.aire=1;B.tiene=false;
  document.getElementById('aire').hidden=false;REP.dest=['🎁 Regalo perdido',rg[0],rg[1]];gpsSet(REP.dest,linea([[P.x,P.y],[rg[0],rg[1]]]));try{sonCaja()}catch(e){}
  setTimeout(()=>{if(BUC.on&&BUC.fase==='nado')mostrar(document.body.classList.contains('pad')?'Joystick derecho: ↓ bucea · ↑ sube · joystick izquierdo para nadar · busca el regalo que brilla':'⤓ Z bucea · ⤒ Q sube · ▲ nada · busca el regalo que brilla en el fondo')},700)}
-function updateNado(dt){const B=BUC;if(!REP.on||!B.on){buceoLimpia();cambiarModo('coche');return}
+// ---------- nado libre: meterse al mar desde cualquier orilla, nadar y bucear (edit_nadolibre.py)
+function nadoEntra(x,y){const B=BUC;Object.assign(B,{on:true,libre:true,fase:'libre',t:0,tiene:true,aire:1,W:null,D:[x,y],moto:null,reg:null,boya:null,WY:-.03});
+ const nad=new THREE.Group(),piv=new THREE.Group(),f=mkPersona();f.scale.setScalar(.8);f.position.y=-.026;piv.add(f);piv.rotation.z=-1.2;nad.add(piv);
+ piv.userData.br=f.userData.brazos?f.userData.brazos.children:[];piv.userData.pi=f.userData.piernas?f.userData.piernas.children:[];
+ const lz=new THREE.PointLight(0xa8ecff,0,.9,1.5);lz.position.set(.05,.02,0);nad.add(lz);nad.userData.luz=lz;nad.userData.f=piv;nad.position.set(x,B.WY-.012,y);scene.add(nad);B.nad=nad;
+ cambiarModo('nado');document.body.classList.add('heli');P.x=x;P.y=y;P.z=B.WY-.012;P.v=Math.min(Math.max(P.v,0),.12);P.vz=0;camInit=false;document.getElementById('aire').hidden=false;
+ mostrar(document.body.classList.contains('pad')?'🏊 Nadando · joystick derecho ↓ bucea · ↑ sube · vuelve a la orilla para salir':'🏊 Nadando · Z bucea · Q sube · nada hasta la orilla para salir')}
+function nadoFin(){const B=BUC;B.libre=false;buceoLimpia();const s_=document.querySelector('#vel small');if(s_)s_.textContent='km/h · flechas o WASD · E subir/bajar'}
+function nadoSale(x,y){nadoFin();cambiarModo('pie');P.x=x;P.y=y;P.v=0;P.vz=0;camInit=false;mostrar('🚶 Fuera del agua')}
+function nadoMundo(){const B=BUC;if(B.W){scene.remove(B.W);B.W.traverse(o=>{if(o.geometry)o.geometry.dispose()});B.W=null}B.D=[P.x,P.y];buceoMundo(B.D,B.WY)}
+// orilla a la que salir: un punto de tierra transitable delante (o cerca) del nadador
+function nadoOrilla(){let best=null,bd=1e9;for(let r=.03;r<=.14;r+=.015)for(let k=0;k<24;k++){const t=k/24*6.2832,x=P.x+Math.cos(t)*r,y=P.y+Math.sin(t)*r;if(!pieOK(cell(x,y).t))continue;
+  let ok=true;for(let q=0;q<6;q++){const t2=q/6*6.2832;if(!pieOK(cell(x+Math.cos(t2)*.012,y+Math.sin(t2)*.012).t))ok=false}const s=r+Math.abs(Math.atan2(Math.sin(-Math.atan2(y-P.y,x-P.x)-P.a),Math.cos(-Math.atan2(y-P.y,x-P.x)-P.a)))*.03;if(ok&&s<bd){bd=s;best=[x,y]}}return best}
+function updateNado(dt){const B=BUC;if(!B.on||(!B.libre&&!REP.on)){const lb=B.libre;if(lb)nadoFin();else buceoLimpia();cambiarModo(lb?'pie':'coche');return}
  const sup=B.WY-.012,bajo=P.z<sup-.015,tnow=performance.now()/1000;
+ if(B.libre){B.t+=dt;if(B.W)buceoMundoTick(dt);const baja=keys.alt_dn||(PAD.ry||0)>.3;if(baja&&!bajo&&(!B.W||Math.hypot(P.x-B.D[0],P.y-B.D[1])>B.RZ*.45))nadoMundo()}
  const tgt=keys.up?(bajo?.3:.24):keys.down?-.08:0;P.v+=(tgt-P.v)*Math.min(1,dt*3);const steer=(keys.left?1:0)-(keys.right?1:0);P.a+=steer*2.2*dt;
  const vzt=PAD.ry?-PAD.ry*.3:keys.alt_dn?-.22:keys.alt_up?.24:(bajo?.035:0);P.vz=(P.vz||0)+(vzt-(P.vz||0))*Math.min(1,dt*3);
- let nx=P.x+Math.cos(P.a)*P.v*dt,ny=P.y-Math.sin(P.a)*P.v*dt;if(cell(nx,ny).t!==0||Math.hypot(nx-B.D[0],ny-B.D[1])>B.RZ-.06){P.v*=.3;nx=P.x;ny=P.y;if(!B.avB||tnow-B.avB>3){B.avB=tnow;mostrar('Hasta aquí: no te alejes de la zona de buceo')}}P.x=nx;P.y=ny;
- P.z+=P.vz*dt;const fz=B.hB(P.x,P.y)+.022;if(P.z<fz){P.z=fz;if(P.vz<0)P.vz=0}if(P.z>sup){P.z=sup;if(P.vz>0)P.vz=0}
+ let nx=P.x+Math.cos(P.a)*P.v*dt,ny=P.y-Math.sin(P.a)*P.v*dt;if(B.libre&&!bajo&&cell(nx,ny).t!==0&&P.v>.03){const o=pieOK(cell(nx,ny).t)?[nx+Math.cos(P.a)*.015,ny-Math.sin(P.a)*.015]:nadoOrilla();if(o&&pieOK(cell(o[0],o[1]).t)){nadoSale(o[0],o[1]);return}}if(B.libre&&!B.W&&cell(nx,ny).t===0){}else if(cell(nx,ny).t!==0||(B.W&&(!B.libre||bajo)&&Math.hypot(nx-B.D[0],ny-B.D[1])>B.RZ-.06)){P.v*=.3;nx=P.x;ny=P.y;if(!B.avB||tnow-B.avB>3){B.avB=tnow;mostrar(B.libre?(cell(nx,ny).t!==0?'Sube a la superficie para salir a la orilla':'Sube a la superficie para seguir explorando'):'Hasta aquí: no te alejes de la zona de buceo')}}P.x=nx;P.y=ny;
+ P.z+=P.vz*dt;const fz=B.W?B.hB(P.x,P.y)+.022:-9;if(P.z<fz){P.z=fz;if(P.vz<0)P.vz=0}if(P.z>sup){P.z=sup;if(P.vz>0)P.vz=0}
  // aire: se gasta bajo el agua y se recupera en la superficie
  if(bajo){B.aire-=dt/26;if(B.aire<=0){B.aire=0;P.vz=.4;if(!B.avA||tnow-B.avA>2.5){B.avA=tnow;mostrar('¡Sin aire! Sube a la superficie')}}}else B.aire=Math.min(1,B.aire+dt*.5);
  const ai=document.querySelector('#aire i');ai.style.width=(B.aire*100).toFixed(0)+'%';ai.style.background=B.aire<.25?'linear-gradient(90deg,#ff5a3a,#ffb08a)':'linear-gradient(90deg,#3fd0ff,#bff4ff)';
@@ -6090,15 +6106,15 @@ function updateNado(dt){const B=BUC;if(!REP.on||!B.on){buceoLimpia();cambiarModo
  N_.position.set(P.x,P.z+(bajo?0:Math.sin(tnow*3)*.003),P.y);N_.rotation.set(0,P.a,0);N_.userData.luz.intensity=bajo?1.3:0;
  if(B.moto){B.moto.position.y=B.WY+Math.sin(tnow*2)*.003;B.moto.rotation.z=Math.sin(tnow*1.6)*.04}
  // cámara: detrás del nadador
- const dx=Math.cos(P.a),dz=-Math.sin(P.a),dist=bajo?.24:.32,hg=bajo?.05:.12;const want=new THREE.Vector3(P.x-dx*dist,Math.max(P.z+hg,B.hB(P.x-dx*dist,P.y-dz*dist)+.04),P.y-dz*dist);
+ const dx=Math.cos(P.a),dz=-Math.sin(P.a),dist=bajo?.24:.32,hg=bajo?.05:.12;const want=new THREE.Vector3(P.x-dx*dist,Math.max(P.z+hg,B.W?B.hB(P.x-dx*dist,P.y-dz*dist)+.04:-9),P.y-dz*dist);
  if(!camInit){pcam.position.copy(want);camInit=true}else pcam.position.lerp(want,Math.min(1,dt*4));look.set(P.x+dx*.12,P.z-(bajo?.01:.03),P.y+dz*.12);pcam.lookAt(look);pcam.fov=62;pcam.updateProjectionMatrix();
  // efecto océano: niebla azul, velo, esfera que tapa el cielo
- const camBajo=pcam.position.y<B.WY-.003;window.__BAJO=camBajo;document.getElementById('bajoAgua').hidden=!camBajo;B.esf.visible=camBajo;for(const w of WATERS)w.visible=!camBajo;B.esf.position.copy(pcam.position);B.part.visible=camBajo;for(const m of B.rayos)m.visible=camBajo;B.sup.visible=camBajo;
+ const camBajo=!!B.W&&pcam.position.y<B.WY-.003;window.__BAJO=camBajo;document.getElementById('bajoAgua').hidden=!camBajo;for(const w of WATERS)w.visible=!camBajo;if(camBajo){B.oculta=B.oculta||[];for(const o of scene.children)if(o.visible&&!o.isLight&&!o.isCamera&&o!==B.W&&o!==B.nad&&!(B.reg&&o===B.reg.g)){o.visible=false;if(!B.oculta.includes(o))B.oculta.push(o)}}else if(B.oculta){for(const o of B.oculta)o.visible=true;B.oculta=null}if(B.W){B.esf.visible=camBajo;B.esf.position.copy(pcam.position);B.part.visible=camBajo;for(const m of B.rayos)m.visible=camBajo;B.sup.visible=camBajo}
  if(camBajo){const pr=Math.min(1,(B.WY-pcam.position.y)/.3),nk=1-.85*SKYU.uNight.value;FOG.color.setRGB((.028-.02*pr)*nk,(.2-.12*pr)*nk,(.21-.115*pr)*nk);B.esf.material.color.copy(FOG.color);FOG.near=.03;FOG.far=1.15-.4*pr}else{FOG.near=5;FOG.far=20}
  const v=document.getElementById('vel');v.firstChild.nodeValue=Math.max(0,Math.round((sup-P.z)*70));v.querySelector('small').textContent='m de profundidad · Z bucea · Q sube';hudAccion(dt)}
 function buceoSube(){const B=BUC,mc=B.moto;P.x=mc.position.x;P.y=mc.position.z;P.v=0;scene.remove(mc);B.moto=null;scene.remove(B.nad);B.nad=null;buceoLimpia(true);cambiarModo('moto');motoNavPon(true);camInit=false;
  B.on=false;REP.fase='entregar';campDestino(['🎁 Puerto de Vigo',REP.puerto[1],REP.puerto[2]]);aviso('🎁 ¡Rescatado! Llévalo al Puerto de Vigo',2.4,'cuenta')}
-function buceoLimpia(sube){const B=BUC;window.__BAJO=false;for(const w of WATERS)w.visible=true;FOG.near=5;FOG.far=20;document.getElementById('bajoAgua').hidden=true;document.getElementById('aire').hidden=true;document.body.classList.remove('heli');
+function buceoLimpia(sube){const B=BUC;if(B.oculta){for(const o of B.oculta)o.visible=true;B.oculta=null}window.__BAJO=false;for(const w of WATERS)w.visible=true;FOG.near=5;FOG.far=20;document.getElementById('bajoAgua').hidden=true;document.getElementById('aire').hidden=true;document.body.classList.remove('heli');
  if(B.W){scene.remove(B.W);B.W.traverse(o=>{if(o.geometry)o.geometry.dispose()});B.W=null}if(B.boya){scene.remove(B.boya);B.boya=null}if(B.reg){scene.remove(B.reg.g);B.reg=null}if(!sube){if(B.moto){scene.remove(B.moto);B.moto=null}if(B.nad){scene.remove(B.nad);B.nad=null}B.on=false}}
 // avenidas por etapas: el centro, luego las avenidas de alrededor y al final todas las grandes vías de Vigo
 const AV_CEN=/Príncipe|García Barbón|Policarpo Sanz|Urz[aá]iz|Estación de Vigo|Colón|Porta do Sol|Rosalía de Castro|Gran Vía|Lepanto|Vía Norte/i,
