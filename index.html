@@ -3201,7 +3201,7 @@ let MODO='coche';window.modo=()=>MODO;
 const MS=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55});
 function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.py): cartoon pulido · camiseta blanca, vaqueros, zapatillas, ojos de punto y pelo rapado castaño
  // mira hacia +x · pies en y=0 · userData.piernas/brazos con dos hijos cada uno (los usan andar, nadar y la moto)
- const C={PIEL:0xf0bf94,PIEL2:0xe2a47c,ROPA:0xf6f5f1,ROPA2:0xdcdad4,PANT:0x2f5596,PANT2:0x4a74b8,ZAP:0xf4f3ee,SUELA:0x2a2c33,FRANJA:0x2b8fd6,PELO:0x5a3f2c,PELO2:0x7a4e2c,OJO:0x3b2414,BLANCO:0xffffff,CORDON:0xf2efe8};
+ const C={PIEL:0xf0bf94,PIEL2:0xe2a47c,ROPA:0xf6f5f1,ROPA2:0xdcdad4,PANT:0x2f5596,PANT2:0x4a74b8,ZAP:0xf4f3ee,SUELA:0x2a2c33,FRANJA:0x2b8fd6,PELO:0x6a4c38,PELO2:0x7a4e2c,OJO:0x3b2414,BLANCO:0xffffff,CORDON:0xf2efe8};
  const MC={};const M=(c,r=.62,x={})=>{const k=c+'|'+r+'|'+JSON.stringify(x);return MC[k]||(MC[k]=new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r,metalness:0},x)))};
  const add=(par,geo,mat,x=0,y=0,z=0,rx=0,ry=0,rz=0,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.scale.set(sx,sy,sz);par.add(m);return m};
  const CAP=(r,l,s=10)=>new THREE.CapsuleGeometry(r,l,4,s),ESF=(r,a=14,b=10)=>new THREE.SphereGeometry(r,a,b),CIL=(a,b,h,s=14)=>new THREE.CylinderGeometry(a,b,h,s);
@@ -3246,8 +3246,14 @@ function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.p
   add(cab,ESF(.0022,10,8),M(C.PIEL,.55),-.0004,H,s*.0094,0,0,0,.65,1,.5);    // oreja
   add(cab,ESF(.0011,8,6),M(C.PIEL2,.6),.0001,H,s*.0101,0,0,0,.5,.8,.4)}
  add(cab,ESF(.0016,10,8),M(C.PIEL,.55),.0099,H-.001,0,0,0,0,1,.9,1);                              // nariz
- // pelo rapado castaño: una capa finísima pegada al cráneo (mismo centro y forma que la cabeza), entradas en la frente y más bajo en la nuca
- add(cab,new THREE.SphereGeometry(.01005,32,18,0,Math.PI*2,0,Math.PI*.58),M(C.PELO,1),-.0002,H,0,0,0,.42);
+ // pelo rapado: capa finísima con textura de pelo cortito (puntitos) y el borde difuminado, frente bien despejada
+ if(!mkPersona.texPelo){const cv=document.createElement('canvas');cv.width=128;cv.height=64;const x=cv.getContext('2d');
+  x.fillStyle='#5a3e2c';x.fillRect(0,0,128,64);
+  for(let k=0;k<900;k++){const v=Math.random();x.fillStyle=v<.5?'rgba(52,34,22,.55)':'rgba(150,112,84,.35)';x.fillRect(Math.random()*128,Math.random()*64,1,1)}
+  const gr=x.createLinearGradient(0,0,0,64);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.86,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,1)');
+  x.globalCompositeOperation='destination-out';x.fillStyle=gr;x.fillRect(0,0,128,64);
+  mkPersona.texPelo=new THREE.CanvasTexture(cv);mkPersona.texPelo.colorSpace=THREE.SRGBColorSpace}
+ add(cab,new THREE.SphereGeometry(.01003,32,16,0,Math.PI*2,0,Math.PI*.53),new THREE.MeshStandardMaterial({map:mkPersona.texPelo,transparent:true,roughness:1,depthWrite:false}),-.0002,H,0,0,0,.47);
  // boca: sonrisa fina y oscura, pegada a la cara
  add(cab,new THREE.TorusGeometry(.0019,.00038,6,16,Math.PI*.8),M(0x3a2018,.6),.0084,H-.0034,0,0,Math.PI/2,Math.PI*1.1,1,1,.5);
  g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
