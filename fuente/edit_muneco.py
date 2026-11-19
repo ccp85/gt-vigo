@@ -1,6 +1,6 @@
 # Protagonista a pie pulido (muneco.js) y media vuelta al andar hacia atrás, en las cinco páginas.
-#  - mkPersona nuevo: mismo estilo cartoon pero acabado (cabeza grande con dos puntos negros de ojos, nariz,
-#    pelo corto castaño, camiseta blanca de manga corta, vaqueros con dobladillo, zapatillas redondeadas).
+#  - mkPersona nuevo: mismo estilo cartoon pero acabado (cabeza grande con dos puntos negros de ojos, nariz, boca,
+#    pelo rapado castaño, camiseta blanca de manga corta, vaqueros con dobladillo, zapatillas redondeadas).
 #    Mantiene userData.piernas/brazos con dos hijos (los usan nadar, la moto de agua y el ferry) y añade rodillas,
 #    codos, tronco y cabeza articulados (animPersona).
 #  - a pie, ↓ ya no anda de espaldas: el muñeco se da la vuelta y camina hacia la cámara, que se queda detrás,

@@ -3199,9 +3199,9 @@ const P={x:0,y:0,a:0,v:0};window.P=P;let CAMC=0;try{CAMC=(+localStorage.getItem(
 // ---------- vehículos: coche, moto de agua y a pie ----------
 let MODO='coche';window.modo=()=>MODO;
 const MS=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55});
-function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.py): cartoon pulido · camiseta blanca, vaqueros, zapatillas, ojos de punto y pelo corto castaño
+function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.py): cartoon pulido · camiseta blanca, vaqueros, zapatillas, ojos de punto y pelo rapado castaño
  // mira hacia +x · pies en y=0 · userData.piernas/brazos con dos hijos cada uno (los usan andar, nadar y la moto)
- const C={PIEL:0xf0bf94,PIEL2:0xe2a47c,ROPA:0xf6f5f1,ROPA2:0xdcdad4,PANT:0x2f5596,PANT2:0x4a74b8,ZAP:0xf4f3ee,SUELA:0x2a2c33,FRANJA:0x2b8fd6,PELO:0x6b4426,PELO2:0x7a4e2c,OJO:0x3b2414,BLANCO:0xffffff,CORDON:0xf2efe8};
+ const C={PIEL:0xf0bf94,PIEL2:0xe2a47c,ROPA:0xf6f5f1,ROPA2:0xdcdad4,PANT:0x2f5596,PANT2:0x4a74b8,ZAP:0xf4f3ee,SUELA:0x2a2c33,FRANJA:0x2b8fd6,PELO:0x5a3f2c,PELO2:0x7a4e2c,OJO:0x3b2414,BLANCO:0xffffff,CORDON:0xf2efe8};
  const MC={};const M=(c,r=.62,x={})=>{const k=c+'|'+r+'|'+JSON.stringify(x);return MC[k]||(MC[k]=new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r,metalness:0},x)))};
  const add=(par,geo,mat,x=0,y=0,z=0,rx=0,ry=0,rz=0,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.scale.set(sx,sy,sz);par.add(m);return m};
  const CAP=(r,l,s=10)=>new THREE.CapsuleGeometry(r,l,4,s),ESF=(r,a=14,b=10)=>new THREE.SphereGeometry(r,a,b),CIL=(a,b,h,s=14)=>new THREE.CylinderGeometry(a,b,h,s);
@@ -3237,7 +3237,7 @@ function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.p
   add(codo,ESF(.0031,12,8),M(C.PIEL,.55),.0002,-.0125,0,0,0,0,.92,1.08,.88);   // mano
   add(codo,ESF(.0012,8,6),M(C.PIEL,.55),.0024,-.0113,z<0?.0011:-.0011)}     // pulgar
  g.userData.brazos=brazos;
- // ---- cabeza (pivota en el cuello): grande y redonda, dos puntos negros de ojos, nariz y pelo corto
+ // ---- cabeza (pivota en el cuello): grande y redonda, dos puntos negros de ojos, nariz, boca y pelo rapado
  add(tronco,CIL(.0031,.0034,.005,12),M(C.PIEL,.55),0,.03,0);                 // cuello
  const cab=new THREE.Group();cab.position.y=.0315;tronco.add(cab);g.userData.cabeza=cab;const H=.0094;   // centro de la cara en y=H (relativo al cuello)
  add(cab,ESF(.0098,22,16),M(C.PIEL,.55),0,H,0,0,0,0,.96,1,1);
@@ -3246,12 +3246,10 @@ function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.p
   add(cab,ESF(.0022,10,8),M(C.PIEL,.55),-.0004,H,s*.0094,0,0,0,.65,1,.5);    // oreja
   add(cab,ESF(.0011,8,6),M(C.PIEL2,.6),.0001,H,s*.0101,0,0,0,.5,.8,.4)}
  add(cab,ESF(.0016,10,8),M(C.PIEL,.55),.0099,H-.001,0,0,0,0,1,.9,1);                              // nariz
- // pelo corto castaño: casquete pegado a la cabeza, flequillo corto y nuca rapada
- add(cab,new THREE.SphereGeometry(.01015,32,16,0,Math.PI*2,0,Math.PI*.54),M(C.PELO,.8),-.0008,H+.0003,0,0,0,.36);
- add(cab,ESF(.0058,14,10),M(C.PELO,.8),-.0052,H-.0004,0,0,0,0,.62,1,1.5);           // nuca
- for(const[z,ry]of[[-.0036,.3],[0,0],[.0036,-.3]])
-  add(cab,ESF(.0032,14,10),M(C.PELO2,.8),.0064,H+.0064,z,0,ry,-.95,.42,.55,1);       // flequillo corto
- for(const s of[-1,1])add(cab,ESF(.003,10,8),M(C.PELO,.8),.0008,H+.0028,s*.0086,0,0,0,.8,1.1,.4);   // patillas
+ // pelo rapado castaño: una capa finísima pegada al cráneo (mismo centro y forma que la cabeza), entradas en la frente y más bajo en la nuca
+ add(cab,new THREE.SphereGeometry(.01005,32,18,0,Math.PI*2,0,Math.PI*.58),M(C.PELO,1),-.0002,H,0,0,0,.42);
+ // boca: sonrisa fina y oscura, pegada a la cara
+ add(cab,new THREE.TorusGeometry(.0019,.00038,6,16,Math.PI*.8),M(0x3a2018,.6),.0084,H-.0034,0,0,Math.PI/2,Math.PI*1.1,1,1,.5);
  g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
 // animación al andar (o quieto, respirando): piernas con rodilla, brazos con codo, tronco y cabeza
 function animPersona(p,t,amp){const ud=p.userData,ph=t*14,s=Math.sin(ph),c=Math.cos(ph);
