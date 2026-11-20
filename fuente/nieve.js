@@ -76,6 +76,7 @@ function nieveActiva(){return (typeof REP!=='undefined'&&REP.on)||(typeof NAV!==
 function nieveTick(dt){const on=nieveActiva();
  if(on&&!NVE.on){NVE.t=0;NVE.tScan=0;if(!NVE.pts)nveCopos();if(!NVE.div)nveEscarcha()}
  NVE.on=on;
+ nveMontonesTick();
  if(!on){if(NVE.u.value>0)NVE.u.value=Math.max(0,NVE.u.value-dt*2);if(NVE.pts)NVE.pts.visible=false;if(NVE.div)NVE.div.style.opacity=0;return}
  NVE.t+=dt;const a=1-.86*Math.exp(-NVE.t/NVE_TAU);NVE.a=a;NVE.u.value=a;
  // materiales nuevos (zonas que se cargan al moverse) se van cubriendo también; unos pocos por fotograma para no dar tirones
@@ -88,3 +89,43 @@ function nieveTick(dt){const on=nieveActiva();
  const vis=driving&&!(MODO==='pie'&&typeof BUC!=='undefined'&&BUC.W);NVE.pts.visible=vis;
  if(vis){NVE.uC.value.copy(pcam.position);NVE.uSc.value=R.domElement.height/(2*Math.tan(pcam.fov*Math.PI/360))}
  NVE.div.style.opacity=(vis?.15+.55*a:0).toFixed(3)}
+// ---- montones de nieve junto a las aceras
+// calles.js, al poner bordillos a las aceras, pasa también los tramos de bordillo que dan a la calzada; aquí se ponen a lo largo
+// montones de nieve apilada (como la que deja la quitanieves), algo irregulares y con huecos. Están en cada zona desde que se carga,
+// pero solo se ven con la nevada y van creciendo a la vez que cuaja la nieve.
+NVE.mont=[];NVE.uH={value:0};
+function nveMontonGeo(){const g=new THREE.SphereGeometry(1,8,3,0,Math.PI*2,0,Math.PI/2),p=g.attributes.position;
+ for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const r=1+.13*Math.sin(x*7.1+z*3.3)*Math.cos(z*5.7-x*2.1)*(1-y*.5);
+  p.setXYZ(i,x*r,Math.pow(Math.max(y,0),.8)*r,z*r)}
+ g.computeVertexNormals();g.deleteAttribute('uv');return g}
+function nveMontonMat(){const m=new THREE.MeshStandardMaterial({color:0xf2f5fb,roughness:.82,metalness:0});m.userData.noNieve=true;
+ m.onBeforeCompile=sh=>{sh.uniforms.uNvH=NVE.uH;
+  sh.vertexShader='uniform float uNvH;varying vec3 vMw;\n'+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+ {float rr=0.;
+#ifdef USE_INSTANCING
+ rr=fract(sin(dot(instanceMatrix[3].xz,vec2(91.7,37.3)))*4375.5);
+#endif
+ transformed.y*=uNvH*(.55+.45*rr);}`).replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n{vec4 q=vec4(transformed,1.);\n#ifdef USE_INSTANCING\nq=instanceMatrix*q;\n#endif\nvMw=(modelMatrix*q).xyz;}');
+  sh.fragmentShader='varying vec3 vMw;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+ {float h=fract(sin(dot(floor(vMw.xz*900.),vec2(12.9898,78.233)))*43758.5);diffuseColor.rgb*=.94+.06*h;}`).replace('#include <opaque_fragment>',`outgoingLight+=vec3(.05,.06,.1)+step(.994,fract(sin(dot(floor(vMw.xz*1300.+vMw.y*700.),vec2(12.9898,78.233)))*43758.5))*vec3(.6,.7,.9);
+ #include <opaque_fragment>`)};
+ m.customProgramCacheKey=()=>'nieve_monton';return m}
+function nveMontones(root,B){if(!NVE.mGeo){NVE.mGeo=nveMontonGeo();NVE.mMat=nveMontonMat()}
+ const LT=!!window.LITE,M=[],du=new THREE.Object3D();let sem=(B.length*7919+Math.round(B[0]*1e3))%233280;const rnd=()=>(sem=(sem*9301+49297)%233280)/233280;
+ for(let i=0;i+6<B.length;i+=7){const ax=B[i],ay=B[i+1],az=B[i+2],bx=B[i+3],bz=B[i+5],d=B[i+6];let dx=bx-ax,dz=bz-az;const L=Math.hypot(dx,dz);if(L<.03)continue;dx/=L;dz/=L;
+  const nx=dz,nz=-dx,w=.018+d*.9,paso=LT?.075:.05;let s=rnd()*paso;
+  while(s<L-.01){if(rnd()<.85){const ln=paso*(1.2+rnd()*.8),off=w*(.25+rnd()*.35);
+    du.position.set(ax+dx*s+nx*off,ay-d+.002,az+dz*s+nz*off);du.rotation.set(0,Math.atan2(-dz,dx),0);du.scale.set(ln*.75,(d+.008)*(1+rnd()*.9),w*(.65+rnd()*.5));du.updateMatrix();M.push(du.matrix.clone())}
+   else s+=paso*1.5;s+=paso}}
+ if(!M.length)return;
+ // en trozos de 2×2 u: solo se dibujan los cercanos a la cámara
+ const T=new Map(),v=new THREE.Vector3();for(const m of M){v.setFromMatrixPosition(m);const k=Math.floor(v.x/2)+','+Math.floor(v.z/2);let a=T.get(k);if(!a){a=[];T.set(k,a)}a.push(m)}
+ root.updateMatrixWorld(true);const inv=root.matrixWorld.equals(new THREE.Matrix4())?null:root.matrixWorld.clone().invert();
+ for(const [k,L] of T){const im=new THREE.InstancedMesh(NVE.mGeo,NVE.mMat,L.length);let cx=0,cz=0;L.forEach((m,i)=>{im.setMatrixAt(i,m);cx+=m.elements[12];cz+=m.elements[14]});
+  im.instanceMatrix.needsUpdate=true;im.computeBoundingSphere();
+  im.name='nieve_montones';im.userData.noLote=true;im.userData.noMate=true;im.castShadow=false;im.receiveShadow=!LT;im.visible=false;
+  if(inv)im.applyMatrix4(inv);root.add(im);NVE.mont.push({im,x:cx/L.length,z:cz/L.length})}}
+function nveMontonesTick(){const h=NVE.on?THREE.MathUtils.smoothstep(NVE.a,.18,.85):0;NVE.uH.value=h;const on=h>.01&&driving;
+ const R=window.LITE?3.2:5.5,cx=pcam.position.x,cz=pcam.position.z;
+ for(let k=NVE.mont.length-1;k>=0;k--){const o=NVE.mont[k];if(!o.im.parent){NVE.mont.splice(k,1);continue}
+  o.im.visible=on&&Math.abs(o.x-cx)<R&&Math.abs(o.z-cz)<R}}
