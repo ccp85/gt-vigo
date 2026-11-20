@@ -59,16 +59,10 @@ function mkChica(){const g=new THREE.Group(),R=a=>a[(Math.random()*a.length)|0];
  const cab=new THREE.Group();cab.position.y=.0315;tronco.add(cab);g.userData.cabeza=cab;const H=.0088;
  add(cab,ESF(.0088,24,18),mP,0,H,0,0,0,0,.95,1.04,.92);
  add(cab,ESF(.0052,16,10),mP,.0034,H-.0045,0,0,0,0,.9,.7,1.05);       // barbilla suave
- // cara: ojos grandes (blanco, iris de color, pupila, brillo, párpado con pestañas), cejas, colorete, orejas, nariz y boca sonriente
- const mIr=M(R([0x5a3a22,0x3d6b3a,0x3a6aa8,0x7a5a2a]),.3),mBl=M(0xfbfbf8,.3);
+ // cara: ojos de punto negro (como el protagonista) con pestaña, cejas, colorete, orejas, nariz y boca sonriente
  for(const s of[-1,1]){const z=s*.0033;
-  add(cab,ESF(.002,14,10),mBl,.0074,H+.0008,z,0,0,0,.45,1.15,1);                          // blanco del ojo
-  add(cab,ESF(.00125,12,8),mIr,.0082,H+.0006,z,0,0,0,.42,1.1,1);                          // iris
-  add(cab,ESF(.00065,10,6),mN,.00865,H+.0006,z,0,0,0,.4,1,1);                             // pupila
-  add(cab,ESF(.00032,6,4),mBl,.0089,H+.0011,z+s*.0003);                                    // brillo
-  add(cab,ESF(.0021,14,8),mP,.0072,H+.0017,z,0,0,0,.5,.55,1.02);                          // párpado
-  add(cab,new THREE.BoxGeometry(.0005,.0006,.0036),mN,.0082,H+.0022,z,s*.08,0,0);          // línea de pestañas
-  add(cab,new THREE.BoxGeometry(.0004,.0011,.0007),mN,.0079,H+.0026,z+s*.0019,s*.6,0,0);   // pestaña de fuera
+  add(cab,ESF(.00135,10,8),mN,.0083,H+.0008,z,0,0,0,.6,1.18,1);                           // ojo: punto negro
+  add(cab,new THREE.BoxGeometry(.0004,.001,.0007),mN,.0082,H+.0024,z+s*.0012,s*.6,0,0);    // pestaña
   add(cab,CAP(.00035,.0026,6),M(new THREE.Color(pc).multiplyScalar(.8),.7),.0081,H+.0044,z,Math.PI/2+s*.15,0,0);   // ceja
   add(cab,ESF(.0016,10,8),M(0xf08a8a,.6,{transparent:true,opacity:.45}),.0073,H-.0018,s*.0052,0,0,0,.4,.8,1);   // colorete
   add(cab,ESF(.0018,10,8),mP,-.0004,H,s*.0086,0,0,0,.6,.95,.45)}                           // oreja
