@@ -57,7 +57,7 @@ for f in FILES:
     r("const camBajo=pcam.position.y<B.WY-.003;window.__BAJO=camBajo;document.getElementById('bajoAgua').hidden=!camBajo;B.esf.visible=camBajo;for(const w of WATERS)w.visible=!camBajo;B.esf.position.copy(pcam.position);B.part.visible=camBajo;for(const m of B.rayos)m.visible=camBajo;B.sup.visible=camBajo;",
       "const camBajo=!!B.W&&pcam.position.y<B.WY-.003;window.__BAJO=camBajo;document.getElementById('bajoAgua').hidden=!camBajo;for(const w of WATERS)w.visible=!camBajo;"
       # bajo el agua solo se ve el fondo: se esconde el mundo de superficie (tierra, base azul de la maqueta, coches...) y se repone al sacar la cabeza
-      "if(camBajo){B.oculta=B.oculta||[];for(const o of scene.children)if(o.visible&&!o.isLight&&!o.isCamera&&o!==B.W&&o!==B.nad&&!(B.reg&&o===B.reg.g)){o.visible=false;if(!B.oculta.includes(o))B.oculta.push(o)}}else if(B.oculta){for(const o of B.oculta)o.visible=true;B.oculta=null}"
+      "if(camBajo){B.oculta=B.oculta||[];for(const o of scene.children)if(o.visible&&!o.isLight&&!o.isCamera&&o!==B.W&&o!==B.nad&&!o.userData.submarino&&!(B.reg&&o===B.reg.g)){o.visible=false;if(!B.oculta.includes(o))B.oculta.push(o)}}else if(B.oculta){for(const o of B.oculta)o.visible=true;B.oculta=null}"
       "if(B.W){B.esf.visible=camBajo;B.esf.position.copy(pcam.position);B.part.visible=camBajo;for(const m of B.rayos)m.visible=camBajo;B.sup.visible=camBajo}")
     r("function buceoLimpia(sube){const B=BUC;","function buceoLimpia(sube){const B=BUC;if(B.oculta){for(const o of B.oculta)o.visible=true;B.oculta=null}")
     # acción (E): salir a la orilla
