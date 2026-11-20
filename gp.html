@@ -1011,6 +1011,7 @@ function fachadaReal(m,k){m.userData.fv=1;m.userData.real=1;m.emissive=new THREE
     float fila=fl<.5?0.:1.;vec2 cu=vec2(fract(uvF.x),fract(pl));
     vec2 at=vec2((var_+cu.x)/4.,(fila+cu.y)/2.);vec2 dx=vec2(dFdx(uvF.x)/4.,dFdx(pl)/2.),dy=vec2(dFdy(uvF.x)/4.,dFdy(pl)/2.);
     vec4 sampledDiffuseColor=textureGrad(map,at,dx,dy);
+    ${window.LITE?'':`if(fl>.5&&!(var_>2.5&&${k==='b'?'true':'false'})){vec4 Rw=var_>.5&&var_<1.5?vec4(.234,.156,.766,.885):vec4(.203,.24,.797,.823);if(cu.x>Rw.x&&cu.x<Rw.z&&cu.y>Rw.y&&cu.y<Rw.w){vec3 dpx=dFdx(vWF),dpy=dFdy(vWF);vec2 d1=vec2(dFdx(uvF.x),dFdx(pl)),d2=vec2(dFdy(uvF.x),dFdy(pl));vec3 Nn=normalize(cross(dpx,dpy));vec3 Vw=normalize(vWF-cameraPosition);if(dot(Nn,Vw)>0.)Nn=-Nn;vec3 q2=cross(dpy,Nn),q1=cross(Nn,dpx);vec3 Tt=q2*d1.x+q1*d2.x,Bt=q2*d1.y+q1*d2.y;if(dot(Tt,Tt)>1e-20&&dot(Bt,Bt)>1e-20){Tt=normalize(Tt);Bt=normalize(Bt);float vz=max(-dot(Vw,Nn),.12);vec2 c2=cu+vec2(dot(Vw,Tt),dot(Vw,Bt))/vz*vec2(.0055/.05,.0055/.075);if(c2.x<Rw.x||c2.x>Rw.z)sampledDiffuseColor=vec4(vec3(.58),1.);else if(c2.y>Rw.w)sampledDiffuseColor=vec4(vec3(.42),1.);else if(c2.y<Rw.y)sampledDiffuseColor=vec4(vec3(.8),1.);else{sampledDiffuseColor=textureGrad(map,vec2((var_+c2.x)/4.,(fila+c2.y)/2.),dx,dy);float ed=min(min(c2.x-Rw.x,Rw.z-c2.x)*.05,min(c2.y-Rw.y,Rw.w-c2.y)*.075);sampledDiffuseColor.rgb*=mix(.5,1.,smoothstep(0.,.0035,ed))*mix(.62,1.,smoothstep(0.,.006,(Rw.w-c2.y)*.075));}}}}`}
     bool tej=false;
     gla=1.-smoothstep(.82,.9,sampledDiffuseColor.a);
     if(vFc.a>1.5){vec3 base=vFc.rgb;
@@ -1070,6 +1071,7 @@ function fachadaViva(m){if(m.userData.fv)return;{const n=m.name||'';if(/^fachada
    .replace('#include <map_fragment>',`#include <map_fragment>
     float vb=vMapUv.y*18.;float ao=mix(.62,1.,smoothstep(0.,.55,vb));diffuseColor.rgb*=ao;
     float win=1.-smoothstep(.30,.42,dot(sampledDiffuseColor.rgb,vec3(.333)));
+    ${window.LITE?'':`float wr=max(win,step(dot(sampledDiffuseColor.rgb,vec3(.333)),.74)*step(.04,sampledDiffuseColor.b-sampledDiffuseColor.r));if(wr>.5){vec3 dpx=dFdx(vWF),dpy=dFdy(vWF);vec2 u1=dFdx(vMapUv),u2=dFdy(vMapUv);vec3 Nn=normalize(cross(dpx,dpy));vec3 Vw=normalize(vWF-cameraPosition);if(dot(Nn,Vw)>0.)Nn=-Nn;float vz=max(-dot(Vw,Nn),.12);vec3 sv=(Vw+Nn*vz)/vz*.0045;float g11=dot(dpx,dpx),g12=dot(dpx,dpy),g22=dot(dpy,dpy),det=g11*g22-g12*g12;if(abs(det)>1e-24){float r1=dot(dpx,sv),r2=dot(dpy,sv);float ca=(r1*g22-r2*g12)/det,cb=(r2*g11-r1*g12)/det;vec2 duv=ca*u1+cb*u2;vec4 s2=texture2D(map,vMapUv+duv);float w2=max(1.-smoothstep(.30,.42,dot(s2.rgb,vec3(.333))),step(dot(s2.rgb,vec3(.333)),.74)*step(.04,s2.b-s2.r));vec3 bas=diffuseColor.rgb/max(sampledDiffuseColor.rgb,vec3(.03));diffuseColor.rgb=w2<.5?bas*s2.rgb*.5:bas*s2.rgb*.9;}}`}
     vec3 cel=vec3(floor(vMapUv.x*2.),floor(vb),0.)+floor(vWF*3.)*vec3(1.7,0.,2.3);
     float on=step(.5,hF(cel))*win*uLuz;`)
    .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance*=on*(1.2+1.0*hF(cel+5.));')};
@@ -5769,7 +5771,7 @@ function fachadasInit(L){const BASE=FACH.L?FACH.L.length:0;FACH.L=(FACH.L||[]).c
    add(ver?'cupv':'cupp',ver?M.cupv:M.cupp,V.set(cx,top+.047,cy),Q,S.set(.044,.052,.044),null);add('tam',M.tam,V.set(cx,top+.108,cy),Q,S.set(.006,.024,.006),null)}
   if(zona){// centro: miradores en el eje de la fachada, balcones de hierro, balcón corrido en la 1ª planta, cornisa y buhardillas
    const galW=sd%3!==1,corr=sd%4===0,buh=sd%2===0;const mid=(ax+bx)/2,midy=(ay+by)/2;
-   add('los',M.los,V.set(mid+nx*.006,z0+Math.max(.06,h-.004),midy+ny*.006),Q,S.set(Ln,.007,.013),null);if(nf>=2){add('zoc',M.zoc,V.set(mid+nx*.003,z0+.003,midy+ny*.003),Q,S.set(Ln,.006,.008),null);add('pil',M.pil,V.set(mid+nx*.005,z0+.0905,midy+ny*.005),Q,S.set(Ln,.007,.012),null);if(Ln>.06)for(const e of[.006,Ln-.006])add('pil',M.pil,V.set(ax+ux*e+nx*.003,z0+h/2,ay+uy*e+ny*.003),Q,S.set(.012,h,.007),null)}
+   add('los',M.los,V.set(mid+nx*.006,z0+Math.max(.06,h-.004),midy+ny*.006),Q,S.set(Ln,.007,.013),null);if(nf>=2){add('zoc',M.zoc,V.set(mid+nx*.003,z0+.003,midy+ny*.003),Q,S.set(Ln,.006,.008),null);add('pil',M.pil,V.set(mid+nx*.005,z0+.0905,midy+ny*.005),Q,S.set(Ln,.007,.012),null);if(Ln>.06)for(const e of[.006,Ln-.006])add('pil',M.pil,V.set(ax+ux*e+nx*.003,z0+h/2,ay+uy*e+ny*.003),Q,S.set(.012,h,.007),null);for(let f=2;f<nf;f++)add('pil',M.pil,V.set(mid+nx*.003,z0+.02+f*FL-.0012,midy+ny*.003),Q,S.set(Ln,.003,.007),null);if(h>.12){add('pil',M.pil,V.set(mid+nx*.008,z0+h+.0006,midy+ny*.008),Q,S.set(Ln+.01,.0035,.022),null);if(!window.LITE)for(let k=.007;k<Ln-.004;k+=.013)add('mar',M.pil,V.set(ax+ux*k+nx*.006,z0+h-.0095,ay+uy*k+ny*.006),Q,S.set(.0035,.005,.012),null)}}
    if(nf>=3&&corr)add('bar',M.bar,V.set(mid+nx*.0135,z0+.02+FL+.011,midy+ny*.0135),Q,S.set(Ln*.96,.014,.001),null),add('los',M.los,V.set(mid+nx*.007,z0+.02+FL+.003,midy+ny*.007),Q,S.set(Ln*.96,.003,.014),null);
    for(let n=Math.ceil(sa-.5);n<=Math.floor(sb-.5);n++){const tt=((n+.5)-sa)*BAY/Ln;if(tt<.05||tt>.95)continue;const b=n;const px=ax+dx*tt,py=ay+dy*tt;
     const P=(off,y)=>V.set(px+nx*off,z0+y,py+ny*off);const enEje=Math.abs(tt-.5)<Math.max(.13,.6*BAY/Ln);
@@ -5777,7 +5779,7 @@ function fachadasInit(L){const BASE=FACH.L?FACH.L.length:0;FACH.L=(FACH.L||[]).c
      if(((b+sd)%3+3)%3===0){Qp.setFromAxisAngle(AX,sg*.42);const qq=Q.clone().multiply(Qp);add('tol',M.tol,P(.013,.086),qq,S.set(BAY*.9,.002,.026),c.set(TOL[(((sd+(b>>1))%TOL.length)+TOL.length)%TOL.length]).clone())}}
     for(let f=1;f<nf;f++){const y=.02+f*FL;if(f===1&&corr)continue;
      if(galW&&enEje&&f<nf){add('gal',M.gal,P(.008,y+FL*.5),Q,S.set(BAY*.95,FL*.94,.016),null);continue}
-     add('pil',M.pil,P(.003,y+.061),Q,S.set(BAY*.64,.0045,.005),null);if(((b*7+f*3+sd)%5+5)%5<3){add('los',M.los,P(.007,y+.003),Q,S.set(BAY*.8,.003,.014),null);add('bar',M.bar,P(.0135,y+.011),Q,S.set(BAY*.8,.014,.001),null)}}
+     if(((b*7+f*3+sd)%5+5)%5<3){add('los',M.los,P(.007,y+.003),Q,S.set(BAY*.8,.003,.014),null);add('bar',M.bar,P(.0135,y+.011),Q,S.set(BAY*.8,.014,.001),null)}}
     if(buh&&((b+sd)%2+2)%2===0&&nf>=3)add('gal',M.gal,P(-.006,h+.013),Q,S.set(BAY*.5,.021,.014),null)}
    continue}
   for(let n=Math.ceil(sa-.5);n<=Math.floor(sb-.5);n++){const tt=((n+.5)-sa)*BAY/Ln;if(tt<.06||tt>.94)continue;const b=n;const px=ax+dx*tt,py=ay+dy*tt;const h1=(sd*7+((b%97)+97)*13)%97;
@@ -5791,7 +5793,7 @@ function fachadasInit(L){const BASE=FACH.L?FACH.L.length:0;FACH.L=(FACH.L||[]).c
     if(h1%7===f%7&&f<nf-1)add('aire',M.aire,P(.004,y+.012),Q,S.set(.012,.009,.007),null)}}}
  const M4=new THREE.Matrix4();
  for(const t of G.values()){const grp=new THREE.Group();for(const k in t.L){const A=t.L[k];const im=new THREE.InstancedMesh(k==='tam'?FGEO.cil:(k==='cupv'||k==='cupp')?FGEO.cup:BOX,M[k],A.length);
-   A.forEach(([p,q,sc,col],i)=>{M4.compose(p,q,sc);im.setMatrixAt(i,M4);if(col)im.setColorAt(i,col)});im.castShadow=k!=='esc';im.receiveShadow=true;im.userData.A=A;grp.add(im)}
+   A.forEach(([p,q,sc,col],i)=>{M4.compose(p,q,sc);im.setMatrixAt(i,M4);if(col)im.setColorAt(i,col)});im.castShadow=k!=='esc'&&!(window.LITE&&k==='mar');im.receiveShadow=true;im.userData.A=A;grp.add(im)}
   grp.visible=false;scene.add(grp);FACH.trozos.push({g:grp,x:t.x/t.n,y:t.y/t.n})}
  FACH.ok=true}
 fetch('vigo_fachadas.json').then(r=>r.ok?r.json():null).then(L=>{if(L)fachadasInit(L)}).catch(()=>{});

@@ -32,7 +32,14 @@ r("if(nf>=2){add('esc',M.esc,P(.0025,.034),Q,S.set(BAY*.88,.058,.004),null);",
   "else{add('esc',M.esc,P(.0025,.034),Q,S.set(BAY*.84,.058,.004),null);if(hb<3)add('per',M.per,P(.0032,.063-(hb===1?.009:.017)),Q,S.set(BAY*.84,hb===1?.018:.034,.002),null)}"
   "if(hb===5){add('ban',M.ban,V.set(px+nx*.016,z0+.112,py+ny*.016),Q,S.set(.0018,.016,.022),c.set(ROT[((sd+b*3)%ROT.length+ROT.length)%ROT.length]).clone())}")
 r("if(((b*7+f*3+sd)%5+5)%5<3){add('los',M.los,P(.007,y+.003)",
-  "add('pil',M.pil,P(.003,y+.061),Q,S.set(BAY*.64,.0045,.005),null);if(((b*7+f*3+sd)%5+5)%5<3){add('los',M.los,P(.007,y+.003)")
+  "if(((b*7+f*3+sd)%5+5)%5<3){add('los',M.los,P(.007,y+.003)")
+# relieve de verdad: impostas de piedra en cada planta, cornisa doble con canecillos y sombras de todo lo que sobresale
+r("if(Ln>.06)for(const e of[.006,Ln-.006])add('pil',M.pil,V.set(ax+ux*e+nx*.003,z0+h/2,ay+uy*e+ny*.003),Q,S.set(.012,h,.007),null)}",
+  "if(Ln>.06)for(const e of[.006,Ln-.006])add('pil',M.pil,V.set(ax+ux*e+nx*.003,z0+h/2,ay+uy*e+ny*.003),Q,S.set(.012,h,.007),null);"
+  "for(let f=2;f<nf;f++)add('pil',M.pil,V.set(mid+nx*.003,z0+.02+f*FL-.0012,midy+ny*.003),Q,S.set(Ln,.003,.007),null);"
+  "if(h>.12){add('pil',M.pil,V.set(mid+nx*.008,z0+h+.0006,midy+ny*.008),Q,S.set(Ln+.01,.0035,.022),null);if(!window.LITE)for(let k=.007;k<Ln-.004;k+=.013)add('mar',M.pil,V.set(ax+ux*k+nx*.006,z0+h-.0095,ay+uy*k+ny*.006),Q,S.set(.0035,.005,.012),null)}}")
+r("im.castShadow=k!=='esc';","im.castShadow=k!=='esc'&&!(window.LITE&&k==='mar');")
+
 r("function subePaso(){",r"""window.__fachG=()=>FACH;
 // los edificios pasan a 'real' poco a poco después de cargar la zona: se repasa cada pocos segundos (cada edificio una sola vez)
 setInterval(()=>{try{for(const z of ZROOTS){const rt=z.root;if(rt.parent)centroFachadas(rt)}}catch(e){console.warn('centroFachadas',e)}},4000);
