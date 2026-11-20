@@ -2,7 +2,7 @@ import sys,os,json
 # ================= RADIO SUNO: canciones propias de Navidad (hechas con Suno) en el reparto de Navidad =================
 # Nueva emisora «🎶 Vigo Nadal» con las canciones de la carpeta musica/ (mp3 de verdad, no sintetizadas).
 # Solo en Navidad (window.SOLO_NAVIDAD: nav.html y navm.html) y es la primera emisora, así que el reparto arranca con ellas.
-# Detrás siguen 🎄 Radio Navidad (villancicos chiptune) y 🌴 Vigo Reggae.
+# Es la única emisora de Navidad (ya no están 🎄 Radio Navidad ni 🌴 Vigo Reggae); el mundo abierto sigue con las suyas.
 # Las canciones suenan con un <audio> conectado a la radio (RADIO.g): se callan andando, nadando o buceando, igual que el resto.
 # Al acabar una pasa sola a la siguiente; M / Ⓨ y el panel 📻 funcionan igual. Si un mp3 no carga, salta al siguiente.
 # Va al final de build.sh (después de edit_radionavidad.py) y toca las cinco páginas (fuera de Navidad no cambia nada).
@@ -66,8 +66,8 @@ for f in (sys.argv[1:] or [x for x in ['index.html','indexm.html','gp.html','nav
     def r(a,b,n=1):
         global s
         assert s.count(a)==n,(f,s.count(a),a[:90]); s=s.replace(a,b)
-    a="const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎄 Radio Navidad',c:VILLANCICOS},"
-    r(a,JS.replace('__LISTA__',LISTA)+"const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎶 Vigo Nadal',c:SUNO},{nom:'🎄 Radio Navidad',c:VILLANCICOS},")
+    a="const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎄 Radio Navidad',c:VILLANCICOS},{nom:'🌴 Vigo Reggae',c:REGGAE}]:"
+    r(a,JS.replace('__LISTA__',LISTA)+"const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎶 Vigo Nadal',c:SUNO}]:")
     # la radio parada (bajas del vehículo, carrera, sin sonido): también calla el mp3
     r("if(!play){if(RADIO.run){RADIO.run=false;RADIO.g.gain.setTargetAtTime(0,ct,.3)}return}",
       "if(!play){radioMp3Para();if(RADIO.run){RADIO.run=false;RADIO.g.gain.setTargetAtTime(0,ct,.3)}return}")
