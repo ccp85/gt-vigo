@@ -45,7 +45,7 @@ JS=r"""
 const SUNO=__LISTA__.map(c=>({nom:c.nom,f:c.f,mp3:true,bpm:120,bars:1,paso(){}}));
 function radioMp3(S,ct){const Q=RADIO;
  if(!Q.au){Q.au=new Audio();Q.au.preload='auto';Q.au.playsInline=true;Q.auErr=0;
-  Q.auSrc=AC.createMediaElementSource(Q.au);Q.auG=AC.createGain();Q.auG.gain.value=.75;Q.auSrc.connect(Q.auG);Q.auG.connect(Q.g);
+  Q.auSrc=AC.createMediaElementSource(Q.au);Q.auG=AC.createGain();Q.auG.gain.value=1.15;Q.auSrc.connect(Q.auG);Q.auG.connect(Q.g);
   Q.au.addEventListener('playing',()=>{Q.auErr=0});
   Q.au.addEventListener('ended',()=>{const S_=CANCIONES[Q.i];if(!S_||!S_.mp3||S_.f!==Q.auF)return;Q.i=(Q.i+1)%CANCIONES.length;Q.run=false;radioGuarda();radioAviso();radioPanelPinta()});
   Q.au.addEventListener('error',()=>{const S_=CANCIONES[Q.i];if(!S_||!S_.mp3)return;Q.auF=null;
