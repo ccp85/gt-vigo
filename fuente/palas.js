@@ -10,25 +10,74 @@ function mkPala(){const g=new THREE.Group(),M=(c,r)=>new THREE.MeshStandardMater
  const hoja=new THREE.Mesh(new THREE.CylinderGeometry(.0078,.0078,.0011,20),M(0xc98b4b,.7));hoja.rotation.z=Math.PI/2;hoja.scale.set(1,1,.86);hoja.position.y=-.0255;g.add(hoja);
  const borde=new THREE.Mesh(new THREE.TorusGeometry(.0078,.0006,6,20),M(0x2b8fd6,.5));borde.rotation.y=Math.PI/2;borde.scale.set(1,.86,1);borde.position.y=-.0255;g.add(borde);
  g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
-// la chica: el mismo muñeco que el protagonista, en bikini, chanclas y coleta
-function mkChica(){const g=mkPersona(),R=a=>a[(Math.random()*a.length)|0];const piel=new THREE.Color(R(PIEL_C)),bik=R(BANO_C).clone(),pelo=new THREE.Color(R([0x2a1d16,0x3a2a20,0x6b4a2a,0xc9a15a,0x8a3a22,0xd8b878]));
- const CAMB={0x2f5596:'piel',0x4a74b8:'piel',0xf6f5f1:'piel',0xdcdad4:'piel',0xf4f3ee:'piel',0x2b8fd6:'piel',0xf2efe8:'piel',0x2a2c33:'chancla'};
- const ch=new THREE.Color(R([0xff7aa8,0xf2c230,0x14a3a3,0xffffff]));const quitar=[];
- g.traverse(o=>{if(!o.isMesh)return;const m=o.material;if(m.map){quitar.push(o);return}const k=CAMB[m.color.getHex()];if(!k)return;o.material=m.clone();o.material.color.copy(k==='piel'?piel:ch);
-  if(o.geometry.type==='TorusGeometry'&&o.parent===g.userData.tronco)quitar.push(o)});
- for(const o of quitar)o.parent.remove(o);
- const T=g.userData.tronco,mb=new THREE.MeshStandardMaterial({color:bik,roughness:.6}),mp=new THREE.MeshStandardMaterial({color:pelo,roughness:.85});
- for(const o of T.children)if(o.isMesh&&o.geometry.type==='CapsuleGeometry'&&Math.abs(o.position.y-.0004)<1e-5)o.material=mb;    // cadera → braguita
- const banda=new THREE.Mesh(new THREE.CylinderGeometry(.0121,.0121,.0042,20),mb);banda.scale.set(.7,1,1);banda.position.y=.0185;T.add(banda);
- for(const s of[-1,1]){const c=new THREE.Mesh(new THREE.SphereGeometry(.0036,12,8),mb);c.scale.set(.62,.95,1);c.position.set(.0068,.0182,s*.0042);T.add(c)}
- const cab=g.userData.cabeza,H=.0094;
- const cas=new THREE.Mesh(new THREE.SphereGeometry(.0104,24,14,0,Math.PI*2,0,Math.PI*.6),mp);cas.position.set(-.0006,H,0);cas.rotation.z=.34;cab.add(cas);
- const nuca=new THREE.Mesh(new THREE.SphereGeometry(.0098,16,10),mp);nuca.scale.set(.75,.8,1.02);nuca.position.set(-.0035,H-.0015,0);cab.add(nuca);
- const col=new THREE.Mesh(new THREE.CapsuleGeometry(.0034,.011,4,10),mp);col.position.set(-.0118,H-.004,0);col.rotation.z=-.35;cab.add(col);
- const gom=new THREE.Mesh(new THREE.TorusGeometry(.0029,.0008,6,12),new THREE.MeshStandardMaterial({color:ch,roughness:.5}));gom.position.set(-.0105,H+.0022,0);gom.rotation.set(0,Math.PI/2,-.35+Math.PI/2);cab.add(gom);
- for(const o of cab.children)if(o.geometry&&o.geometry.type==='TorusGeometry'&&o!==gom)o.material=new THREE.MeshStandardMaterial({color:0xb03a3a,roughness:.5});   // labios
- const pala=mkPala();g.userData.brazos.children[1].userData.codo.add(pala);g.userData.pala=pala;
- g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.scale.setScalar(.74);g.name='chica_palas';return g}
+// la chica: muñeca cartoon propia (misma articulación que el protagonista para andar y golpear), figura de reloj de arena,
+// bikini de triángulo con tiras, chanclas, pelo largo suelto o coleta, pestañas, labios y colorete; a veces gafas de sol en la cabeza
+function mkChica(){const g=new THREE.Group(),R=a=>a[(Math.random()*a.length)|0];
+ const piel=new THREE.Color(R(PIEL_C)),bik=R(BANO_C),pc=R([0x2a1d16,0x3a2a20,0x6b4a2a,0xc9a15a,0x8a3a22,0xe0c27a,0x15171c]),pelo=new THREE.Color(pc);
+ const MC={},M=(c,r=.55,x={})=>{const k=new THREE.Color(c).getHex()+'|'+r+'|'+JSON.stringify(x);return MC[k]||(MC[k]=new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r,metalness:0},x)))};
+ const mP=M(piel,.5),mB=M(bik,.42),mH=M(pelo,.65),mC=M(R([0xff7aa8,0xf2c230,0x14a3a3,0xffffff,0x1d4fa8]),.6),mN=M(0x1a1412,.4);
+ const add=(par,geo,mat,x=0,y=0,z=0,rx=0,ry=0,rz=0,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.scale.set(sx,sy,sz);par.add(m);return m};
+ const CAP=(r,l,s=12)=>new THREE.CapsuleGeometry(r,l,4,s),ESF=(r,a=16,b=12)=>new THREE.SphereGeometry(r,a,b),CIL=(a,b,h,s=14)=>new THREE.CylinderGeometry(a,b,h,s);
+ const palo=(par,a,b,r,mat)=>{const A=new THREE.Vector3(...a),d=new THREE.Vector3(...b).sub(A),L=d.length();const m=add(par,CIL(r,r,L,6),mat);m.position.copy(A).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return m};
+ // ---- piernas largas: muslo, rodilla, pantorrilla y pie con chancla
+ const piernas=new THREE.Group();piernas.position.y=.033;g.add(piernas);
+ for(const z of[-.0043,.0043]){const pv=new THREE.Group();pv.position.z=z;piernas.add(pv);
+  add(pv,CAP(.0045,.0082),mP,0,-.0068,0,0,0,0,.95,1,1);
+  const rod=new THREE.Group();rod.position.y=-.0152;pv.add(rod);pv.userData.rod=rod;
+  add(rod,ESF(.0032,12,8),mP,0,0,0);
+  add(rod,CAP(.0031,.0092),mP,0,-.0064,0);
+  add(rod,ESF(.0031,12,8),mP,-.0007,-.0045,0,0,0,0,.9,1.35,.95);   // gemelo
+  const pie=new THREE.Group();pie.position.y=-.0161;rod.add(pie);
+  add(pie,CAP(.0017,.0056,10),mP,.0021,-.0006,0,0,0,Math.PI/2,1,1,1.05);
+  add(pie,new THREE.BoxGeometry(.0102,.0009,.0045),mC,.0021,-.0019,0);
+  palo(pie,[.0042,-.0014,0],[.0006,.0002,z<0?-.0019:.0019],.00045,mC)}
+ g.userData.piernas=piernas;
+ // ---- tronco: cadera ancha, cintura estrecha, pecho y hombros finos
+ const T0=.033,tronco=new THREE.Group();tronco.position.y=T0;g.add(tronco);g.userData.tronco=tronco;
+ add(tronco,ESF(.0088,20,14),mP,0,.0012,0,0,0,0,.7,.62,1);
+ const perfil=[[.0001,.0006],[.0083,.0006],[.0088,.0035],[.0072,.0085],[.0064,.0115],[.0068,.014],[.0079,.0175],[.0084,.0205],[.0079,.024],[.0058,.0268],[.003,.0284],[.0001,.0288]].map(([r,y])=>new THREE.Vector2(r,y));
+ add(tronco,new THREE.LatheGeometry(perfil,24),mP,0,0,0,0,0,0,.64,1,1);
+ // braguita de bikini con lazos a los lados
+ add(tronco,new THREE.SphereGeometry(.0091,22,10,0,Math.PI*2,Math.PI*.42,Math.PI*.58),mB,.0001,.0012,0,0,0,0,.72,.66,1.03);
+ for(const s of[-1,1]){add(tronco,ESF(.0011,8,6),mB,0,.0026,s*.009);palo(tronco,[0,.0026,s*.009],[.0008,-.0004,s*.0096],.0004,mB)}
+ // parte de arriba: dos triángulos (copas), banda y tiras al cuello
+ for(const s of[-1,1]){add(tronco,ESF(.0036,14,10),mB,.0039,.0182,s*.0037,0,s*.15,0,.72,.92,.98);
+  palo(tronco,[.0052,.0205,s*.0036],[.0012,.0268,s*.0027],.0004,mB)}
+ add(tronco,new THREE.TorusGeometry(.0077,.00055,6,24),mB,0,.0158,0,Math.PI/2,0,0,.66,1,1);
+ // ---- brazos finos: hombro, codo, mano
+ const brazos=new THREE.Group();tronco.add(brazos);
+ for(const z of[-.0104,.0104]){const b=new THREE.Group();b.position.set(-.0004,.0238,z);b.rotation.x=z<0?.1:-.1;brazos.add(b);
+  add(b,ESF(.0031,14,10),mP,0,-.0002,0);
+  add(b,CAP(.0024,.0068),mP,0,-.0048,0);
+  const codo=new THREE.Group();codo.position.y=-.0104;b.add(codo);b.userData.codo=codo;
+  add(codo,CAP(.0021,.0064),mP,0,-.0043,0);
+  add(codo,ESF(.0024,12,8),mP,.0002,-.0104,0,0,0,0,.8,1.15,.72);
+  add(codo,ESF(.001,8,6),mP,.0021,-.0094,z<0?.001:-.001)}
+ g.userData.brazos=brazos;
+ // ---- cuello y cabeza
+ add(tronco,CIL(.0023,.0027,.0055,12),mP,0,.0293,0);
+ const cab=new THREE.Group();cab.position.y=.0315;tronco.add(cab);g.userData.cabeza=cab;const H=.0088;
+ add(cab,ESF(.0088,24,18),mP,0,H,0,0,0,0,.95,1.04,.92);
+ add(cab,ESF(.0052,16,10),mP,.0034,H-.0045,0,0,0,0,.9,.7,1.05);       // barbilla suave
+ for(const s of[-1,1]){const z=s*.0032;
+  add(cab,ESF(.0014,10,8),mN,.0079,H+.0008,z,0,0,0,.5,1.3,.95);                          // ojo
+  add(cab,ESF(.0004,6,4),M(0xffffff,.2),.0085,H+.0013,z+s*.0004);                        // brillo
+  add(cab,new THREE.BoxGeometry(.0004,.0007,.0024),mN,.0081,H+.0024,z+s*.0006,s*.35,0,0); // pestañas
+  add(cab,CAP(.00035,.0026,6),M(new THREE.Color(pc).multiplyScalar(.8),.7),.0083,H+.0042,z,Math.PI/2+s*.15,0,0);   // ceja
+  add(cab,ESF(.0016,10,8),M(0xf08a8a,.6,{transparent:true,opacity:.45}),.0073,H-.0016,s*.0051,0,0,0,.4,.8,1);   // colorete
+  add(cab,ESF(.0018,10,8),mP,-.0004,H,s*.0086,0,0,0,.6,.95,.45)}                         // oreja
+ add(cab,ESF(.0009,8,6),mP,.0089,H-.0012,0,0,0,0,1,.8,.9);                                  // nariz
+ const mL=M(0xc8404f,.35);add(cab,ESF(.0013,10,8),mL,.0084,H-.0036,0,0,0,0,.6,.42,1.5);add(cab,ESF(.0012,10,8),mL,.0083,H-.0045,0,0,0,0,.6,.48,1.35);
+ // pelo: casquete, flequillo y melena suelta o coleta
+ add(cab,new THREE.SphereGeometry(.0095,26,14,0,Math.PI*2,0,Math.PI*.62),mH,-.0005,H+.0002,0,0,0,.85,1,1.02,1);
+ add(cab,ESF(.006,14,10),mH,.0052,H+.0058,.0016,0,0,-.35,.55,.45,1.45);
+ if(Math.random()<.55){add(cab,CAP(.0068,.0145,14),mH,-.0058,H-.0105,0,0,0,.1,.55,1,1.2);
+  for(const s of[-1,1])add(cab,CAP(.0021,.0115,8),mH,-.0016,H-.0062,s*.0089,s*.1,0,.1)}
+ else{add(cab,ESF(.0094,16,10),mH,-.0032,H-.0012,0,0,0,0,.72,.82,1.02);add(cab,CAP(.0034,.0115,10),mH,-.0124,H-.0045,0,0,0,-.35);
+  add(cab,new THREE.TorusGeometry(.0029,.0008,6,12),mC,-.0108,H+.0024,0,0,Math.PI/2,-.35+Math.PI/2)}
+ if(Math.random()<.4){const mG=M(0x15171c,.2,{metalness:.4});for(const s of[-1,1])add(cab,ESF(.0024,12,8),mG,.0036,H+.0086,s*.0032,0,0,-.5,.4,1,1);add(cab,CAP(.0004,.003,6),mG,.0043,H+.0089,0,Math.PI/2)}
+ const pala=mkPala();brazos.children[1].userData.codo.add(pala);g.userData.pala=pala;
+ g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.scale.setScalar(.76);g.name='chica_palas';return g}
 function palasObjetos(){if(PAL.bola)return;
  PAL.bola=new THREE.Mesh(new THREE.SphereGeometry(.0034,12,8),new THREE.MeshStandardMaterial({color:0xf2e14a,roughness:.4,emissive:0x2a2400}));PAL.bola.castShadow=true;scene.add(PAL.bola);
  PAL.sombra=new THREE.Mesh(new THREE.CircleGeometry(.004,12),new THREE.MeshBasicMaterial({color:0x1d1c33,transparent:true,opacity:.3,depthWrite:false}));PAL.sombra.rotation.x=-Math.PI/2;PAL.sombra.renderOrder=3;scene.add(PAL.sombra);

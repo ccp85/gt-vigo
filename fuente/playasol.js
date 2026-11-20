@@ -15,14 +15,29 @@ const GPL=(()=>{const U=THREE,ni=g=>{g=g.index?g.toNonIndexed():g;if(g.attribute
  const pielT=mg([cilX(.0075,-.003,.019,.0045,0,.55,1),esf(.0078,.017,.0045,0,.7,.55,1),esf(.0072,-.003,.0042,0,.9,.55,1),cilX(.0024,.019,.023,.0045,0),
   ...par(s=>cil2(.003,[-.004,.003,s*.0036],[-.031,.0026,s*.0042])),...par(s=>esf(.0022,-.032,.0042,s*.0042,.6,1.4,1)),
   ...par(s=>cil2(.0022,[.016,.0035,s*.0098],[-.004,.0026,s*.0106])),...par(s=>esf(.0021,-.006,.0026,s*.0106))]);
- const shortT=cilX(.0083,-.013,.0015,.0043,0,.6,1.02),bikiniT=mg([cilX(.0077,-.0085,.0005,.0043,0,.6,1),...par(s=>esf(.0029,.0125,.0079,s*.0036,1,.55,1))]);
+ const shortT=cilX(.0083,-.013,.0015,.0043,0,.6,1.02);
  // sentado con las piernas estiradas, mirando hacia +x y apoyado en los brazos
  const tor=new U.CylinderGeometry(.0078,.0072,.021,9);tor.scale(.62,1,1);tor.rotateZ(.18);tor.translate(-.002,.0165,0);
  const pielS=mg([ni(tor),esf(.0078,-.0037,.026,0,.62,.45,1),esf(.0075,0,.0055,0,.8,.6,1),cil2(.0024,[-.0045,.027,0],[-.005,.031,0]),
   ...par(s=>cil2(.003,[.002,.004,s*.0038],[.03,.003,s*.0044])),...par(s=>esf(.0022,.031,.0045,s*.0044,.6,1.4,1)),
   ...par(s=>cil2(.0022,[-.004,.0245,s*.0098],[-.011,.003,s*.0115])),...par(s=>esf(.0021,-.0115,.0022,s*.0115))]);
- const shortS=cilX(.0083,-.005,.01,.0055,0,.75,1.02),bikiniS=mg([cilX(.0078,-.004,.004,.0055,0,.7,1),...par(s=>esf(.0029,.0012,.0205,s*.0036,.55,1,1))]);
+ const shortS=cilX(.0083,-.005,.01,.0055,0,.75,1.02);
+ // ellas: cintura estrecha, cadera ancha, piernas y brazos finos; bikini de copas con banda
+ const pielTf=mg([esf(.007,.0155,.0045,0,.75,.55,1),cilX(.0056,.003,.0125,.0042,0,.55,1),esf(.0078,-.002,.0042,0,.95,.58,1.05),cilX(.0021,.019,.023,.0045,0),
+  ...par(s=>cil2(.0031,[-.004,.0032,s*.0035],[-.017,.0027,s*.0034])),...par(s=>cil2(.0024,[-.017,.0027,s*.0034],[-.03,.0024,s*.0036])),...par(s=>esf(.0018,-.031,.004,s*.0036,.6,1.5,1)),
+  ...par(s=>cil2(.0019,[.0145,.0034,s*.0085],[-.004,.0025,s*.0098])),...par(s=>esf(.0019,-.006,.0025,s*.0098))]);
+ const bikiniTf=mg([esf(.0081,-.003,.0042,0,.62,.6,1.07),cilX(.0064,.012,.0135,.0045,0,.58,1),...par(s=>esf(.0031,.0128,.0076,s*.0034,.95,.6,.95))]);
+ const cin=new U.CylinderGeometry(.0059,.0063,.008,9);cin.scale(.62,1,1);cin.rotateZ(.18);cin.translate(-.0012,.0112,0);
+ const pielSf=mg([esf(.0078,0,.0055,0,.8,.6,1.05),ni(cin),esf(.0072,-.0032,.0192,0,.62,.8,1),esf(.0066,-.0045,.025,0,.6,.42,1),cil2(.0021,[-.0048,.026,0],[-.0052,.031,0]),
+  ...par(s=>cil2(.0031,[.002,.004,s*.0035],[.016,.0034,s*.0037])),...par(s=>cil2(.0024,[.016,.0034,s*.0037],[.03,.003,s*.004])),...par(s=>esf(.0018,.031,.0045,s*.004,.6,1.5,1)),
+  ...par(s=>cil2(.0019,[-.0045,.0242,s*.0088],[-.011,.003,s*.0105])),...par(s=>esf(.0019,-.0115,.0022,s*.0105))]);
+ const ban=new U.CylinderGeometry(.0072,.0072,.0011,12);ban.scale(.64,1,1);ban.rotateZ(.18);ban.translate(-.0026,.0168,0);
+ const bikiniSf=mg([esf(.008,.0004,.0049,0,.8,.5,1.06),ni(ban),...par(s=>esf(.0031,.0010,.0192,s*.0034,.6,.95,.95))]);
  const cabeza=ni(new U.SphereGeometry(.0066,10,8)),pelo=ni(new U.SphereGeometry(.0071,10,5,0,Math.PI*2,0,Math.PI*.55));
+ // melena larga: tumbada, abierta sobre la toalla por encima de la cabeza; sentada, cayendo por la espalda
+ const cas=(rz)=>{const g=ni(new U.SphereGeometry(.0072,10,6,0,Math.PI*2,0,Math.PI*.58));g.rotateZ(rz);return g};
+ const peloLT=mg([cas(-Math.PI/2-.5),esf(.0075,.0075,-.0048,0,1.25,.22,1.15)]);
+ const peloLS=mg([cas(.4),esf(.0052,-.0058,-.0085,0,.5,1.35,1.12)]);
  // sombrilla a rayas (gajos pares de color; los impares, blancos, van con el palo) y toalla con dos franjas más oscuras
  const cono=ni(new U.ConeGeometry(.04,.013,12,1,true)),P=cono.attributes.position.array,N=cono.attributes.normal.array,A=[[],[]],B=[[],[]];
  for(let t=0;t<P.length/9;t++){const k=(t>>1)&1;for(let j=0;j<9;j++){A[k].push(P[t*9+j]);B[k].push(N[t*9+j])}}
@@ -30,7 +45,7 @@ const GPL=(()=>{const U=THREE,ni=g=>{g=g.index?g.toNonIndexed():g;if(g.attribute
  const somB=mg([cil2(.0009,[0,0,0],[0,.073,0],5),esf(.0016,0,.0735,0),gajos(1)]);
  const vc=(g,v)=>{const n=g.attributes.position.count;g.setAttribute('color',new U.Float32BufferAttribute(new Float32Array(n*3).fill(v),3));return g};
  const toalla=mg([vc(caja(.054,.0012,.025,0,.0006,0),1),...par(s=>vc(caja(.006,.0012,.025,s*.03,.0006,0),.62))]);
- return {pielT,shortT,bikiniT,pielS,shortS,bikiniS,cabeza,pelo,somB,telaA:gajos(0),toalla}})();
+ return {pielT,shortT,pielS,shortS,pielTf,bikiniTf,pielSf,bikiniSf,cabeza,pelo,peloLT,peloLS,somB,telaA:gajos(0),toalla}})();
 const TIPOS_P=Object.keys(GPL);let MAT_P=null;
 function matPlaya(){if(MAT_P)return MAT_P;MAT_P={};const sh=new THREE.MeshStandardMaterial({roughness:.6}),ro=new THREE.MeshStandardMaterial({roughness:.75});
  for(const t of TIPOS_P)MAT_P[t]=/^piel|cabeza/.test(t)?sh:ro;MAT_P.telaA=new THREE.MeshStandardMaterial({roughness:.8,side:THREE.DoubleSide});
@@ -61,10 +76,10 @@ function vidaPlaya(root){root.updateMatrixWorld(true);const tris=[];let tot=0;co
  const rnd=L=>L[(Math.random()*L.length)|0];
  const persona=(ch,p,a,lx,lz,ang,sent)=>{const ella=Math.random()<.5,piel=new THREE.Color(rnd(PIEL_C)),ba=rnd(BANO_C),pe=new THREE.Color(rnd(PELO_C)),cs=Math.cos(ang),sn=Math.sin(ang);
   const rot=(x,z)=>[lx+x*cs+z*sn,lz-x*sn+z*cs];
-  if(sent){const [hx,hz]=rot(-.0055,0);pon(ch,'pielS',p,a,lx,.0013,lz,ang,piel);pon(ch,ella?'bikiniS':'shortS',p,a,lx,.0013,lz,ang,ba);
-   pon(ch,'cabeza',p,a,hx,.0368,hz,ang,piel);pon(ch,'pelo',p,a,hx,.0368,hz,ang,pe,RS)}
-  else{const [hx,hz]=rot(.026,0);pon(ch,'pielT',p,a,lx,.0013,lz,ang,piel);pon(ch,ella?'bikiniT':'shortT',p,a,lx,.0013,lz,ang,ba);
-   pon(ch,'cabeza',p,a,hx,.0068,hz,ang,piel);pon(ch,'pelo',p,a,hx,.0068,hz,ang,pe,RT)}};
+  if(sent){const [hx,hz]=rot(-.0055,0);pon(ch,ella?'pielSf':'pielS',p,a,lx,.0013,lz,ang,piel);pon(ch,ella?'bikiniSf':'shortS',p,a,lx,.0013,lz,ang,ba);
+   pon(ch,'cabeza',p,a,hx,.0368,hz,ang,piel);if(ella&&Math.random()<.75)pon(ch,'peloLS',p,a,hx,.0368,hz,ang,pe);else pon(ch,'pelo',p,a,hx,.0368,hz,ang,pe,RS)}
+  else{const [hx,hz]=rot(.025,0);pon(ch,ella?'pielTf':'pielT',p,a,lx,.0013,lz,ang,piel);pon(ch,ella?'bikiniTf':'shortT',p,a,lx,.0013,lz,ang,ba);
+   pon(ch,'cabeza',p,a,hx,.0068,hz,ang,piel);if(ella&&Math.random()<.75)pon(ch,'peloLT',p,a,hx,.0068,hz,ang,pe);else pon(ch,'pelo',p,a,hx,.0068,hz,ang,pe,RT)}};
  const toalla=(ch,p,a,lx,lz,ang)=>pon(ch,'toalla',p,a,lx,0,lz,ang,rnd(TOA_C));
  const dePie=(ch,p,a,lx,lz,ang)=>{const cs=Math.cos(a),sn=Math.sin(a);DP.push([p.x+lx*cs+lz*sn,p.y,p.z-lx*sn+lz*cs,a+ang,.93+Math.random()*.12])};
  for(const p of S){const ch=trozo(p),a=Math.random()*6.2832,r=Math.random();
