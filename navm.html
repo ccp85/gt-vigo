@@ -5113,7 +5113,25 @@ const REGGAE=[
  reggae('Bus de Coia',82,48,[[0],[9,'m'],[5],[7]],[[0,0,3],[3,0,1],[4,7,2],[8,12,2],[10,7,2],[12,4,2],[14,2,2]],
   [[0,7,2],[2,9,2],[4,12,4],[8,9,2],[10,7,2],[12,4,4],[16,5,2],[18,4,2],[20,2,4],[24,0,2],[26,2,2],[28,4,4]])];
 CANCIONES.push(...REGGAE);
-const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎄 Radio Navidad',c:VILLANCICOS},{nom:'🌴 Vigo Reggae',c:REGGAE}]:[{nom:'📻 Radio Vigo',c:VIGO3},{nom:'🌴 Vigo Reggae',c:REGGAE}];
+
+// ---------- 🎶 Vigo Nadal: canciones propias en mp3 (edit_radiosuno.py)
+const SUNO=[{"nom": "Vigo en Navidad", "f": "musica/vigo-en-navidad.mp3"}, {"nom": "Merry Christmas, Vigo", "f": "musica/merry-christmas-vigo.mp3"}, {"nom": "Vigo, Bo Nadal", "f": "musica/vigo-bo-nadal.mp3"}, {"nom": "Santa Claus in Vigo", "f": "musica/santa-claus-in-vigo.mp3"}, {"nom": "Three Kings in Vigo", "f": "musica/three-kings-in-vigo.mp3"}, {"nom": "Kings Yah Come", "f": "musica/kings-yah-come.mp3"}, {"nom": "Vigo Lights", "f": "musica/vigo-lights.mp3"}, {"nom": "Acéndense as Luces", "f": "musica/acendense-as-luces.mp3"}, {"nom": "Vigo Se Enciende", "f": "musica/vigo-se-enciende.mp3"}, {"nom": "Christmas House Groove", "f": "musica/christmas-house-groove.mp3"}, {"nom": "Vigo enciende la Navidad", "f": "musica/vigo-enciende-la-navidad.mp3"}, {"nom": "Let Your Christmas Shine", "f": "musica/let-your-christmas-shine.mp3"}, {"nom": "8-Bit Christmas", "f": "musica/8-bit-christmas.mp3"}, {"nom": "Vigo, Turn the Night to Day", "f": "musica/vigo-turn-the-night-to-day.mp3"}, {"nom": "Light It Up, Vigo", "f": "musica/light-it-up-vigo.mp3"}, {"nom": "Vigo in Christmas", "f": "musica/vigo-in-christmas.mp3"}, {"nom": "Festive Club Drop", "f": "musica/festive-club-drop.mp3"}, {"nom": "Vigo en Navidad II", "f": "musica/vigo-en-navidad-1.mp3"}, {"nom": "Silent Night Waltz", "f": "musica/silent-night-waltz.mp3"}, {"nom": "Vigo Lights Up", "f": "musica/vigo-lights-up.mp3"}, {"nom": "Navidad de 8-Bit", "f": "musica/navida-de-8-bit.mp3"}, {"nom": "Merry Christmas, Vigo II", "f": "musica/merry-christmas-vigo-1.mp3"}, {"nom": "Vigo, Turn the Night to Day II", "f": "musica/vigo-turn-the-night-to-day-1.mp3"}, {"nom": "Christmas House Groove II", "f": "musica/christmas-house-groove-1.mp3"}, {"nom": "Vigo en Navidad III", "f": "musica/vigo-en-navidad-2.mp3"}, {"nom": "Pixelated Carol", "f": "musica/pixelated-carol.mp3"}, {"nom": "Canción sorpresa", "f": "musica/untitled.mp3"}].map(c=>({nom:c.nom,f:c.f,mp3:true,bpm:120,bars:1,paso(){}}));
+function radioMp3(S,ct){const Q=RADIO;
+ if(!Q.au){Q.au=new Audio();Q.au.preload='auto';Q.au.playsInline=true;Q.auErr=0;
+  Q.auSrc=AC.createMediaElementSource(Q.au);Q.auG=AC.createGain();Q.auG.gain.value=.75;Q.auSrc.connect(Q.auG);Q.auG.connect(Q.g);
+  Q.au.addEventListener('playing',()=>{Q.auErr=0});
+  Q.au.addEventListener('ended',()=>{const S_=CANCIONES[Q.i];if(!S_||!S_.mp3||S_.f!==Q.auF)return;Q.i=(Q.i+1)%CANCIONES.length;Q.run=false;radioGuarda();radioAviso();radioPanelPinta()});
+  Q.au.addEventListener('error',()=>{const S_=CANCIONES[Q.i];if(!S_||!S_.mp3)return;Q.auF=null;
+   if(++Q.auErr>=4){emisoraPon(((Q.e||0)+1)%EMISORAS.length,0,true);return}Q.i=(Q.i+1)%CANCIONES.length;Q.run=false;radioGuarda()})}
+ if(Q.auF!==S.f){Q.auF=S.f;Q.au.src=S.f;Q.run=false}
+ if(!Q.run){Q.run=true;Q.g.gain.cancelScheduledValues(ct);Q.g.gain.setTargetAtTime(.42,ct,.4);if(!Q.dicho){Q.dicho=1;setTimeout(radioAviso,2500)}}
+ if(Q.au.ended)return;
+ if(Q.au.paused&&!Q.au.dataset.pide){Q.au.dataset.pide=1;const p=Q.au.play();if(p&&p.then)p.then(()=>{delete Q.au.dataset.pide},()=>{delete Q.au.dataset.pide});else delete Q.au.dataset.pide}
+ Q.g.gain.setTargetAtTime(MODO==='heli'?.3:.42,ct,.3)}
+function radioMp3Para(){const Q=RADIO;if(Q.au&&!Q.au.paused)Q.au.pause()}
+// los navegadores del móvil solo dejan arrancar un <audio> dentro de un toque o tecla
+['pointerdown','touchend','keydown'].forEach(ev=>addEventListener(ev,()=>{const Q=RADIO,S=CANCIONES[Q.i];if(Q.au&&Q.au.paused&&Q.run&&S&&S.mp3)Q.au.play().catch(()=>{})},{capture:true,passive:true}));
+const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎶 Vigo Nadal',c:SUNO},{nom:'🎄 Radio Navidad',c:VILLANCICOS},{nom:'🌴 Vigo Reggae',c:REGGAE}]:[{nom:'📻 Radio Vigo',c:VIGO3},{nom:'🌴 Vigo Reggae',c:REGGAE}];
 function emisoraPon(e,i,callado){RADIO.e=Math.max(0,Math.min(EMISORAS.length-1,e|0));CANCIONES.length=0;CANCIONES.push(...EMISORAS[RADIO.e].c);RADIO.i=Math.max(0,(i|0)%CANCIONES.length);RADIO.on=true;RADIO.run=false;
  try{localStorage.setItem(window.SOLO_NAVIDAD?'gtvigo_nav_emisora':'gtvigo_emisora',String(RADIO.e))}catch(_){}radioGuarda();if(!callado)radioAviso();radioPanelPinta()}
 {let e=0;try{e=window.SOLO_NAVIDAD?0:(+localStorage.getItem('gtvigo_emisora')||0)}catch(_){}const on=RADIO.on;emisoraPon(e,RADIO.i,true);RADIO.on=on}
@@ -5121,7 +5139,7 @@ function radioPanelPinta(){const P_=document.getElementById('radioPanel');if(!P_
  P_.querySelector('.em').innerHTML=EMISORAS.map((x,k)=>`<button data-e="${k}" class="${k===RADIO.e?'sel':''}">${x.nom}</button>`).join('');
  P_.querySelector('.ca').innerHTML=E.c.map((x,k)=>`<button data-i="${k}" class="${RADIO.on&&k===RADIO.i?'sel':''}">${RADIO.on&&k===RADIO.i?'🔊':'▶'} ${x.nom}</button>`).join('')+`<button data-off="1" class="${RADIO.on?'':'sel'}">⏻ Apagar la radio</button>`;
  P_.querySelectorAll('.em button').forEach(b=>b.onclick=ev=>{ev.stopPropagation();emisoraPon(+b.dataset.e,0)});
- P_.querySelectorAll('.ca button').forEach(b=>b.onclick=ev=>{ev.stopPropagation();if(b.dataset.off){RADIO.on=false;RADIO.run=false;if(RADIO.g)RADIO.g.gain.setTargetAtTime(0,AC.currentTime,.1);radioGuarda();radioAviso();radioPanelPinta()}else emisoraPon(RADIO.e,+b.dataset.i)});
+ P_.querySelectorAll('.ca button').forEach(b=>b.onclick=ev=>{ev.stopPropagation();if(b.dataset.off){radioMp3Para();RADIO.on=false;RADIO.run=false;if(RADIO.g)RADIO.g.gain.setTargetAtTime(0,AC.currentTime,.1);radioGuarda();radioAviso();radioPanelPinta()}else emisoraPon(RADIO.e,+b.dataset.i)});
  const f=P_.querySelector('.ca button.sel')||P_.querySelector('.ca button');if(f&&document.body.classList.contains('pad'))f.focus({preventScroll:true})}
 // cartelito de la emisora al cambiar de canción (Ⓨ / M): icono grande, emisora y título
 function radioOSD(){let el=document.getElementById('radioOSD');if(!el){el=document.createElement('div');el.id='radioOSD';el.style.cssText='position:fixed;right:14px;top:calc(110px + env(safe-area-inset-top));z-index:80;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:16px;background:rgba(18,20,38,.88);color:#fff;font:600 13px system-ui;box-shadow:0 6px 24px rgba(0,0,0,.4);transition:opacity .4s,transform .4s;pointer-events:none';document.body.appendChild(el)}
@@ -5133,8 +5151,8 @@ function radioAviso(){radioOSD();try{mostrar(RADIO.on?(EMISORAS[RADIO.e||0].nom+
 function radioSig(){setTimeout(radioPanelPinta,0);if(RADIO.on&&RADIO.i>=CANCIONES.length-1){emisoraPon(((RADIO.e||0)+1)%EMISORAS.length,0);return}if(!RADIO.on){RADIO.on=true;RADIO.i=0}else if(RADIO.i>=CANCIONES.length-1)RADIO.on=false;else RADIO.i++;RADIO.run=false;
  if(!RADIO.on&&RADIO.g)RADIO.g.gain.setTargetAtTime(0,AC.currentTime,.1);radioGuarda();radioAviso()}
 function radioTick(){if(!AC||!master)return;radNodos();if(!RADIO.g)return;const ct=AC.currentTime,play=RADIO.on&&driving&&MODO!=='pie'&&MODO!=='nado'&&(!RACE.on||!!window.SOLO_NAVIDAD)&&soundOn;
- if(!play){if(RADIO.run){RADIO.run=false;RADIO.g.gain.setTargetAtTime(0,ct,.3)}return}
- const S=CANCIONES[RADIO.i],sm=60/S.bpm/4;
+ if(!play){radioMp3Para();if(RADIO.run){RADIO.run=false;RADIO.g.gain.setTargetAtTime(0,ct,.3)}return}
+ const S=CANCIONES[RADIO.i],sm=60/S.bpm/4;if(S.mp3){radioMp3(S,ct);return}radioMp3Para();
  if(!RADIO.run){RADIO.run=true;RADIO.k=0;RADIO.t=ct+.1;RADIO.dl.delayTime.setValueAtTime(60/S.bpm*.75,ct);RADIO.g.gain.cancelScheduledValues(ct);RADIO.g.gain.setTargetAtTime(.42,ct,.4);if(!RADIO.dicho){RADIO.dicho=1;setTimeout(radioAviso,2500)}}
  if(RADIO.t<ct-.2)RADIO.t=ct+.02;
  while(RADIO.t<ct+.22){S.paso(RADIO.k,RADIO.t);RADIO.k++;RADIO.t+=sm;if(RADIO.k>=16*S.bars){RADIO.i=(RADIO.i+1)%CANCIONES.length;RADIO.run=false;radioGuarda();radioAviso();return}}
