@@ -4354,7 +4354,7 @@ function paso(){const t0=AC.currentTime,s=AC.createBufferSource(),f=AC.createBiq
 function golpe(){padVibra(.7,.35,160);if(!AC||!soundOn)return;const t0=AC.currentTime;if(t0-lastThud<.35)return;lastThud=t0;const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=NB;f.type='lowpass';f.frequency.value=260;env(g,t0,.005,.35,.25);s.connect(f);f.connect(g);g.connect(master);s.start(t0,Math.random());s.stop(t0+.35);
  const o=AC.createOscillator(),g2=AC.createGain();o.frequency.setValueAtTime(120,t0);o.frequency.exponentialRampToValueAtTime(45,t0+.2);env(g2,t0,.005,.25,.2);o.connect(g2);g2.connect(master);o.start(t0);o.stop(t0+.3)}
 window.golpe=golpe;
-function audioTick(t,dt){if(!AC)return;const ct=AC.currentTime;master.gain.setTargetAtTime(soundOn&&driving?.8:0,ct,.15);if(!soundOn||!driving)return;
+function audioTick(t,dt){if(!AC)return;const ct=AC.currentTime;master.gain.setTargetAtTime(soundOn&&driving?.8*(window.SOLO_NAVIDAD?NAV_SFX:1):0,ct,.15);if(!soundOn||!driving)return;
  marT-=dt;if(marT<=0){marT=.4;let w=0;for(let k=0;k<12;k++){const a=k/12*6.283;if(cell(P.x+Math.cos(a)*1.2,P.y+Math.sin(a)*1.2).t===0)w++;if(cell(P.x+Math.cos(a)*.5,P.y+Math.sin(a)*.5).t===0)w++}mar=w/24}
  if(t-lastA>.1){lastA=t;waveG.gain.setTargetAtTime((.05+.25*mar)*(.6+.4*Math.pow(.5+.5*Math.sin(t*.5),3)),ct,.15);cityG.gain.setTargetAtTime(.05*(1-mar)*(1-(night?.5:0)),ct,.5)}
  const sp=Math.min(1.6,Math.abs(P.v)),veh=MODO==='coche'||MODO==='moto';
@@ -5068,9 +5068,10 @@ function musTick(){if(!MUS.run||!AC)return;if(window.SOLO_NAVIDAD){if(MUS.g)MUS.
  MUS.lp.frequency.setTargetAtTime(RACE.turboT>0?7000:2600,ct,.1);MUS.g.gain.setTargetAtTime(MUS.on&&soundOn?.55:0,ct,.1)}
 function musCambia(){MUS.on=!MUS.on;try{localStorage.setItem('gtvigo_mus',MUS.on?'1':'0')}catch(e){}const b=document.getElementById('rMus');b.classList.toggle('off',!MUS.on);aviso(MUS.on?'🎵 Música':'🔇 Música apagada',1,'peq')}
 // ---------- Radio Vigo
+const NAV_SFX=.45;   // Navidad: volumen de los efectos (la radio se compensa)
 const RADIO={i:0,on:true,run:false,k:0,t:0,g:null};window.__RADIO=RADIO;
 try{const v=localStorage.getItem(window.SOLO_NAVIDAD?'gtvigo_nav_radio':'gtvigo_radio');if(v==='off')RADIO.on=false;else if(v!==null)RADIO.i=(+v||0)%10}catch(e){}
-function radNodos(){if(RADIO.g||!AC||!master)return;const Q=RADIO;Q.g=AC.createGain();Q.g.gain.value=0;Q.g.connect(master);
+function radNodos(){if(RADIO.g||!AC||!master)return;const Q=RADIO;Q.g=AC.createGain();Q.g.gain.value=0;{const bo=AC.createGain();bo.gain.value=window.SOLO_NAVIDAD?1/NAV_SFX:1;Q.g.connect(bo);bo.connect(master)}
  Q.duck=AC.createGain();Q.duck.connect(Q.g);Q.lp=AC.createBiquadFilter();Q.lp.type='lowpass';Q.lp.frequency.value=3200;Q.lp.Q.value=2;Q.lp.connect(Q.duck);
  Q.dl=AC.createDelay(1);Q.fb=AC.createGain();Q.fb.gain.value=.3;Q.wet=AC.createGain();Q.wet.gain.value=.25;Q.lp.connect(Q.dl);Q.dl.connect(Q.fb);Q.fb.connect(Q.dl);Q.dl.connect(Q.wet);Q.wet.connect(Q.g);
  Q.gai=AC.createBiquadFilter();Q.gai.type='bandpass';Q.gai.frequency.value=1500;Q.gai.Q.value=.9;Q.gai.connect(Q.lp)}
@@ -5183,7 +5184,7 @@ function radioMp3(S,ct){const Q=RADIO;
 function radioMp3Para(){const Q=RADIO;if(Q.au&&!Q.au.paused)Q.au.pause()}
 // los navegadores del móvil solo dejan arrancar un <audio> dentro de un toque o tecla
 ['pointerdown','touchend','keydown'].forEach(ev=>addEventListener(ev,()=>{const Q=RADIO,S=CANCIONES[Q.i];if(Q.au&&Q.au.paused&&Q.run&&S&&S.mp3)Q.au.play().catch(()=>{})},{capture:true,passive:true}));
-const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎶 Vigo Nadal',c:SUNO},{nom:'🎄 Radio Navidad',c:VILLANCICOS},{nom:'🌴 Vigo Reggae',c:REGGAE}]:[{nom:'📻 Radio Vigo',c:VIGO3},{nom:'🌴 Vigo Reggae',c:REGGAE}];
+const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎶 Vigo Nadal',c:SUNO}]:[{nom:'📻 Radio Vigo',c:VIGO3},{nom:'🌴 Vigo Reggae',c:REGGAE}];
 function emisoraPon(e,i,callado){RADIO.e=Math.max(0,Math.min(EMISORAS.length-1,e|0));CANCIONES.length=0;CANCIONES.push(...EMISORAS[RADIO.e].c);RADIO.i=Math.max(0,(i|0)%CANCIONES.length);RADIO.on=true;RADIO.run=false;
  try{localStorage.setItem(window.SOLO_NAVIDAD?'gtvigo_nav_emisora':'gtvigo_emisora',String(RADIO.e))}catch(_){}radioGuarda();if(!callado)radioAviso();radioPanelPinta()}
 {let e=0;try{e=window.SOLO_NAVIDAD?0:(+localStorage.getItem('gtvigo_emisora')||0)}catch(_){}const on=RADIO.on;emisoraPon(e,RADIO.i,true);RADIO.on=on}
