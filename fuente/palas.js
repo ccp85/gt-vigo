@@ -42,7 +42,7 @@ function mkChica(){const g=new THREE.Group(),R=a=>a[(Math.random()*a.length)|0];
  for(const s of[-1,1]){add(tronco,ESF(.0011,8,6),mB,0,.0026,s*.009);palo(tronco,[0,.0026,s*.009],[.0008,-.0004,s*.0096],.0004,mB)}
  // parte de arriba: dos triángulos (copas), banda y tiras al cuello
  for(const s of[-1,1]){add(tronco,ESF(.0036,14,10),mB,.0039,.0182,s*.0037,0,s*.15,0,.72,.92,.98);
-  palo(tronco,[.0052,.0205,s*.0036],[.0012,.0268,s*.0027],.0004,mB)}
+  palo(tronco,[.0057,.0203,s*.0037],[.0053,.0241,s*.0032],.00042,mB);palo(tronco,[.0053,.0241,s*.0032],[.0031,.0279,s*.0025],.00042,mB)}
  add(tronco,new THREE.TorusGeometry(.0077,.00055,6,24),mB,0,.0158,0,Math.PI/2,0,0,.66,1,1);
  // ---- brazos finos: hombro, codo, mano
  const brazos=new THREE.Group();tronco.add(brazos);
@@ -59,17 +59,27 @@ function mkChica(){const g=new THREE.Group(),R=a=>a[(Math.random()*a.length)|0];
  const cab=new THREE.Group();cab.position.y=.0315;tronco.add(cab);g.userData.cabeza=cab;const H=.0088;
  add(cab,ESF(.0088,24,18),mP,0,H,0,0,0,0,.95,1.04,.92);
  add(cab,ESF(.0052,16,10),mP,.0034,H-.0045,0,0,0,0,.9,.7,1.05);       // barbilla suave
- for(const s of[-1,1]){const z=s*.0032;
-  add(cab,ESF(.0014,10,8),mN,.0079,H+.0008,z,0,0,0,.5,1.3,.95);                          // ojo
-  add(cab,ESF(.0004,6,4),M(0xffffff,.2),.0085,H+.0013,z+s*.0004);                        // brillo
-  add(cab,new THREE.BoxGeometry(.0004,.0007,.0024),mN,.0081,H+.0024,z+s*.0006,s*.35,0,0); // pestañas
-  add(cab,CAP(.00035,.0026,6),M(new THREE.Color(pc).multiplyScalar(.8),.7),.0083,H+.0042,z,Math.PI/2+s*.15,0,0);   // ceja
-  add(cab,ESF(.0016,10,8),M(0xf08a8a,.6,{transparent:true,opacity:.45}),.0073,H-.0016,s*.0051,0,0,0,.4,.8,1);   // colorete
-  add(cab,ESF(.0018,10,8),mP,-.0004,H,s*.0086,0,0,0,.6,.95,.45)}                         // oreja
+ // cara: ojos grandes (blanco, iris de color, pupila, brillo, párpado con pestañas), cejas, colorete, orejas, nariz y boca sonriente
+ const mIr=M(R([0x5a3a22,0x3d6b3a,0x3a6aa8,0x7a5a2a]),.3),mBl=M(0xfbfbf8,.3);
+ for(const s of[-1,1]){const z=s*.0033;
+  add(cab,ESF(.002,14,10),mBl,.0074,H+.0008,z,0,0,0,.45,1.15,1);                          // blanco del ojo
+  add(cab,ESF(.00125,12,8),mIr,.0082,H+.0006,z,0,0,0,.42,1.1,1);                          // iris
+  add(cab,ESF(.00065,10,6),mN,.00865,H+.0006,z,0,0,0,.4,1,1);                             // pupila
+  add(cab,ESF(.00032,6,4),mBl,.0089,H+.0011,z+s*.0003);                                    // brillo
+  add(cab,ESF(.0021,14,8),mP,.0072,H+.0017,z,0,0,0,.5,.55,1.02);                          // párpado
+  add(cab,new THREE.BoxGeometry(.0005,.0006,.0036),mN,.0082,H+.0022,z,s*.08,0,0);          // línea de pestañas
+  add(cab,new THREE.BoxGeometry(.0004,.0011,.0007),mN,.0079,H+.0026,z+s*.0019,s*.6,0,0);   // pestaña de fuera
+  add(cab,CAP(.00035,.0026,6),M(new THREE.Color(pc).multiplyScalar(.8),.7),.0081,H+.0044,z,Math.PI/2+s*.15,0,0);   // ceja
+  add(cab,ESF(.0016,10,8),M(0xf08a8a,.6,{transparent:true,opacity:.45}),.0073,H-.0018,s*.0052,0,0,0,.4,.8,1);   // colorete
+  add(cab,ESF(.0018,10,8),mP,-.0004,H,s*.0086,0,0,0,.6,.95,.45)}                           // oreja
  add(cab,ESF(.0009,8,6),mP,.0089,H-.0012,0,0,0,0,1,.8,.9);                                  // nariz
- const mL=M(0xc8404f,.35);add(cab,ESF(.0013,10,8),mL,.0084,H-.0036,0,0,0,0,.6,.42,1.5);add(cab,ESF(.0012,10,8),mL,.0083,H-.0045,0,0,0,0,.6,.48,1.35);
+ const mL=M(0xc8404f,.35);
+ add(cab,ESF(.0014,12,8),mL,.0082,H-.0035,0,0,0,0,.55,.4,1.7);                             // labio de arriba
+ add(cab,ESF(.0013,12,8),mL,.0081,H-.0045,0,0,0,0,.6,.5,1.45);                             // labio de abajo
+ add(cab,new THREE.TorusGeometry(.0021,.00025,6,14,Math.PI*.8),M(0x5a1a20,.5),.00845,H-.0034,0,0,Math.PI/2,Math.PI*1.1,1,1,.45);   // sonrisa
+ for(const s of[-1,1])add(cab,ESF(.0004,6,4),M(0x8a2a30,.5),.0082,H-.0036,s*.0024);         // comisuras
  // pelo: casquete, flequillo y melena suelta o coleta
- add(cab,new THREE.SphereGeometry(.0095,26,14,0,Math.PI*2,0,Math.PI*.62),mH,-.0005,H+.0002,0,0,0,.85,1,1.02,1);
+ add(cab,new THREE.SphereGeometry(.0092,26,14,0,Math.PI*2,0,Math.PI*.62),mH,-.0004,H+.0002,0,0,0,.8,.97,1.05,.97);
  add(cab,ESF(.006,14,10),mH,.0052,H+.0058,.0016,0,0,-.35,.55,.45,1.45);
  if(Math.random()<.55){add(cab,CAP(.0068,.0145,14),mH,-.0058,H-.0105,0,0,0,.1,.55,1,1.2);
   for(const s of[-1,1])add(cab,CAP(.0021,.0115,8),mH,-.0016,H-.0062,s*.0089,s*.1,0,.1)}

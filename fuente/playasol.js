@@ -45,11 +45,15 @@ const GPL=(()=>{const U=THREE,ni=g=>{g=g.index?g.toNonIndexed():g;if(g.attribute
  const somB=mg([cil2(.0009,[0,0,0],[0,.073,0],5),esf(.0016,0,.0735,0),gajos(1)]);
  const vc=(g,v)=>{const n=g.attributes.position.count;g.setAttribute('color',new U.Float32BufferAttribute(new Float32Array(n*3).fill(v),3));return g};
  const toalla=mg([vc(caja(.054,.0012,.025,0,.0006,0),1),...par(s=>vc(caja(.006,.0012,.025,s*.03,.0006,0),.62))]);
- return {pielT,shortT,pielS,shortS,pielTf,bikiniTf,pielSf,bikiniSf,cabeza,pelo,peloLT,peloLS,somB,telaA:gajos(0),toalla}})();
+ // caras de los bañistas: dos ojos oscuros y boca (con su color en los vértices). Tumbados miran arriba; sentados, al frente
+ const ojo=(x,y,z,sx,sy,sz)=>vc(esf(.00105,x,y,z,sx,sy,sz),.06),boca=(x,y,z,sx,sy,sz)=>{const g=esf(.0012,x,y,z,sx,sy,sz);const n=g.attributes.position.count,c=new Float32Array(n*3);for(let i=0;i<n;i++){c[i*3]=.62;c[i*3+1]=.16;c[i*3+2]=.2}g.setAttribute('color',new U.Float32BufferAttribute(c,3));return g};
+ const caraT=mg([...par(s=>ojo(.0012,.0062,s*.0024,1,.45,.85)),boca(-.0028,.0058,0,.55,.4,1.5)]);
+ const caraS=mg([...par(s=>ojo(.0062,.0012,s*.0024,.45,1,.85)),boca(.0059,-.0028,0,.4,.55,1.5)]);
+ return {pielT,shortT,pielS,shortS,caraT,caraS,pielTf,bikiniTf,pielSf,bikiniSf,cabeza,pelo,peloLT,peloLS,somB,telaA:gajos(0),toalla}})();
 const TIPOS_P=Object.keys(GPL);let MAT_P=null;
 function matPlaya(){if(MAT_P)return MAT_P;MAT_P={};const sh=new THREE.MeshStandardMaterial({roughness:.6}),ro=new THREE.MeshStandardMaterial({roughness:.75});
  for(const t of TIPOS_P)MAT_P[t]=/^piel|cabeza/.test(t)?sh:ro;MAT_P.telaA=new THREE.MeshStandardMaterial({roughness:.8,side:THREE.DoubleSide});
- MAT_P.somB=new THREE.MeshStandardMaterial({color:0xfbf7f2,roughness:.7,side:THREE.DoubleSide});MAT_P.toalla=new THREE.MeshStandardMaterial({roughness:.9,vertexColors:true});return MAT_P}
+ MAT_P.somB=new THREE.MeshStandardMaterial({color:0xfbf7f2,roughness:.7,side:THREE.DoubleSide});MAT_P.toalla=new THREE.MeshStandardMaterial({roughness:.9,vertexColors:true});MAT_P.caraT=MAT_P.caraS=new THREE.MeshStandardMaterial({roughness:.4,vertexColors:true});return MAT_P}
 // ropa de playa para la gente de crearGente: ellos con bañador y el pecho al aire, ellas con bañador entero
 function trajeBano(G,sem=0){const C=new THREE.Color();for(let i=0;i<G.N;i++){const h=(i*7+sem*13)%97,ella=h%2===0,piel=new THREE.Color(PIEL_C[(i*3+sem)%PIEL_C.length]),ba=BANO_C[(h*5+i)%BANO_C.length];
   for(const m of [G.pi,G.pd,G.bi,G.bd,G.ca])m.setColorAt(i,piel);G.cad.setColorAt(i,ba);G.to.setColorAt(i,ella?ba:piel)}
@@ -77,9 +81,9 @@ function vidaPlaya(root){root.updateMatrixWorld(true);const tris=[];let tot=0;co
  const persona=(ch,p,a,lx,lz,ang,sent)=>{const ella=Math.random()<.5,piel=new THREE.Color(rnd(PIEL_C)),ba=rnd(BANO_C),pe=new THREE.Color(rnd(PELO_C)),cs=Math.cos(ang),sn=Math.sin(ang);
   const rot=(x,z)=>[lx+x*cs+z*sn,lz-x*sn+z*cs];
   if(sent){const [hx,hz]=rot(-.0055,0);pon(ch,ella?'pielSf':'pielS',p,a,lx,.0013,lz,ang,piel);pon(ch,ella?'bikiniSf':'shortS',p,a,lx,.0013,lz,ang,ba);
-   pon(ch,'cabeza',p,a,hx,.0368,hz,ang,piel);if(ella&&Math.random()<.75)pon(ch,'peloLS',p,a,hx,.0368,hz,ang,pe);else pon(ch,'pelo',p,a,hx,.0368,hz,ang,pe,RS)}
+   pon(ch,'cabeza',p,a,hx,.0368,hz,ang,piel);pon(ch,'caraS',p,a,hx,.0368,hz,ang,null);if(ella&&Math.random()<.75)pon(ch,'peloLS',p,a,hx,.0368,hz,ang,pe);else pon(ch,'pelo',p,a,hx,.0368,hz,ang,pe,RS)}
   else{const [hx,hz]=rot(.025,0);pon(ch,ella?'pielTf':'pielT',p,a,lx,.0013,lz,ang,piel);pon(ch,ella?'bikiniTf':'shortT',p,a,lx,.0013,lz,ang,ba);
-   pon(ch,'cabeza',p,a,hx,.0068,hz,ang,piel);if(ella&&Math.random()<.75)pon(ch,'peloLT',p,a,hx,.0068,hz,ang,pe);else pon(ch,'pelo',p,a,hx,.0068,hz,ang,pe,RT)}};
+   pon(ch,'cabeza',p,a,hx,.0068,hz,ang,piel);pon(ch,'caraT',p,a,hx,.0068,hz,ang,null);if(ella&&Math.random()<.75)pon(ch,'peloLT',p,a,hx,.0068,hz,ang,pe);else pon(ch,'pelo',p,a,hx,.0068,hz,ang,pe,RT)}};
  const toalla=(ch,p,a,lx,lz,ang)=>pon(ch,'toalla',p,a,lx,0,lz,ang,rnd(TOA_C));
  const dePie=(ch,p,a,lx,lz,ang)=>{const cs=Math.cos(a),sn=Math.sin(a);DP.push([p.x+lx*cs+lz*sn,p.y,p.z-lx*sn+lz*cs,a+ang,.93+Math.random()*.12])};
  for(const p of S){const ch=trozo(p),a=Math.random()*6.2832,r=Math.random();
