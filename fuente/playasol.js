@@ -52,6 +52,7 @@ function vidaPlaya(root){root.updateMatrixWorld(true);const tris=[];let tot=0;co
  for(let t=0;t<NS*10&&S.length<NS;t++){const p=pick(),gx=Math.floor(p.x/.06),gz=Math.floor(p.z/.06);let ok=!orilla(p.x,p.z,.05)&&!calle(p.x,p.z,.035);
   for(let dx=-1;dx<=1&&ok;dx++)for(let dz=-1;dz<=1&&ok;dz++){const L=HG.get((gx+dx)+','+(gz+dz));if(L)for(const q of L)if((q.x-p.x)**2+(q.z-p.z)**2<R2){ok=false;break}}
   if(!ok)continue;const k=gx+','+gz;(HG.get(k)||HG.set(k,[]).get(k)).push(p);S.push(p)}
+ root.userData.pickPlaya=pick;root.userData.sitiosPlaya=S;   // para la chica de las palas
  // trozos de 8 de lado (en juego se dibuja lo cercano); en el móvil, uno por zona (menos dibujos por imagen)
  const CH=new Map(),M4=new THREE.Matrix4(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),S1=new THREE.Vector3(1,1,1),Yv=new THREE.Vector3(0,1,0);
  const RT=new THREE.Matrix4().makeRotationZ(-Math.PI/2-.5),RS=new THREE.Matrix4().makeRotationZ(.4);
