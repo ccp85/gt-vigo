@@ -1284,8 +1284,8 @@ const GPL=(()=>{const U=THREE,ni=g=>{g=g.index?g.toNonIndexed():g;if(g.attribute
  const somB=mg([cil2(.0009,[0,0,0],[0,.073,0],5),esf(.0016,0,.0735,0),gajos(1)]);
  const vc=(g,v)=>{const n=g.attributes.position.count;g.setAttribute('color',new U.Float32BufferAttribute(new Float32Array(n*3).fill(v),3));return g};
  const toalla=mg([vc(caja(.054,.0012,.025,0,.0006,0),1),...par(s=>vc(caja(.006,.0012,.025,s*.03,.0006,0),.62))]);
- // caras de los bañistas: dos ojos oscuros y boca (con su color en los vértices). Tumbados miran arriba; sentados, al frente
- const ojo=(x,y,z,sx,sy,sz)=>vc(esf(.00105,x,y,z,sx,sy,sz),.06),boca=(x,y,z,sx,sy,sz)=>{const g=esf(.0012,x,y,z,sx,sy,sz);const n=g.attributes.position.count,c=new Float32Array(n*3);for(let i=0;i<n;i++){c[i*3]=.62;c[i*3+1]=.16;c[i*3+2]=.2}g.setAttribute('color',new U.Float32BufferAttribute(c,3));return g};
+ // caras de los bañistas: dos puntos negros de ojos y boca (con su color en los vértices). Tumbados miran arriba; sentados, al frente
+ const ojo=(x,y,z,sx,sy,sz)=>vc(esf(.0012,x,y,z,sx,sy,sz),0),boca=(x,y,z,sx,sy,sz)=>{const g=esf(.0012,x,y,z,sx,sy,sz);const n=g.attributes.position.count,c=new Float32Array(n*3);for(let i=0;i<n;i++){c[i*3]=.62;c[i*3+1]=.16;c[i*3+2]=.2}g.setAttribute('color',new U.Float32BufferAttribute(c,3));return g};
  const caraT=mg([...par(s=>ojo(.0012,.0062,s*.0024,1,.45,.85)),boca(-.0028,.0058,0,.55,.4,1.5)]);
  const caraS=mg([...par(s=>ojo(.0062,.0012,s*.0024,.45,1,.85)),boca(.0059,-.0028,0,.4,.55,1.5)]);
  return {pielT,shortT,pielS,shortS,caraT,caraS,pielTf,bikiniTf,pielSf,bikiniSf,cabeza,pelo,peloLT,peloLS,somB,telaA:gajos(0),toalla}})();
@@ -3722,11 +3722,12 @@ const GEO_G=(()=>{const vc=(g,c)=>{const n=g.attributes.position.count,a=new Flo
  const brazo=new THREE.CylinderGeometry(.0026,.0022,.018,6);brazo.translate(0,-.009,0);const mano=new THREE.SphereGeometry(.0024,6,4);mano.translate(0,-.0195,0);
  const brz=mergeGeometries([vc(brazo.toNonIndexed(),0xffffff),vc(mano.toNonIndexed(),0xe8b48a)]);
  const cab=new THREE.SphereGeometry(.0068,10,8);cab.scale(1,1.1,.95);cab.translate(0,.0535,0);const cue=new THREE.CylinderGeometry(.0024,.0026,.004,6);cue.translate(0,.0465,0);
- const cabeza=mergeGeometries([cab.toNonIndexed(),cue.toNonIndexed()]);
+ const ojos=[-1,1].map(k=>{const o=new THREE.SphereGeometry(.0012,6,4);o.scale(.55,1.2,1);o.translate(.0063,.0548,k*.0025);return vc(o,0x000000)});   // ojos: dos puntos negros (edit_ojos)
+ const cabeza=mergeGeometries([vc(cab,0xffffff),vc(cue,0xffffff),...ojos]);
  const pelo=new THREE.SphereGeometry(.0072,10,6,0,Math.PI*2,0,Math.PI*.55);pelo.rotateZ(.35);pelo.translate(-.001,.0552,0);
  return {pierna,torso,brz,cabeza,pelo,cad}})();
 function crearGente(N,nombre){const mk=(geo,vcol,c)=>{const m=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({roughness:.7,vertexColors:vcol,color:c||0xffffff}),N);m.frustumCulled=false;m.castShadow=true;m.name=nombre;return m};
- const G={pi:mk(GEO_G.pierna,true),pd:mk(GEO_G.pierna,true),cad:mk(GEO_G.cad,false),to:mk(GEO_G.torso,true),bi:mk(GEO_G.brz,true),bd:mk(GEO_G.brz,true),ca:mk(GEO_G.cabeza,false),pe:mk(GEO_G.pelo,false),N};
+ const G={pi:mk(GEO_G.pierna,true),pd:mk(GEO_G.pierna,true),cad:mk(GEO_G.cad,false),to:mk(GEO_G.torso,true),bi:mk(GEO_G.brz,true),bd:mk(GEO_G.brz,true),ca:mk(GEO_G.cabeza,true),pe:mk(GEO_G.pelo,false),N};
  G.all=[G.pi,G.pd,G.cad,G.to,G.bi,G.bd,G.ca,G.pe];
  for(let i=0;i<N;i++){const pc=new THREE.Color(PANT_C[(i*5+1)%PANT_C.length]),rc=new THREE.Color(ROPA_C[(i*7+3)%ROPA_C.length]);
   G.pi.setColorAt(i,pc);G.pd.setColorAt(i,pc);G.cad.setColorAt(i,pc);G.to.setColorAt(i,rc);G.bi.setColorAt(i,rc);G.bd.setColorAt(i,rc);
@@ -5900,7 +5901,7 @@ function carroza(g,tipo,pint,bx,ruedas4,luces){
  const cono=(r,h,mat,x,y,z,rz=0,seg=10,name)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg),mat);m.position.set(x,y,z);m.rotation.z=rz;if(name)m.name=name;g.add(m);return m};
  // figura sentada: túnica, cabeza, barba, brazos al volante
  const figura=(x,tun,piel,barba,capa)=>{const T=MV(tun,.7);cil(.0078,.0105,.022,T,x,.046,0);if(capa!=null)cil(.0086,.012,.018,MV(capa,.8),x-.003,.045,0);
-  esf(.0064,MV(piel,.75),x,.0635,0);if(barba!=null){esf(.0056,MV(barba,.85),x+.0032,.0585,0,1,1.25,1.05);esf(.0034,MV(barba,.85),x+.005,.053,0,1,1.4,1)}
+  esf(.0064,MV(piel,.75),x,.0635,0);for(const z of[-.0024,.0024])esf(.0011,NEGRO,x+.0058,.0655,z,.55,1.2,1);if(barba!=null){esf(.0056,MV(barba,.85),x+.0032,.0585,0,1,1.25,1.05);esf(.0034,MV(barba,.85),x+.005,.053,0,1,1.4,1)}
   for(const z of[.0095,-.0095]){const a=bx(.016,.0042,.0042,x+.008,.05,z,T);a.rotation.z=-.35;esf(.0026,MV(piel,.75),x+.016,.0465,z)}
   bx(.002,.012,.016,x+.018,.044,0,NEGRO)};                                                   // volante
  const corona=(x,y,gema)=>{cil(.0058,.0052,.0045,ORO,x,y,0,0,0,10);for(let k=0;k<6;k++){const a=k/6*6.283;cono(.0014,.004,ORO,x+Math.cos(a)*.0052,y+.004,Math.sin(a)*.0052,0,5)}esf(.0015,brillo(gema,1.2),x+.0058,y,0)};
@@ -7261,7 +7262,7 @@ function casaConstruye(){const C=CASM,G=new THREE.Group();G.name='casaDentro';co
  // los de la casa: cuerpo, cabeza y cono de visión
  const gente=[{n:'Papá',col:0x2a4fa8,ruta:[[.14,.88],[.6,.88],[.6,.7],[.14,.7]],v:.085,esp:1},{n:'Mamá',col:0xc23f6a,ruta:[[.86,.92],[1.66,.92]],v:.075,esp:1.4},{n:'Niño',col:0x2fa84f,fijo:[.98,.3],mira:Math.PI/2,barre:1.25,per:6.5,peq:1}];
  C.gente=gente.map(g=>{const o=new THREE.Group(),s_=g.peq?.75:1;const cu=new THREE.Mesh(new THREE.CylinderGeometry(.013*s_,.016*s_,.05*s_,10),M(g.col,.7));cu.position.y=.032*s_;o.add(cu);
-  const ca=new THREE.Mesh(new THREE.SphereGeometry(.011*s_,10,8),M(0xf0c8a8,.7));ca.position.y=.068*s_;o.add(ca);const ojo=new THREE.Mesh(new THREE.BoxGeometry(.004,.003,.014*s_),M(0x111111,.5));ojo.position.set(.01*s_,.07*s_,0);o.add(ojo);
+  const ca=new THREE.Mesh(new THREE.SphereGeometry(.011*s_,10,8),M(0xf0c8a8,.7));ca.position.y=.068*s_;o.add(ca);for(const k of[-1,1]){const ojo=new THREE.Mesh(new THREE.SphereGeometry(.0019*s_,8,6),M(0x111111,.4));ojo.scale.set(.55,1.2,1);ojo.position.set(.0102*s_,.07*s_,k*.0042*s_);o.add(ojo)}
   const RG=.4,AN=.62,cg=new THREE.CircleGeometry(RG,28,-AN,AN*2);cg.rotateX(-Math.PI/2);const cono=new THREE.Mesh(cg,new THREE.MeshBasicMaterial({color:0xffe066,transparent:true,opacity:.22,depthWrite:false}));cono.position.y=.006;cono.renderOrder=3;
   const cw=new THREE.Group();cw.add(cono);G.add(cw);G.add(o);return Object.assign({},g,{o,cw,cono,RG,AN,i:0,x:0,z:0,a:0,p:0,al:0})});
  // ---------- decoración navideña y detalles
@@ -7803,16 +7804,10 @@ function mkChica(){const g=new THREE.Group(),R=a=>a[(Math.random()*a.length)|0];
  const cab=new THREE.Group();cab.position.y=.0315;tronco.add(cab);g.userData.cabeza=cab;const H=.0088;
  add(cab,ESF(.0088,24,18),mP,0,H,0,0,0,0,.95,1.04,.92);
  add(cab,ESF(.0052,16,10),mP,.0034,H-.0045,0,0,0,0,.9,.7,1.05);       // barbilla suave
- // cara: ojos grandes (blanco, iris de color, pupila, brillo, párpado con pestañas), cejas, colorete, orejas, nariz y boca sonriente
- const mIr=M(R([0x5a3a22,0x3d6b3a,0x3a6aa8,0x7a5a2a]),.3),mBl=M(0xfbfbf8,.3);
+ // cara: ojos de punto negro (como el protagonista) con pestaña, cejas, colorete, orejas, nariz y boca sonriente
  for(const s of[-1,1]){const z=s*.0033;
-  add(cab,ESF(.002,14,10),mBl,.0074,H+.0008,z,0,0,0,.45,1.15,1);                          // blanco del ojo
-  add(cab,ESF(.00125,12,8),mIr,.0082,H+.0006,z,0,0,0,.42,1.1,1);                          // iris
-  add(cab,ESF(.00065,10,6),mN,.00865,H+.0006,z,0,0,0,.4,1,1);                             // pupila
-  add(cab,ESF(.00032,6,4),mBl,.0089,H+.0011,z+s*.0003);                                    // brillo
-  add(cab,ESF(.0021,14,8),mP,.0072,H+.0017,z,0,0,0,.5,.55,1.02);                          // párpado
-  add(cab,new THREE.BoxGeometry(.0005,.0006,.0036),mN,.0082,H+.0022,z,s*.08,0,0);          // línea de pestañas
-  add(cab,new THREE.BoxGeometry(.0004,.0011,.0007),mN,.0079,H+.0026,z+s*.0019,s*.6,0,0);   // pestaña de fuera
+  add(cab,ESF(.00135,10,8),mN,.0083,H+.0008,z,0,0,0,.6,1.18,1);                           // ojo: punto negro
+  add(cab,new THREE.BoxGeometry(.0004,.001,.0007),mN,.0082,H+.0024,z+s*.0012,s*.6,0,0);    // pestaña
   add(cab,CAP(.00035,.0026,6),M(new THREE.Color(pc).multiplyScalar(.8),.7),.0081,H+.0044,z,Math.PI/2+s*.15,0,0);   // ceja
   add(cab,ESF(.0016,10,8),M(0xf08a8a,.6,{transparent:true,opacity:.45}),.0073,H-.0018,s*.0052,0,0,0,.4,.8,1);   // colorete
   add(cab,ESF(.0018,10,8),mP,-.0004,H,s*.0086,0,0,0,.6,.95,.45)}                           // oreja
