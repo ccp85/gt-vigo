@@ -73,3 +73,5 @@ Las rutas de `build.sh` son las de la máquina donde se desarrolló; para usarlo
 ## Analíticas
 
 `fuente/edit_analitica.py` con `fuente/analitica.js` añade GoatCounter (sin cookies) a las cinco páginas. Panel: <https://gtvigo.goatcounter.com>. Además de las visitas de cada página cuenta, una vez por partida, estos eventos: `zona/<id>` (zonas del mapa a las que llega el jugador), `modo/<m>` (coche, moto, helicóptero…), `carrera/gp` o `carrera/navidad`, `navidad/<personaje>` y `mision/<misión>`. En local (`localhost`) no cuenta nada.
+
+`fuente/edit_visitas.py` con `fuente/visitas.js` muestra en la pantalla de inicio «👀 N visitas · N este mes», leído de GoatCounter. Solo aparece si en el panel está activado **Settings → «Allow adding visitor counts on your website»**; GoatCounter guarda las cifras hasta 4 h en caché.
