@@ -7,6 +7,28 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GT Vigo">
 <title>GT Vigo · Navidad Móvil</title>
+<script id="gtvAnalitica">
+// Analíticas con GoatCounter (gtvigo.goatcounter.com): sin cookies, no necesita aviso de cookies.
+// gtvEv('zona/samil','Zona Samil') cuenta un evento una sola vez por partida (no repite si vuelves a la misma zona).
+// En localhost GoatCounter no cuenta nada, así que las pruebas en local no ensucian los datos.
+(function(){
+  var hechos={},cola=[];
+  function slug(t){return String(t).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9/]+/g,'-').replace(/-*\/-*/g,'/').replace(/^-+|-+$/g,'')||'x'}
+  function manda(){
+    var gc=window.goatcounter;if(!gc||!gc.count)return false;
+    while(cola.length){var e=cola.shift();try{gc.count({path:e[0],title:e[1],event:true})}catch(_){}}
+    return true;
+  }
+  window.gtvEv=function(nombre,titulo){
+    try{
+      var p=slug(nombre);if(hechos[p])return;hechos[p]=1;
+      cola.push([p,titulo||nombre]);
+      if(!manda()){var n=0,iv=setInterval(function(){if(manda()||++n>60)clearInterval(iv)},1000)}
+    }catch(_){}
+  };
+})();
+</script>
+<script data-goatcounter="https://gtvigo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Russo+One&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>
@@ -3108,7 +3130,7 @@ const FALDON=(()=>{
    if(typeof recortar==='function')recortar(0,true)};
   const tr=[];for(const m of mallas){tr.push(m.ar.buffer);if(m.ix)tr.push(m.ix.buffer)}
   W.postMessage({id,mallas,col},tr)}})();
-function cargaZona(id,NP,k,N){return (async()=>{const TT=(window.__TC=window.__TC||{})[id]={};let t0=performance.now();const mk=n=>{const t=performance.now();TT[n]=Math.round(t-t0);t0=t};
+function cargaZona(id,NP,k,N){try{gtvEv('zona/'+id,'Zona '+id)}catch(e){}return (async()=>{const TT=(window.__TC=window.__TC||{})[id]={};let t0=performance.now();const mk=n=>{const t=performance.now();TT[n]=Math.round(t-t0);t0=t};
   const pre=await precargar(id);mk('descarga');delete PRE[id];const pj=pre.pj;let u8;const qv='?b='+(pj.bytes||0);
   if(pj.formato==='png'){msg('Descomprimiendo '+id+' ('+k+'/'+N+')…');const ps=await Promise.all(pre.bufs.map(pngBytesAsync));let n=0;for(const p of ps)n+=p.length;u8=new Uint8Array(n);n=0;for(const p of ps){u8.set(p,n);n+=p.length}mk('png')}
   else{const rs=await Promise.all([...Array(NP)].map((_,i)=>fetch(id+'_glb_'+(i+1)+'.txt'+qv)));for(const r of rs)if(!r.ok)throw new Error('HTTP '+r.status);
@@ -3506,7 +3528,7 @@ function ponerMotos(){if(motosListas||!MAPA)return;motosListas=true;
    const ln=(APARC.filter(q=>q.tipo==='moto').length%2)===1;const g=ln?mkLanchaM(false,false):mkMoto(false);g.visible=false;scene.add(g);APARC.push({tipo:'moto',g,x:best[0],y:best[1],a,lancha:ln})}}
  for(const [hx,hy,ha] of [[45.3,31.8,2.4],[108.5,5.4,3.9],[23.9,75.6,1.6],[61.9,26.6,2.0],[83.6,51.5,1.2],[86.6,28.6,2.0]]){if(!pieOK(cell(hx,hy).t))continue;const g=mkHeli();g.visible=false;scene.add(g);APARC.push({tipo:'heli',g,x:hx,y:hy,a:ha,z:groundY(hx,hy)})}}
 const pieOK=t=>t===1||t===2||t===4||t===5;   // el jugador a pie va por donde quiera (los peatones del juego, solo por acera y pasos de cebra)
-function cambiarModo(m){if(BUC.libre&&m!=='nado')nadoFin();document.body.classList.toggle('conLim',m==='coche');if(P.ferry){P.ferry.v=P.ferry.v0||P.ferry.v;P.ferry=null}if(P.tun){P.tun=null;tunelVer(false);fantasma(true)}MODO=m;car.visible=driving&&m==='coche';moto.visible=driving&&m==='moto';persona.visible=driving&&m==='pie';heli.visible=driving&&m==='heli';document.body.classList.toggle('heli',driving&&m==='heli');document.body.classList.toggle('nado',driving&&m==='nado');if(m!=='heli')FOG.far=20;P.turn=null;P.stuck=0;P.chk=null;window.CD=undefined}
+function cambiarModo(m){try{gtvEv('modo/'+m,'Modo '+m)}catch(e){}if(BUC.libre&&m!=='nado')nadoFin();document.body.classList.toggle('conLim',m==='coche');if(P.ferry){P.ferry.v=P.ferry.v0||P.ferry.v;P.ferry=null}if(P.tun){P.tun=null;tunelVer(false);fantasma(true)}MODO=m;car.visible=driving&&m==='coche';moto.visible=driving&&m==='moto';persona.visible=driving&&m==='pie';heli.visible=driving&&m==='heli';document.body.classList.toggle('heli',driving&&m==='heli');document.body.classList.toggle('nado',driving&&m==='nado');if(m!=='heli')FOG.far=20;P.turn=null;P.stuck=0;P.chk=null;window.CD=undefined}
 let avisoT=0,objetivo=null;
 function buscarObjetivo(){objetivo=null;if(SKC.on&&MODO==='skate')return null;if(SKT.on){if(SKT.fase==='ir'&&MODO==='coche'&&SKT.cerca){objetivo={k:'skate'};return '🛹 Subir al tejado'}if(MODO==='skate'){objetivo={k:'skate'};return '⤒ Saltar'}}if(APG.on&&APG.fase==='lucha'){objetivo={k:'apagon'};return '🥊 ¡Forcejea!'}if(CASM.on){const t_=casaObjetivo();if(t_!==undefined)return t_}if(BUC.on){const t_=buceoObjetivo();if(t_!==undefined)return t_}
  if(MODO==='pie'){let bd=1e9;if(P.ferry){objetivo=null;return null}{const fb=ferryCerca();if(fb){objetivo={k:'ferry',b:fb,txt:'⛴ Subir al ferry '+(fb.s<fb.tot/2?(fb.n==='Cíes'?'a las Cíes':'a '+fb.n):'a Vigo')};return objetivo.txt}}
@@ -4918,7 +4940,7 @@ function parrilla(){// dos columnas detrás de la línea de salida; el jugador s
  const pj=pos[RACE.rivales.length];const[x,y,tx,ty]=cirPos(pj[0],pj[1]);Object.assign(P,{x,y,a:Math.atan2(-ty,tx),v:0,gy:null});RACE.prog=pj[0];RACE.idx=wrapI(Math.floor(pj[0]));RACE.vuelta=-1;
  RACE.turboT=0;RACE.cargas=0;RACE.mon=0;RACE.endT=0;RACE.t=0;RACE.fin=null;RACE.contraT=0;RACE.atascoT=0;RACE.vueltaT=[];RACE.ultVuelta=0}
 async function empezarCarrera(){if(RACE.on||RACE.cargando)return;RACE.cargando=true;try{await empezarCarrera_()}finally{RACE.cargando=false}}
-async function empezarCarrera_(){const sel=RACE.sel,spec=LISTA()[sel.c];if(RACE.nav){RACE.horaPrev=sel.hora;sel.hora=2}document.getElementById('selCar').hidden=true;document.getElementById('selz').hidden=true;cerrarPrevia();
+async function empezarCarrera_(){const sel=RACE.sel,spec=LISTA()[sel.c];try{gtvEv('carrera/'+(RACE.nav?'navidad':'gp'),RACE.nav?'Carrera Navidad':'Gran Premio')}catch(e){}if(RACE.nav){RACE.horaPrev=sel.hora;sel.hora=2}document.getElementById('selCar').hidden=true;document.getElementById('selz').hidden=true;cerrarPrevia();
  const l=document.getElementById('load');l.hidden=false;l.textContent='Preparando el circuito…';
  await circuito();
  // zona de salida (centro) y vecinas por las que pasa el circuito al principio
@@ -7985,7 +8007,7 @@ function skCalleSale(ok){const S=SKC;if(S.G){scene.remove(S.G);S.G=null}if(S.sk)
  const m2=campMision(REP.nEnt),ab=m2.v==='coche'&&m2.rad>REP.rad;if(ab)REP.rad=m2.rad;repSigue(ab,1800)}
 function repCocheCalle(){let b=null,bd=1e9;for(const d of repPool()){if(d.length<5)continue;const e=Math.hypot(d[1]-P.x,d[2]-P.y);if(e<bd){bd=e;b=d}}
  if(!b){campVeh('coche',REP_DEP[1],REP_DEP[2],0);return}campVeh('coche',b[1],b[2],Math.atan2(-b[4],b[3]))}
-function repMisionNueva(ini){if(ini){REP.rad=REP_R0;repMuro();LUZ.arcos=[];LUZ.ruta=[];LUZ.on=false}const k=REP.nEnt||0;let m=campMision(k);REP.fase='entregar';REP.carga=1;repPila();REP.dest=null;
+function repMisionNueva(ini){if(ini){REP.rad=REP_R0;repMuro();LUZ.arcos=[];LUZ.ruta=[];LUZ.on=false}const k=REP.nEnt||0;let m=campMision(k);try{gtvEv('mision/'+((m&&m.txt)||k),'Misión: '+((m&&m.txt)||k))}catch(e){}REP.fase='entregar';REP.carga=1;repPila();REP.dest=null;
  if(m.v==='moto'){const pu=aguaCerca(89.5,10.83),fd=FERRY_DEST[m.mar],tg=fd&&aguaCerca(fd[1][0],fd[1][1],8);if(!pu||!tg)m={v:'coche',rad:REP.rad,txt:'🗺️ Vigo · ruta larga'};else{
    REP.puerto=['Puerto de Vigo',pu[0],pu[1]];if(MODO==='coche'&&!REP.enPuerto&&Math.hypot(pu[0]-P.x,pu[1]-P.y)>.6){let b=null,bd=1e9;for(const q of repPool()){const e=Math.hypot(q[1]-pu[0],q[2]-pu[1]);if(e<bd){bd=e;b=q}}
     if(b&&bd<2.5){REP.mis=m;REP.enPuerto=1;REP.fase='puerto';REP.carga=1;repPila();campDestino(['Puerto de Vigo · moto de agua',b[1],b[2]]);repMarcaColor(0x35e0ff);aviso('🌊 Misión '+(k+1)+' · ¡Al puerto!',2,'cuenta');setTimeout(()=>{if(REP.on&&!REP.fin)mostrar('Conduce hasta el Puerto de Vigo: allí te espera la moto de agua')},2200);return}}
@@ -8045,7 +8067,7 @@ function repSiguiente(){if(REP.heli){const d=repTejado();REP.dest=d;if(!d){REP.r
  const d=repElegir();REP.dest=d;REP.ult.push([d[1],d[2]]);if(REP.ult.length>5)REP.ult.shift();
  const z=groundY(d[1],d[2]);REP.marca.position.set(d[1],z,d[2]);REP.marca.visible=true;gpsIniciar(d);repSembrar();repHud()}
 async function empezarReparto(){if(REP.on||REP.cargando)return;REP.cargando=true;try{
- const sel=RACE.sel,spec=NAVC[sel.c];document.getElementById('selCar').hidden=true;document.getElementById('selz').hidden=true;cerrarPrevia();
+ const sel=RACE.sel,spec=NAVC[sel.c];try{gtvEv('navidad/'+((spec&&spec.corto)||sel.c),'Navidad · '+((spec&&spec.corto)||sel.c))}catch(e){}document.getElementById('selCar').hidden=true;document.getElementById('selz').hidden=true;cerrarPrevia();
  START=[102.55,21.43];START_A=Math.atan2(-(22.6-21.43),100.6-102.55);
  if(primera){center.set(START[0],0,START[1]);window.__zoomIni=3.2;frame();iso(az)}
  for(const z of ZMETA.zonas)if(zonaDist(z,START[0],START[1])<3)pedirZona(z.id);
