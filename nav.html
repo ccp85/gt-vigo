@@ -1708,7 +1708,7 @@ quad('mate',H2,P(a,w2,za,0.0165),P(b,w2,zb,0.0165),P(b,-w2,zb,0.0165),P(a,-w2,za
   const ZT=US.map(u=>{const q=M(u,.52);return z(q[0],q[1])});if(ZT.some(v=>v==null))return false;
   const fi=(A_,u)=>{const f=(u+.9)/.05,i=Math.max(0,Math.min(US.length-2,Math.floor(f))),t=Math.min(1,Math.max(0,f-i));return A_[i]+(A_[i+1]-A_[i])*t};
   const zr=u=>fi(ZR,u)+.0012,P3=(u,v,h=0)=>{const q=M(u,v);return[q[0],zr(u)+h,q[1]]};
-  const AS=col(0x5c5e70),AS2=col(0x55576a),BL=col(0xf4f3ee),GRS=col(0x5f8b3f),GR=col(0x8a9097);
+  const AS=col(0x545659),AS2=col(0x4d4f52),BL=col(0xf4f3ee),GRS=col(0x5f8b3f),GR=col(0x8a9097);
   const S=arr('suelo');const sq=(a,b,c_,d,cl)=>{S.p.push(...a,...b,...c_,...a,...c_,...d);for(let i=0;i<6;i++)S.c.push(...cl)};
   // carril de deceleración y aceleración (cuña) + explanada
   const wl=u=>u<-.55?.078*(u+.9)/.35:u>.5?.078*(.8-u)/.3:.078;
@@ -3186,7 +3186,7 @@ function cargaZona(id,NP,k,N){try{gtvEv('zona/'+id,'Zona '+id)}catch(e){}return 
   await instancias(id,root);mk('instancias');ZROOTS.push({root,b:new THREE.Box3().setFromObject(root)});
   root.updateMatrixWorld(true);root.traverse(o=>{if(o.isMesh&&/^labio/.test(o.name))labioSinMar(o);if(o.isMesh&&/^zocalo/.test(o.name))zocaloSinMar(o)});mk('labio');
   root.traverse(o=>{if(!o.isMesh)return;o.castShadow=!/agua|zocalo/.test(o.name);o.receiveShadow=!/agua|zocalo/.test(o.name);
-    const m=o.material;if(m){m.roughness=.85;m.metalness=0;if(/^(playa|playita)/.test(o.name))m.color.set('#f4dfb6');{const t=/fachada_\w+_([0-9a-f]{6})$/.exec(m.name||'');if(t)m.color.set('#'+t[1]).multiplyScalar(1.08);if(/^fachada/.test(m.name||'')&&m.map)fachadaViva(m);if(/^#/.test(m.name||'')&&/^edificios/.test(o.name))tejadoReal(m)}{const sm=/^(calzada|carril|puente)/.test(o.name)?1:/^(aceras|acera|paseo|muelle|plaza)/.test(o.name)?.8:/^tierra/.test(o.name)?.4:0;if(sm)for(const mm of [].concat(o.material))mojado(mm,sm)}if(/^verde/.test(o.name))for(const mm of [].concat(o.material))cesped(mm);if(/agua/.test(o.name)){texturaCosta();aguaSamil(m);WATERS.push(m);water=m;o.position.y+=.03}
+    const m=o.material;if(m){m.roughness=.85;m.metalness=0;if(/^(playa|playita)/.test(o.name))m.color.set('#f4dfb6');{const t=/fachada_\w+_([0-9a-f]{6})$/.exec(m.name||'');if(t)m.color.set('#'+t[1]).multiplyScalar(1.08);if(/^fachada/.test(m.name||'')&&m.map)fachadaViva(m);if(/^#/.test(m.name||'')&&/^edificios/.test(o.name))tejadoReal(m)}{const sm=/^(calzada|carril|puente)/.test(o.name)?1:/^(aceras|acera|paseo|muelle|plaza)/.test(o.name)?.8:/^tierra/.test(o.name)?.4:0;if(sm)for(const mm of [].concat(o.material))mojado(mm,sm)}if(/^verde/.test(o.name))for(const mm of [].concat(o.material))cesped(mm);if(/^(calzada|puente)/.test(o.name))for(const mm of [].concat(o.material))if(mm&&mm.name==='calzada')asfaltoReal(mm);if(/^lineas/.test(o.name))for(const mm of [].concat(o.material)){marcaVial(mm);mojado(mm,.9)}if(/agua/.test(o.name)){texturaCosta();aguaSamil(m);WATERS.push(m);water=m;o.position.y+=.03}
     else if(/piezas|arbol|copa/.test(o.name)||/copa|arbol/.test(m.name||'')){const c=m.color;if(c&&c.g>c.r*1.08&&c.g>c.b*1.05)recorteVista(m)}}});
   root.traverse(o=>{if(o.isMesh&&/^piezas/.test(o.name)){const m=o.material;if(m&&!Array.isArray(m)&&m.name==='#2c3438')vitrina(m)}});vidaPlaya(root);try{if(R.compileAsync&&!driving)await Promise.race([R.compileAsync(root,driving?pcam:cam,scene),new Promise(r=>setTimeout(r,2500))])}catch(e){}mk('shaders');scene.add(root);try{FALDON(root)}catch(e){console.warn('faldones',e)}root.traverse(o=>{if(o.isMesh&&/edificios|piezas/.test(o.name))colaBVH(o)
    if(o.isMesh&&/^(tierra|calzada|aceras|acera|verde|playa|roca|paseo|playita|carril|muelle|puente)/.test(o.name))colaBVH(o,true)});mk('bvh');return root})()}
@@ -3200,7 +3200,7 @@ function mojado(m,k){if(!m||m.userData.mo)return;m.userData.mo=1;const prev=m.on
    .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
     if(uK>.95){vec2 q=vWm.xz;float fw=length(fwidth(q));
      float man=nM(q*7.)*.55+nM(q*23.)*.45;                                   // manchas y parches de reasfaltado
-     ${window.LITE?'float grano=0.;float gf=0.;':'float grano=(hM(floor(q*420.))-.5)*(1.-smoothstep(.003,.012,fw))+(nM(q*150.)-.5)*1.4*(1.-smoothstep(.006,.025,fw));float gf=1.;'}  // árido fino (se difumina de lejos)
+     ${window.LITE?'float grano=0.;float gf=0.;':'float grano=(nM(q*420.)-.5)*1.3*(1.-smoothstep(.003,.012,fw))+(nM(q*150.)-.5)*1.4*(1.-smoothstep(.006,.025,fw));float gf=1.;'}  // árido fino (se difumina de lejos)
      float par=smoothstep(.70,.74,nM(q*5.3+17.));                             // parches nuevos más oscuros
      ${window.LITE?'float gri=0.;':'float gri=smoothstep(.985,1.,nM(q*90.+3.))*(1.-smoothstep(.002,.008,fw));'}// grietas
      diffuseColor.rgb*=(.78+.36*man)*(1.+.3*grano*gf)*(1.-.2*par)*(1.-.4*gri);
@@ -3215,6 +3215,29 @@ function mojado(m,k){if(!m||m.userData.mo)return;m.userData.mo=1;const prev=m.on
      outgoingLight+=vec3(1.,.72,.38)*uLz*wW*pud*.12*smoothstep(.55,.9,nM(vWm.xz*9.));}
     #include <opaque_fragment>`)};
  m.customProgramCacheKey=()=>(pk?pk():'')+'|mo';m.needsUpdate=true}
+// ---------- asfalto y marcas viales (edit_asfalto.py): gris neutro, tonos y aceite en la calzada; marcas menos blancas, gastadas y que se mojan
+const ASF_GLSL='float hA(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat nA(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hA(i),hA(i+vec2(1,0)),f.x),mix(hA(i+vec2(0,1)),hA(i+vec2(1,1)),f.x),f.y);}\n';
+function asfaltoReal(m){if(!m||m.userData.asf)return m;m.userData.asf=1;m.color.set(0x54565b);const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
+ m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);
+  sh.vertexShader='varying vec3 vWa;\n'+sh.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n vWa=(modelMatrix*vec4(transformed,1.)).xyz;');
+  sh.fragmentShader='varying vec3 vWa;\n'+ASF_GLSL+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   {vec2 aq=vWa.xz;float afw=max(length(fwidth(aq)),1e-6);
+    float tn=nA(aq*.8)*.6+nA(aq*3.1)*.4-.5;diffuseColor.rgb*=1.+vec3(.06,.035,-.05)*tn*2.;      // tono cálido/frío
+    ${LT?'':`vec2 oc=floor(aq*26.),of=fract(aq*26.)-.5;float oh=hA(oc);
+    vec2 od=of+(vec2(hA(oc+5.),hA(oc+9.))-.5)*.3;float oa=hA(oc+13.)*3.14;od=mat2(cos(oa),-sin(oa),sin(oa),cos(oa))*od;
+    float oil=step(.92,oh)*(1.-smoothstep(.10,.30,length(od*vec2(1.,2.2))+(nA(aq*300.)-.5)*.12))*(1.-smoothstep(.008,.035,afw));
+    diffuseColor.rgb*=1.-.38*oil;`}}`)};
+ m.customProgramCacheKey=()=>(pk?pk():'')+'|asf';m.needsUpdate=true;return m}
+function marcaVial(m){if(!m||m.userData.mv)return m;m.userData.mv=1;m.color.set(0xd9d7cf);m.roughness=Math.min(m.roughness??.8,.7);const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
+ m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);
+  sh.vertexShader='varying vec3 vWv;\n'+sh.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n vWv=(modelMatrix*vec4(transformed,1.)).xyz;');
+  sh.fragmentShader='varying vec3 vWv;\n'+ASF_GLSL+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   {vec2 vq=vWv.xz;float vfw=max(length(fwidth(vq)),1e-6);vec3 asf=vec3(.088,.093,.104);              // color del asfalto (lineal)
+    float cerca=1.-smoothstep(.004,.02,vfw),lejos=smoothstep(.012,.07,vfw);
+    float gas=smoothstep(.5,.85,nA(vq*45.)*.6+nA(vq*130.)*.4)*.8;                                       // pintura gastada
+    ${LT?'':'gas=max(gas,smoothstep(.6,.8,nA(vq*380.))*.6*cerca);'}                                      // grano: puntos sin pintura
+    diffuseColor.rgb=mix(diffuseColor.rgb,asf,clamp(gas*(.35+.65*cerca)+lejos*.28,0.,.85));}`)};
+ m.customProgramCacheKey=()=>(pk?pk():'')+'|mv';m.needsUpdate=true;return m}
 // ---------- césped de verdad (edit_cesped.py): manchas, calvas secas, matas, briznas, franjas de corte y margaritas, todo en el sombreado
 function cesped(m){if(!m||m.userData.ces)return m;m.userData.ces=1;const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
  m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);sh.uniforms.uGWet=UMO.uWet;
@@ -4973,7 +4996,7 @@ function confeti(){const N=400,g=new THREE.BufferGeometry(),pos=new Float32Array
  let t=0;const tick=()=>{t+=.016;for(let i=0;i<N;i++){const v=vel[i];v[1]-=.016*.9;v[0]*=.99;v[2]*=.99;pos[i*3]+=v[0]*.016;pos[i*3+1]=Math.max(z-.15,pos[i*3+1]+v[1]*.016);pos[i*3+2]+=v[2]*.016}g.attributes.position.needsUpdate=true;if(t<6&&pt.parent)requestAnimationFrame(tick);else{scene.remove(pt);g.dispose()}};tick()}
 // ---------- asfalto propio del circuito: cinta continua de borde a borde (tapa aceras y medianas en las curvas suavizadas)
 // con marcas nuevas y rectas: líneas de borde continuas y línea central discontinua; alturas tomadas de la maqueta por tramos
-function pista(objs){const n=CIR.n,T=40,TR=[];const mA=new THREE.MeshStandardMaterial({color:0x5c5c6c,roughness:.9,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});mojado(mA,1);
+function pista(objs){const n=CIR.n,T=40,TR=[];const mA=new THREE.MeshStandardMaterial({color:0x56585c,roughness:.9,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});mojado(mA,1);
  const mL=new THREE.MeshStandardMaterial({color:0xf4f2ea,roughness:.6,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});RACE.pistaMat={mA,mL};
  const lado=(i,o)=>[CIR.X[i]-CIR.TY[i]*o,CIR.Y[i]+CIR.TX[i]*o];
  for(let a=0;a<n;a+=T){const b=Math.min(n,a+T),idx=[];for(let i=a;i<=b;i++)idx.push(i%n);
