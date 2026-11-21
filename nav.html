@@ -3193,10 +3193,11 @@ function cargaZona(id,NP,k,N){try{gtvEv('zona/'+id,'Zona '+id)}catch(e){}return 
 
 // suelo mojado: cuando llueve calles, aceras y muelles se oscurecen, brillan y forman charcos que reflejan el cielo (y de noche la luz de las farolas); se secan poco a poco
 const UMO={uWet:{value:0},uTm:{value:0},uLz:{value:0}};
+const UENV={uEnvC:{value:null},uEnvOn:{value:0},uEnvP:{value:new THREE.Vector3()}};   // edit_charcos.py: foto de la ciudad para los charcos
 function mojado(m,k){if(!m||m.userData.mo)return;m.userData.mo=1;const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;
- m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);Object.assign(sh.uniforms,UMO,{uZen:SKYU.uZen,uHor:SKYU.uHor,uK:{value:k}});
+ m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);Object.assign(sh.uniforms,UMO,UENV,{uZen:SKYU.uZen,uHor:SKYU.uHor,uK:{value:k}});
   sh.vertexShader='varying vec3 vWm;\n'+sh.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n vWm=(modelMatrix*vec4(transformed,1.)).xyz;');
-  sh.fragmentShader='uniform float uWet,uTm,uLz,uK;uniform vec3 uZen,uHor;varying vec3 vWm;\nfloat hM(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat nM(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hM(i),hM(i+vec2(1,0)),f.x),mix(hM(i+vec2(0,1)),hM(i+vec2(1,1)),f.x),f.y);}\n'+sh.fragmentShader
+  sh.fragmentShader='uniform float uWet,uTm,uLz,uK;uniform vec3 uZen,uHor;varying vec3 vWm;uniform samplerCube uEnvC;uniform float uEnvOn;uniform vec3 uEnvP;\nfloat hM(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat nM(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hM(i),hM(i+vec2(1,0)),f.x),mix(hM(i+vec2(0,1)),hM(i+vec2(1,1)),f.x),f.y);}\n'+sh.fragmentShader
    .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
     if(uK>.95){vec2 q=vWm.xz;float fw=length(fwidth(q));
      float man=nM(q*7.)*.55+nM(q*23.)*.45;                                   // manchas y parches de reasfaltado
@@ -3206,12 +3207,15 @@ function mojado(m,k){if(!m||m.userData.mo)return;m.userData.mo=1;const prev=m.on
      diffuseColor.rgb*=(.78+.36*man)*(1.+.3*grano*gf)*(1.-.2*par)*(1.-.4*gri);
      roughnessFactor=clamp(roughnessFactor*.86-.08*man+.06*grano*gf,.42,.95);}
     float wW=uWet*uK;float pud=0.;
-    if(wW>.001){float n=nM(vWm.xz*23.)*.6+nM(vWm.xz*67.)*.4;pud=smoothstep(.58,.68,n+.08*(uWet-.5))*smoothstep(.15,.6,uWet);
+    if(wW>.001){float n=nM(vWm.xz*23.)*.6+nM(vWm.xz*67.)*.4;pud=smoothstep(.56,.71,n+.08*(uWet-.5))*smoothstep(.15,.6,uWet);
      roughnessFactor=mix(roughnessFactor,mix(.34,.05,pud),wW);diffuseColor.rgb*=mix(1.,mix(.66,.5,pud),wW);}`)
    .replace('#include <opaque_fragment>',`if(wW>.001){vec3 Vv=normalize(cameraPosition-vWm);if(isOrthographic)Vv=normalize(vec3(viewMatrix[0][2],viewMatrix[1][2],viewMatrix[2][2]));
      float fr=.04+.96*pow(1.-clamp(Vv.y,0.,1.),5.);vec3 sky=mix(uHor,uZen,clamp(Vv.y*1.3,0.,1.));
+     if(uEnvOn>.5){vec3 rd=vec3(-Vv.x,abs(Vv.y),-Vv.z);rd.xz+=(vec2(nM(vWm.xz*70.+uTm*2.),nM(vWm.xz*70.-uTm*2.+9.))-.5)*.09*pud;
+      vec3 rp=(vWm-uEnvP)/1.6;vec3 env=vec3(0.);for(int i=0;i<4;i++){vec3 d=normalize(rd+rp+vec3(0.,(float(i)-1.5)*.07*(.4+.6*pud),0.));env+=textureCube(uEnvC,d).rgb;}
+      env*=.25;sky=mix(sky,env,.92);}
      vec2 cel=floor(vWm.xz*60.);float ph=fract(uTm*.9+hM(cel)*7.);float rip=(1.-smoothstep(0.,.07,abs(length(fract(vWm.xz*60.)-.5)-ph*.45)))*(1.-ph)*step(.7,hM(cel+3.))*pud;
-     float ref=wW*(.10+.55*pud)*(.35+2.2*fr);outgoingLight=mix(outgoingLight,sky*(1.+.6*rip),clamp(ref,0.,.6));
+     float ref=wW*(.10+.62*pud)*(.18+2.6*fr);outgoingLight=mix(outgoingLight,sky*(1.+.6*rip),clamp(ref,0.,uEnvOn>.5?.82:.6));
      outgoingLight+=vec3(1.,.72,.38)*uLz*wW*pud*.12*smoothstep(.55,.9,nM(vWm.xz*9.));}
     #include <opaque_fragment>`)};
  m.customProgramCacheKey=()=>(pk?pk():'')+'|mo';m.needsUpdate=true}
@@ -3424,13 +3428,13 @@ function reflejoCaras(n){
   RCUBO.cc.position.set(p.x,p.y+.025,p.z);RCUBO.cc.updateMatrixWorld(true)}
  const sh=R.shadowMap,au=sh.autoUpdate,nu=sh.needsUpdate,prev=R.getRenderTarget(),pf=R.getActiveCubeFace(),pl=R.getActiveMipmapLevel(),cut=UCUT.uCut.value,
   sp=sky.position.clone(),ss=sky.scale.clone(),sv=sky.visible,vis=vs.map(o=>o.visible);
- sh.autoUpdate=false;UCUT.uCut.value=0;sky.visible=true;sky.position.copy(RCUBO.cc.position);sky.scale.setScalar(RCUBO.far*.9);vs.forEach(o=>o.visible=false);
+ sh.autoUpdate=false;UCUT.uCut.value=0;UENV.uEnvOn.value=0;UENV.uEnvC.value=null;sky.visible=true;sky.position.copy(RCUBO.cc.position);sky.scale.setScalar(RCUBO.far*.9);vs.forEach(o=>o.visible=false);
  try{for(let k=0;k<n&&RCUBO.face<6;k++){R.setRenderTarget(RCUBO.rt,RCUBO.face);R.render(scene,RCUBO.cc.children[RCUBO.face]);RCUBO.face++}}
  finally{vs.forEach((o,i)=>o.visible=vis[i]);sky.visible=sv;sky.position.copy(sp);sky.scale.copy(ss);UCUT.uCut.value=cut;sh.autoUpdate=au;sh.needsUpdate=nu;R.setRenderTarget(prev,pf,pl)}
- if(RCUBO.face>=6){RCUBO.face=0;RCUBO.out=RCUBO.pm.fromCubemap(RCUBO.rt.texture,RCUBO.out);const tex=RCUBO.out.texture;ENVC.tex=tex;
+ if(RCUBO.face>=6){UENV.uEnvP.value.copy(RCUBO.cc.position)}if(RCUBO.face>0||RCUBO.listo){UENV.uEnvC.value=RCUBO.rt.texture;UENV.uEnvOn.value=RCUBO.listo||RCUBO.face>=6?1:0}if(RCUBO.face>=6){RCUBO.listo=1;RCUBO.face=0;RCUBO.out=RCUBO.pm.fromCubemap(RCUBO.rt.texture,RCUBO.out);const tex=RCUBO.out.texture;ENVC.tex=tex;
   for(const m of REFLEJAN){if(m.envMap!==tex){const nuevo=!m.envMap;m.envMap=tex;if(nuevo)m.needsUpdate=true}}return true}
  return false}
-function reflejosCoches(){if(!driving){RCUBO.face=0;return}const t=performance.now()/1000;
+function reflejosCoches(){if(!driving&&!(UMO.uWet.value>.02)){RCUBO.face=0;return}const t=performance.now()/1000;
  if(window.LITE||RCUBO.mal){if(t-ENVC.t<(window.LITE?60:4))return;ENVC.t=t;try{envCoches()}catch(e){console.warn(e)}return}
  if(!ENVC.tex){ENVC.t=t;try{envCoches()}catch(e){}}   // mientras se llena el primer cubo, el cielo de siempre
  if(RCUBO.face===0&&t-RCUBO.t<((typeof POST!=='undefined'&&POST.on)?.2:.6))return;
