@@ -1459,7 +1459,7 @@ function ap9nIni(){AP9N.ini=1;const D=AP9N.D,LT=!!window.LITE;
  const SM=o=>new THREE.MeshStandardMaterial(o);
  AP9N.mat={mate:SM({vertexColors:true,roughness:.86,side:THREE.DoubleSide}),metal:SM({vertexColors:true,roughness:.36,metalness:.55,side:THREE.DoubleSide}),
   luz:SM({color:0xfff4d6,emissive:0xffd88a,emissiveIntensity:1.1,roughness:.3}),refl:SM({color:0xff9a2a,emissive:0xff7a10,emissiveIntensity:.7,roughness:.3}),
-  cesped:SM({vertexColors:true,roughness:1,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),
+  cesped:cesped(SM({vertexColors:true,roughness:1,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})),
   roca:SM({vertexColors:true,map:ap9nRocaTex(),roughness:.95,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),
   vidrio:SM({map:ap9nAvesTex(),transparent:true,depthWrite:false,side:THREE.DoubleSide,roughness:.12,metalness:.1}),
   rojo:SM({color:0xff2a1a,emissive:0xff1a0a,emissiveIntensity:2,roughness:.4}),
@@ -1949,7 +1949,7 @@ function rampaGV(){const L=RAMPA_S.L,EN=RAMPA_S.en,angT=t=>{const e=EN(t);return
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
   const tec=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0xe6f6ff,roughness:.05,metalness:.2,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));tec.renderOrder=2;G.add(tec)}
  // jardineras a ambos lados: césped, flores, cipreses en cono y arbustos
- {const CES=new THREE.MeshStandardMaterial({color:0x5f9a3e,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),
+ {const CES=cesped(new THREE.MeshStandardMaterial({color:0x5f9a3e,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})),
    BOR=new THREE.MeshStandardMaterial({color:0xb9b4aa,roughness:.9});
   for(const sd of[-1,1]){tira(-.03,L+.03,sd*.049,.016,0,.0045,CES);pared(-.03,L+.03,sd*.058,.004,.002,BOR);pared(-.03,L+.03,sd*.04,.004,.002,BOR)}
   const cip=[],arb=[],flo=[];let rs=13;const rn=()=>(rs=(rs*16807)%2147483647)/2147483647;
@@ -3106,7 +3106,7 @@ function cargaZona(id,NP,k,N){try{gtvEv('zona/'+id,'Zona '+id)}catch(e){}return 
   await instancias(id,root);mk('instancias');ZROOTS.push({root,b:new THREE.Box3().setFromObject(root)});
   root.updateMatrixWorld(true);root.traverse(o=>{if(o.isMesh&&/^labio/.test(o.name))labioSinMar(o);if(o.isMesh&&/^zocalo/.test(o.name))zocaloSinMar(o)});mk('labio');
   root.traverse(o=>{if(!o.isMesh)return;o.castShadow=!/agua|zocalo/.test(o.name);o.receiveShadow=!/agua|zocalo/.test(o.name);
-    const m=o.material;if(m){m.roughness=.85;m.metalness=0;if(/^(playa|playita)/.test(o.name))m.color.set('#f4dfb6');{const t=/fachada_\w+_([0-9a-f]{6})$/.exec(m.name||'');if(t)m.color.set('#'+t[1]).multiplyScalar(1.08);if(/^fachada/.test(m.name||'')&&m.map)fachadaViva(m);if(/^#/.test(m.name||'')&&/^edificios/.test(o.name))tejadoReal(m)}{const sm=/^(calzada|carril|puente)/.test(o.name)?1:/^(aceras|acera|paseo|muelle|plaza)/.test(o.name)?.8:/^tierra/.test(o.name)?.4:0;if(sm)for(const mm of [].concat(o.material))mojado(mm,sm)}if(/agua/.test(o.name)){texturaCosta();aguaSamil(m);WATERS.push(m);water=m;o.position.y+=.03}
+    const m=o.material;if(m){m.roughness=.85;m.metalness=0;if(/^(playa|playita)/.test(o.name))m.color.set('#f4dfb6');{const t=/fachada_\w+_([0-9a-f]{6})$/.exec(m.name||'');if(t)m.color.set('#'+t[1]).multiplyScalar(1.08);if(/^fachada/.test(m.name||'')&&m.map)fachadaViva(m);if(/^#/.test(m.name||'')&&/^edificios/.test(o.name))tejadoReal(m)}{const sm=/^(calzada|carril|puente)/.test(o.name)?1:/^(aceras|acera|paseo|muelle|plaza)/.test(o.name)?.8:/^tierra/.test(o.name)?.4:0;if(sm)for(const mm of [].concat(o.material))mojado(mm,sm)}if(/^verde/.test(o.name))for(const mm of [].concat(o.material))cesped(mm);if(/agua/.test(o.name)){texturaCosta();aguaSamil(m);WATERS.push(m);water=m;o.position.y+=.03}
     else if(/piezas|arbol|copa/.test(o.name)||/copa|arbol/.test(m.name||'')){const c=m.color;if(c&&c.g>c.r*1.08&&c.g>c.b*1.05)recorteVista(m)}}});
   root.traverse(o=>{if(o.isMesh&&/^piezas/.test(o.name)){const m=o.material;if(m&&!Array.isArray(m)&&m.name==='#2c3438')vitrina(m)}});vidaPlaya(root);try{if(R.compileAsync&&!driving)await Promise.race([R.compileAsync(root,driving?pcam:cam,scene),new Promise(r=>setTimeout(r,2500))])}catch(e){}mk('shaders');scene.add(root);try{FALDON(root)}catch(e){console.warn('faldones',e)}root.traverse(o=>{if(o.isMesh&&/edificios|piezas/.test(o.name))colaBVH(o)
    if(o.isMesh&&/^(tierra|calzada|aceras|acera|verde|playa|roca|paseo|playita|carril|muelle|puente)/.test(o.name))colaBVH(o,true)});mk('bvh');return root})()}
@@ -3135,6 +3135,36 @@ function mojado(m,k){if(!m||m.userData.mo)return;m.userData.mo=1;const prev=m.on
      outgoingLight+=vec3(1.,.72,.38)*uLz*wW*pud*.12*smoothstep(.55,.9,nM(vWm.xz*9.));}
     #include <opaque_fragment>`)};
  m.customProgramCacheKey=()=>(pk?pk():'')+'|mo';m.needsUpdate=true}
+// ---------- césped de verdad (edit_cesped.py): manchas, calvas secas, matas, briznas, franjas de corte y margaritas, todo en el sombreado
+function cesped(m){if(!m||m.userData.ces)return m;m.userData.ces=1;const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
+ m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);sh.uniforms.uGWet=UMO.uWet;
+  sh.vertexShader='varying vec3 vWg;\n'+sh.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n vWg=(modelMatrix*vec4(transformed,1.)).xyz;');
+  sh.fragmentShader='uniform float uGWet;varying vec3 vWg;\nfloat hG(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat nG(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hG(i),hG(i+vec2(1,0)),f.x),mix(hG(i+vec2(0,1)),hG(i+vec2(1,1)),f.x),f.y);}\n'+sh.fragmentShader
+   .replace('#include <color_fragment>',`#include <color_fragment>
+    vec2 gq=vWg.xz;float gfw=max(length(fwidth(gq)),1e-6);
+    float gc=1.-smoothstep(.0025,.012,gfw);                                   // detalle de cerca (briznas, flores)
+    float gm=1.-smoothstep(.015,.07,gfw);                                     // detalle medio (matas, franjas)
+    float gL=nG(gq*2.2)*.45+nG(gq*8.)*.35+nG(gq*19.)*.2;                       // manchas (25-2 m)
+    float gD=smoothstep(.64,.88,nG(gq*2.3+7.))*(.6+.4*nG(gq*11.));            // calvas secas
+    float gK=nG(gq*38.)*.6+nG(gq*95.)*.4;                                     // matas
+    vec3 gb=diffuseColor.rgb*vec3(.40,.43,.27);                                // verde natural (menos pastel)
+    vec3 gcol=mix(gb*vec3(.62,.74,.62),gb*vec3(1.22,1.14,.92),smoothstep(.2,.8,gL));
+    gcol=mix(gcol,gcol*vec3(1.7,1.32,.7)+vec3(.025,.018,0.),gD*.6);           // paja
+    gcol*=mix(1.,.72+.56*gK,gm);
+    float gS=smoothstep(.5,.6,nG(gq*.6+3.));                                  // franjas de corte en parte de los parques
+    gcol*=1.+.075*gS*gm*smoothstep(-.35,.35,sin(gq.x*50.+nG(gq*.4)*2.))*2.-.075*gS*gm;
+    ${LT?'':`float gB=hG(floor(gq*430.));gcol*=mix(1.,.84+.32*gB,gc);            // briznas
+    vec2 fcl=floor(gq*160.),ffr=fract(gq*160.)-.5;float fh=hG(fcl+11.);
+    float fl=step(.968,fh)*(1.-smoothstep(.10,.19,length(ffr)))*gc*step(.45,nG(gq*3.+21.));
+    gcol=mix(gcol,fh>.988?vec3(.85,.62,.06):vec3(.86,.86,.80),fl);`}
+    gcol*=1.-.25*uGWet;
+    diffuseColor.rgb=gcol;`)
+   .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n roughnessFactor=mix(.92,.62,uGWet);')
+   .replace('#include <normal_fragment_maps>',LT?'#include <normal_fragment_maps>':`#include <normal_fragment_maps>
+    {vec2 gp=gq*95.;float e=.35;vec2 gd=vec2(nG(gp+vec2(e,0.))-nG(gp-vec2(e,0.)),nG(gp+vec2(0.,e))-nG(gp-vec2(0.,e)));
+     vec2 gp2=gq*430.;gd+=vec2(hG(floor(gp2+vec2(1.,0.)))-hG(floor(gp2-vec2(1.,0.))),hG(floor(gp2+vec2(0.,1.)))-hG(floor(gp2-vec2(0.,1.))))*.35*gc;
+     normal=normalize(normal+(viewMatrix*vec4(gd.x,0.,gd.y,0.)).xyz*.55*gm);}`)};
+ m.customProgramCacheKey=()=>(pk?pk():'')+'|ces';m.needsUpdate=true;return m}
 // las mallas grandes de cada zona (edificios, aceras, calzadas...) se parten en baldosas de 4×4 u: así solo se dibuja
 // lo que queda cerca y delante de la cámara (antes se dibujaba la zona entera aunque estuviera detrás o muy lejos)
 const TESELA=7;
