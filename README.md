@@ -69,3 +69,7 @@ Las rutas de `build.sh` son las de la máquina donde se desarrolló; para usarlo
 - Google Earth y fotos se usaron solo como referencia visual: todos los modelos (Samil, Castrelos, fortaleza del Castro, Porta do Sol, la cúpula del parque infantil de la Rúa Venezuela, etc.) son propios y genéricos.
 - El coche patrulla y la lancha se basan en modelos low-poly aportados por el autor.
 - El coche principal (el utilitario rojo del mundo abierto, "Cinquecento" en la carrera) es `coche500.glb`, un modelo aportado por el autor. Se genera desde su `.obj` + texturas PBR con `fuente/herramientas/coche2glb.py` (lo reduce a ~30k triángulos, lo gira y escala, y empaqueta base/normal/metal-rugosidad); `fuente/edit_coche500.py` lo carga solo en `index.html`. Mientras carga se ve el coche antiguo.
+
+## Analíticas
+
+`fuente/edit_analitica.py` con `fuente/analitica.js` añade GoatCounter (sin cookies) a las cinco páginas. Panel: <https://gtvigo.goatcounter.com>. Además de las visitas de cada página cuenta, una vez por partida, estos eventos: `zona/<id>` (zonas del mapa a las que llega el jugador), `modo/<m>` (coche, moto, helicóptero…), `carrera/gp` o `carrera/navidad`, `navidad/<personaje>` y `mision/<misión>`. En local (`localhost`) no cuenta nada.
