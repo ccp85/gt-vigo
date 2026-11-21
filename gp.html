@@ -3394,7 +3394,7 @@ function cambiaLim(){LIM=LIMS[(LIMS.indexOf(LIM)+1)%LIMS.length];try{localStorag
 addEventListener('DOMContentLoaded',pintaLim);setTimeout(()=>{pintaLim();const b=document.getElementById('lim');b.onclick=e=>{e.stopPropagation();cambiaLim()};b.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true})},0);
 addEventListener('keydown',e=>{if(driving&&!RACE.on&&MODO==='coche'&&e.code==='KeyL'&&!e.repeat)cambiaLim()});
 {const ghost=new THREE.MeshBasicMaterial({color:0xf08a6a,depthTest:true,depthFunc:THREE.GreaterDepth,depthWrite:false});
- const g=new THREE.Group();car.children.filter(m=>m.name!=='haz').forEach(m=>{const c=new THREE.Mesh(m.geometry,ghost);c.position.copy(m.position);c.rotation.copy(m.rotation);c.renderOrder=1;g.add(c)});car.add(g);car.children.forEach(m=>{if(m.isMesh)m.renderOrder=2})}car.visible=false;scene.add(car);const CAR0=car.clone(true);CAR0.userData={tipo:'clasico'};
+ const g=new THREE.Group();car.children.filter(m=>m.name!=='haz'&&!(m.geometry&&m.geometry.type==='CylinderGeometry')).forEach(m=>{const c=new THREE.Mesh(m.geometry,ghost);c.position.copy(m.position);c.rotation.copy(m.rotation);c.renderOrder=1;g.add(c)});car.add(g);car.children.forEach(m=>{if(m.isMesh)m.renderOrder=2})}car.visible=false;scene.add(car);const CAR0=car.clone(true);CAR0.userData={tipo:'clasico'};
 const P={x:0,y:0,a:0,v:0};window.P=P;let CAMC=0;try{CAMC=(+localStorage.getItem('gtvigo_cam')||0)===1?1:0}catch(e){}let CZ=1;
 // ---------- vehículos: coche, moto de agua y a pie ----------
 let MODO='coche';window.modo=()=>MODO;
@@ -3700,7 +3700,7 @@ function vestirCoche(src,tipo){const k=(src.userData.vsc?src.scale.x/VSC:src.sca
   m.position.multiplyScalar(k);m.scale.multiplyScalar(k);car.add(m);if(c.name==='sombra')SOMBRAS.push(m)}
  car.userData.body=body||new THREE.MeshStandardMaterial({color:0x888888});car.userData.tipo=tipo||src.userData.tipo;
  const ghost=new THREE.MeshBasicMaterial({color:0xf08a6a,depthTest:true,depthFunc:THREE.GreaterDepth,depthWrite:false});const gg=new THREE.Group();
- car.children.forEach(m=>{if(m.isMesh&&m.name!=='sombra'&&m.name!=='haz'){const c=new THREE.Mesh(m.geometry,ghost);c.position.copy(m.position);c.rotation.copy(m.rotation);c.scale.copy(m.scale);c.renderOrder=1;gg.add(c);m.renderOrder=2}});car.add(gg)}
+ car.children.forEach(m=>{if(m.isMesh&&m.name!=='sombra'&&m.name!=='haz')m.renderOrder=2;if(m.isMesh&&m.name!=='sombra'&&m.name!=='haz'&&m.geometry.type!=='CylinderGeometry'){const c=new THREE.Mesh(m.geometry,ghost);c.position.copy(m.position);c.rotation.copy(m.rotation);c.scale.copy(m.scale);c.renderOrder=1;gg.add(c);m.renderOrder=2}});car.add(gg)}
 window.mkVehiculoT=t=>{const g=mkVehiculo(t,VTIPOS[t].col[0]);scene.add(g);return g};window.cambiarModoT=m=>cambiarModo(m);
 const TRAF=[];window.TRAF=TRAF;let RUTAS=null;
 // ---------- ciudad viva: densidad según la hora, reacciones del tráfico y de los peatones, claxon y bocadillos
