@@ -5346,7 +5346,7 @@ function radioMp3(S,ct){const Q=RADIO;
 function radioMp3Para(){const Q=RADIO;if(Q.au&&!Q.au.paused)Q.au.pause()}
 // los navegadores del móvil solo dejan arrancar un <audio> dentro de un toque o tecla
 ['pointerdown','touchend','keydown'].forEach(ev=>addEventListener(ev,()=>{const Q=RADIO,S=CANCIONES[Q.i];if(Q.au&&Q.au.paused&&Q.run&&S&&S.mp3)Q.au.play().catch(()=>{})},{capture:true,passive:true}));
-const EMISORAS=window.SOLO_NAVIDAD?[{nom:'🎶 Vigo Nadal',c:SUNO}]:[{nom:'📻 Radio Vigo',c:VIGO3},{nom:'🌴 Vigo Reggae',c:REGGAE}];
+const EMISORAS=[{nom:'🎶 Vigo Nadal',c:SUNO}];   // edit_radiomundo.py: la radio de Navidad también en el mundo abierto
 function emisoraPon(e,i,callado){RADIO.e=Math.max(0,Math.min(EMISORAS.length-1,e|0));CANCIONES.length=0;CANCIONES.push(...EMISORAS[RADIO.e].c);RADIO.i=Math.max(0,(i|0)%CANCIONES.length);RADIO.on=true;RADIO.run=false;
  try{localStorage.setItem(window.SOLO_NAVIDAD?'gtvigo_nav_emisora':'gtvigo_emisora',String(RADIO.e))}catch(_){}radioGuarda();if(!callado)radioAviso();radioPanelPinta()}
 {let e=0;try{e=window.SOLO_NAVIDAD?0:(+localStorage.getItem('gtvigo_emisora')||0)}catch(_){}const on=RADIO.on;emisoraPon(e,RADIO.i,true);RADIO.on=on}
