@@ -3234,7 +3234,7 @@ function farosTick(){const nf=THREE.MathUtils.smoothstep(Math.max(CIELO.nf,(TIEM
  for(const m of FAROMATS){m.emissiveIntensity=m.userData.faro==='f'?.3+2.6*nf:.15+1.8*nf}}
 // ---------- reflejos: la pintura de los coches lleva barniz y refleja el cielo del momento (se rehace cada pocos segundos)
 const REFLEJAN=new Set();
-function pintura(col){const m=new THREE.MeshPhysicalMaterial({color:col,roughness:.42,metalness:.25,clearcoat:1,clearcoatRoughness:.07,envMapIntensity:1});m.userData.pintura=1;REFLEJAN.add(m);if(ENVC.tex){m.envMap=ENVC.tex}return m}
+function pintura(col){const m=new THREE.MeshPhysicalMaterial({color:col,roughness:.26,metalness:.55,clearcoat:1,clearcoatRoughness:.03,envMapIntensity:1.3});m.userData.pintura=1;REFLEJAN.add(m);if(ENVC.tex){m.envMap=ENVC.tex}return m}
 const ENVC={tex:null,rt:null,t:-99,pm:null,sc:null,mat:null};
 function envCoches(){if(!ENVC.pm){ENVC.pm=new THREE.PMREMGenerator(R);ENVC.sc=new THREE.Scene();
   ENVC.mat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{uZen:{value:new THREE.Color()},uHor:{value:new THREE.Color()},uSun:{value:new THREE.Vector3()},uSunC:{value:new THREE.Color()},uSuelo:{value:new THREE.Color()}},
@@ -3248,7 +3248,28 @@ function envCoches(){if(!ENVC.pm){ENVC.pm=new THREE.PMREMGenerator(R);ENVC.sc=ne
  const U=ENVC.mat.uniforms;U.uZen.value.copy(SKYU.uZen.value);U.uHor.value.copy(SKYU.uHor.value);U.uSun.value.copy(SKYU.uSun.value);U.uSunC.value.copy(sun.color).multiplyScalar(sun.intensity*.5);U.uSuelo.value.setRGB(.12,.12,.14).multiplyScalar(1-.6*CIELO.nf);
  const rt=ENVC.pm.fromScene(ENVC.sc,0.02);const prim=!ENVC.tex;if(ENVC.rt)ENVC.rt.dispose();ENVC.rt=rt;ENVC.tex=rt.texture;
  for(const m of REFLEJAN){const nuevo=!m.envMap;m.envMap=ENVC.tex;if(nuevo)m.needsUpdate=true}}
-function reflejosCoches(){if(!driving)return;const t=performance.now()/1000;if(t-ENVC.t<(window.LITE?60:4))return;ENVC.t=t;try{envCoches()}catch(e){console.warn(e)}}
+// ---------- reflejos de verdad (edit_reflejos.py): un cubo pegado a tu vehículo fotografía la ciudad y eso refleja la pintura
+const RCUBO={cc:null,rt:null,pm:null,out:null,face:0,t:-99,mal:false,far:6};window.__RCUBO=RCUBO;
+function reflejoCaras(n){
+ if(!RCUBO.cc){RCUBO.rt=new THREE.WebGLCubeRenderTarget(128,{type:THREE.HalfFloatType,generateMipmaps:false});
+  RCUBO.cc=new THREE.CubeCamera(.004,RCUBO.far,RCUBO.rt);RCUBO.cc.coordinateSystem=R.coordinateSystem;RCUBO.cc.updateCoordinateSystem();RCUBO.pm=new THREE.PMREMGenerator(R)}
+ const ob=n_=>{try{return n_()}catch(e){return null}};
+ const vs=[ob(()=>car),ob(()=>moto),ob(()=>persona),ob(()=>heli)].filter(o=>o&&o.isObject3D);
+ if(RCUBO.face===0){const vh=MODO==='moto'?vs[1]:MODO==='heli'?vs[3]:MODO==='pie'?vs[2]:car;const p=new THREE.Vector3();(vh&&vh.isObject3D?vh:car).getWorldPosition(p);
+  RCUBO.cc.position.set(p.x,p.y+.025,p.z);RCUBO.cc.updateMatrixWorld(true)}
+ const sh=R.shadowMap,au=sh.autoUpdate,nu=sh.needsUpdate,prev=R.getRenderTarget(),pf=R.getActiveCubeFace(),pl=R.getActiveMipmapLevel(),cut=UCUT.uCut.value,
+  sp=sky.position.clone(),ss=sky.scale.clone(),sv=sky.visible,vis=vs.map(o=>o.visible);
+ sh.autoUpdate=false;UCUT.uCut.value=0;sky.visible=true;sky.position.copy(RCUBO.cc.position);sky.scale.setScalar(RCUBO.far*.9);vs.forEach(o=>o.visible=false);
+ try{for(let k=0;k<n&&RCUBO.face<6;k++){R.setRenderTarget(RCUBO.rt,RCUBO.face);R.render(scene,RCUBO.cc.children[RCUBO.face]);RCUBO.face++}}
+ finally{vs.forEach((o,i)=>o.visible=vis[i]);sky.visible=sv;sky.position.copy(sp);sky.scale.copy(ss);UCUT.uCut.value=cut;sh.autoUpdate=au;sh.needsUpdate=nu;R.setRenderTarget(prev,pf,pl)}
+ if(RCUBO.face>=6){RCUBO.face=0;RCUBO.out=RCUBO.pm.fromCubemap(RCUBO.rt.texture,RCUBO.out);const tex=RCUBO.out.texture;ENVC.tex=tex;
+  for(const m of REFLEJAN){if(m.envMap!==tex){const nuevo=!m.envMap;m.envMap=tex;if(nuevo)m.needsUpdate=true}}return true}
+ return false}
+function reflejosCoches(){if(!driving){RCUBO.face=0;return}const t=performance.now()/1000;
+ if(window.LITE||RCUBO.mal){if(t-ENVC.t<(window.LITE?60:4))return;ENVC.t=t;try{envCoches()}catch(e){console.warn(e)}return}
+ if(!ENVC.tex){ENVC.t=t;try{envCoches()}catch(e){}}   // mientras se llena el primer cubo, el cielo de siempre
+ if(RCUBO.face===0&&t-RCUBO.t<((typeof POST!=='undefined'&&POST.on)?.2:.6))return;
+ try{if(reflejoCaras(2))RCUBO.t=t}catch(e){console.warn('reflejos',e);RCUBO.mal=true;RCUBO.face=0}}
 const car=new THREE.Group();
 {const M=(c,r=.45,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
  // utilitario pequeño y redondeado, granate (estilo cinquecento)
@@ -3288,7 +3309,7 @@ const OFJ=(()=>{
  const std=(o)=>new THREE.MeshStandardMaterial(o);
  const T=(rol,c,o={})=>{switch(rol){
   case 'pintura':return pintura(c);
-  case 'cristal':{const m=std({color:0x1b2233,roughness:.06,metalness:.3,envMapIntensity:1.3});REFLEJAN.add(m);return m}
+  case 'cristal':{const m=new THREE.MeshPhysicalMaterial({color:0x0e121a,roughness:.03,metalness:0,clearcoat:1,clearcoatRoughness:0,envMapIntensity:2.2});REFLEJAN.add(m);return m}
   case 'cromo':{const m=std({color:0xd8dbe0,roughness:.18,metalness:.9});REFLEJAN.add(m);return m}
   case 'negro':return std({color:0x1a1a22,roughness:o.roughness>.5?.85:.45,metalness:o.roughness>.5?0:.3});
   case 'faro':{const m=std({color:0xfff6dc,roughness:.2,emissive:0xfff2c0,emissiveIntensity:.4});m.userData.faro='f';FAROMATS.add(m);return m}
