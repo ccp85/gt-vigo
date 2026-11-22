@@ -10,7 +10,8 @@
 #  - pintura gastada: zonas donde se ve el asfalto a través, más de cerca con grano, y de lejos se funden un poco con la
 #    calzada para que los cruces con muchas marcas no se vean tan cargados;
 #  - con lluvia se mojan igual que la calzada (se oscurecen y entran en los charcos), antes quedaban secas por encima.
-# En el móvil (LITE): color nuevo y desgaste, sin manchas de aceite ni grano.
+# En el móvil (LITE): color nuevo y desgaste, sin manchas de aceite ni grano. Calzada y marcas llevan userData.noMate para que
+# nitido.js no las pase a material mate (Lambert): sin «roughness» el mojado no compila y la calzada salía blanca en el móvil.
 import os
 OLD_ZONA="if(/^verde/.test(o.name))for(const mm of [].concat(o.material))cesped(mm);"
 NEW_ZONA=OLD_ZONA+"if(/^(calzada|puente)/.test(o.name))for(const mm of [].concat(o.material))if(mm&&mm.name==='calzada')asfaltoReal(mm);if(/^lineas/.test(o.name))for(const mm of [].concat(o.material)){marcaVial(mm);mojado(mm,.9)}"
@@ -19,7 +20,7 @@ COLS=[("const AS=col(0x5c5e70),AS2=col(0x55576a)","const AS=col(0x545659),AS2=co
       ("const mA=new THREE.MeshStandardMaterial({color:0x5c5c6c,","const mA=new THREE.MeshStandardMaterial({color:0x56585c,")]
 FN=r'''// ---------- asfalto y marcas viales (edit_asfalto.py): gris neutro, tonos y aceite en la calzada; marcas menos blancas, gastadas y que se mojan
 const ASF_GLSL='float hA(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat nA(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hA(i),hA(i+vec2(1,0)),f.x),mix(hA(i+vec2(0,1)),hA(i+vec2(1,1)),f.x),f.y);}\n';
-function asfaltoReal(m){if(!m||m.userData.asf)return m;m.userData.asf=1;m.color.set(0x54565b);const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
+function asfaltoReal(m){if(!m||m.userData.asf)return m;m.userData.asf=1;m.userData.noMate=1;m.color.set(0x54565b);const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
  m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);
   sh.vertexShader='varying vec3 vWa;\n'+sh.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n vWa=(modelMatrix*vec4(transformed,1.)).xyz;');
   sh.fragmentShader='varying vec3 vWa;\n'+ASF_GLSL+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
@@ -30,7 +31,7 @@ function asfaltoReal(m){if(!m||m.userData.asf)return m;m.userData.asf=1;m.color.
     float oil=step(.92,oh)*(1.-smoothstep(.10,.30,length(od*vec2(1.,2.2))+(nA(aq*300.)-.5)*.12))*(1.-smoothstep(.008,.035,afw));
     diffuseColor.rgb*=1.-.38*oil;`}}`)};
  m.customProgramCacheKey=()=>(pk?pk():'')+'|asf';m.needsUpdate=true;return m}
-function marcaVial(m){if(!m||m.userData.mv)return m;m.userData.mv=1;m.color.set(0xd9d7cf);m.roughness=Math.min(m.roughness??.8,.7);const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
+function marcaVial(m){if(!m||m.userData.mv)return m;m.userData.mv=1;m.userData.noMate=1;m.color.set(0xd9d7cf);m.roughness=Math.min(m.roughness??.8,.7);const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
  m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);
   sh.vertexShader='varying vec3 vWv;\n'+sh.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n vWv=(modelMatrix*vec4(transformed,1.)).xyz;');
   sh.fragmentShader='varying vec3 vWv;\n'+ASF_GLSL+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
