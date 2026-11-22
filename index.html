@@ -4583,6 +4583,7 @@ function taxiTick(dt){
 //    🌀 Giro (C / Ⓧ): cutback, vuelves hacia la rompiente. 🚀 Aéreo (↑ / Espacio / Ⓐ cerca de la cresta y con velocidad).
 //    Al subir a la cresta y bajar de golpe: snap. Metido justo bajo el labio: ¡tubo! El equilibrio se pierde si te pasas
 //    de la cresta, si te quedas abajo del todo o con el picado del mar.
+//  - Siempre de día o al atardecer (se elige en la ficha; nunca de noche). Al terminar vuelve la hora que había.
 //  - Cada maniobra seguida sube el multiplicador (hasta x5). Retos: 3 cutbacks, aguantar 20 s en una ola y 5 olas seguidas
 //    sin caerte (la racha se guarda entre sesiones). Dan monedas 🪙 y suben el nivel: olas pequeñas → medianas → grandes,
 //    y tablas nuevas (Clásica, Cíes, Monteferro). Se guarda en el navegador (gtvigo_surf).
@@ -4598,7 +4599,7 @@ const SG_DUR=180;
 MISIONES.push({id:'surf',ico:'🏄',n:'Surf en Patos',d:'Minijuego en la playa de Patos (Nigrán)',da:'Vas camino de Patos · toca para cancelar',ir:()=>surfIr(),on:()=>SG.ruta,fin:()=>surfCancelar()});
 // ---- estilos: ficha de la playa, marcador y HUD del minijuego
 {const st=document.createElement('style');st.textContent=`
-body.surfg .bar,body.surfg #pad,body.surfg #mini,body.surfg #vel,body.surfg #calle,body.surfg #gps,body.surfg #bAcc,body.surfg #taxiHud,body.surfg #contra,body.surfg #aviso,body.surfg #rCuenta,body.surfg #joy,body.surfg #radio,body.surfg #radioPanel,body.surfg .hint{display:none!important}
+body.surfg #bNoche,body.surfg .bar,body.surfg #pad,body.surfg #mini,body.surfg #vel,body.surfg #calle,body.surfg #gps,body.surfg #bAcc,body.surfg #taxiHud,body.surfg #contra,body.surfg #aviso,body.surfg #rCuenta,body.surfg #joy,body.surfg #radio,body.surfg #radioPanel,body.surfg .hint{display:none!important}
 #sgFicha{position:fixed;inset:0;z-index:40;background:rgba(8,30,44,.55);display:flex;align-items:center;justify-content:center;padding:14px}
 #sgFicha[hidden],#sgHud[hidden]{display:none!important}
 #sgFicha .c{background:#fffdf7;color:#10232e;border-radius:20px;max-width:460px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.4);font:500 13px var(--body)}
@@ -4785,7 +4786,10 @@ const SG_DATOS=[['📍','<b>Dónde:</b> ensenada de Carreira, en Nigrán (Pontev
 function sgRetosHtml(ses){return SG_RETOS.map(r=>{const ok=ses?!!SG.retoHecho[r.id]:!!SGD.retos[r.id];return `<div class="reto${ok?' ok':''}">${r.ico} ${r.n}${r.id==='seq5'&&!ok?` <small>(racha: ${SGD.racha})</small>`:''}</div>`}).join('')}
 function sgSel(){const bo=SG_NIV.slice(1).map((v,i)=>`<button data-o="${i+1}" class="${SGD.olas===i+1?'on':''}" ${i+1>SGD.nivel?'disabled':''}>${i+1>SGD.nivel?'🔒 ':''}${v.n}</button>`).join('');
  const bt=SG_TABLAS.map((v,i)=>`<button data-t="${i}" class="${SGD.tabla===i?'on':''}" ${v.niv>SGD.nivel?'disabled':''}><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#${v.c.toString(16).padStart(6,'0')};border:1px solid #0003"></span> ${v.niv>SGD.nivel?'🔒 ':''}${v.n}</button>`).join('');
- return `<div class="opt">Olas</div><div class="sel so">${bo}</div><div class="opt">Tabla</div><div class="sel st">${bt}</div>`}
+ const bh=[['dia','☀️ De día'],['tarde','🌅 Atardecer']].map(([k,t])=>`<button data-h="${k}" class="${sgHora()===k?'on':''}">${t}</button>`).join('');
+ return `<div class="opt">Hora</div><div class="sel sh">${bh}</div><div class="opt">Olas</div><div class="sel so">${bo}</div><div class="opt">Tabla</div><div class="sel st">${bt}</div>`}
+// hora de la sesión: siempre de día o al atardecer, nunca de noche (si no la has elegido, la que se parezca a la hora del juego)
+function sgHora(){return SGD.hora||(CIELO.h>=18.3&&CIELO.h<22.5?'tarde':'dia')}
 function sgFicha(modo){const fin=modo==='fin';SG.ficha=true;
  const cab=`<div class="foto"><span class="sello">PLAYA REAL · RÍAS BAIXAS</span><small>Foto: HombreDHojalata · <a href="${SG_FOTOW}" target="_blank" rel="noopener">Wikimedia Commons</a></small></div>`;
  let cuerpo;
@@ -4800,6 +4804,7 @@ function sgFicha(modo){const fin=modo==='fin';SG.ficha=true;
  SGF.innerHTML=`<div class="c">${cab}<div class="in">${cuerpo}</div></div>`;SGF.hidden=false;
  {const im=new Image();im.alt='Playa de Patos, Nigrán';im.decoding='async';im.onload=()=>{const f=SGF.querySelector('.foto');if(f&&!f.querySelector('img'))f.prepend(im)};im.onerror=()=>{};im.src=SG_FOTO}
  SGF.querySelectorAll('.so button').forEach(b=>b.onclick=()=>{SGD.olas=+b.dataset.o;sgGuardar();SGF.querySelectorAll('.so button').forEach(x=>x.classList.toggle('on',x===b))});
+ SGF.querySelectorAll('.sh button').forEach(b=>b.onclick=()=>{SGD.hora=b.dataset.h;sgGuardar();SGF.querySelectorAll('.sh button').forEach(x=>x.classList.toggle('on',x===b))});
  SGF.querySelectorAll('.st button').forEach(b=>b.onclick=()=>{SGD.tabla=+b.dataset.t;sgGuardar();SGF.querySelectorAll('.st button').forEach(x=>x.classList.toggle('on',x===b))});
  SGF.querySelector('.go').onclick=()=>{SGF.hidden=true;SG.ficha=false;sgEmpezar()};
  SGF.querySelector('.no').onclick=()=>{SGF.hidden=true;SG.ficha=false};
@@ -4830,10 +4835,12 @@ function surfgTick(dt){if(SG.on)return;const sp=SG.sp||(MAPA&&Math.hypot(P.x+25,
 function sgEmpezar(){const sp=sgSpot();if(!sp||!driving)return;sgOlaInit();sgPartInit();sgCies();if(!SG.sf)SG.sf=sgSurfista();sgVestir();
  Object.assign(SG,{on:true,t:SG_DUR,tt:0,pts:0,mult:1,multT:0,olas:0,caidas:0,cut:0,maxRide:0,retoHecho:{},msgT:0});SG.k={l:0,r:0,a:0,b:0};SG.padX=0;SG.cam.ini=false;
  for(const k in keys)keys[k]=false;P.v=0;SG.prevPie=MODO==='pie'&&persona.visible;if(SG.prevPie)persona.visible=false;if(SG.mk)SG.mk.visible=false;
+ if(!SG.prevCielo)SG.prevCielo={modo:CIELO.modo,h:CIELO.h};CIELO.modo='surf';CIELO.h=sgHora()==='tarde'?20.45:(SG.prevCielo.h>=9&&SG.prevCielo.h<=18?SG.prevCielo.h:12.5);CIELO.txt='';try{cielo(0)}catch(e){}
  document.body.classList.add('surfg');SGH.hidden=false;SG.sf.g.visible=true;SGD.sesiones++;sgGuardar();sgRetosHud();sgNuevaOla(true);
  try{gtvEv('minijuego/surf','Surf Patos')}catch(e){}}
 function sgTerminar(motivo){if(!SG.on)return;SG.on=false;SG.pts=Math.round(SG.pts);SG.padA=0;document.body.classList.remove('surfg');SGH.hidden=true;if(SGW.m)SGW.m.visible=false;if(SG.sf)SG.sf.g.visible=false;if(SG.cies)SG.cies.visible=false;
  if(SGP.pts){SGP.life.fill(0);for(let i=0;i<SGP.N;i++)SGP.pos[i*3+1]=-99;SGP.pts.geometry.attributes.position.needsUpdate=true}
+ if(SG.prevCielo){CIELO.modo=SG.prevCielo.modo;CIELO.h=SG.prevCielo.h;CIELO.txt='';SG.prevCielo=null;try{cielo(0)}catch(e){}}
  if(SG.prevPie)persona.visible=true;SG.prevPie=false;camInit=false;sgRugido(0);SG.cerca=true;SG.W=null;
  const rec=SG.pts>SGD.mejor;if(rec)SGD.mejor=SG.pts;let gana='';const nv0=SGD.nivel,nr=Object.keys(SGD.retos).length;
  if(SGD.nivel<2&&SGD.mejor>=4000&&nr>=2)SGD.nivel=2;if(SGD.nivel===2&&nv0===2&&SGD.mejor>=9000&&nr>=3)SGD.nivel=3;
