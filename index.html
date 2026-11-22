@@ -1156,9 +1156,53 @@ function fachadaViva(m){if(m.userData.fv)return;{const n=m.name||'';if(/^fachada
     float on=step(.5,hF(cel))*win*uLuz;`)
    .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance*=on*(1.2+1.0*hF(cel+5.));')};
  m.needsUpdate=true}
-function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Object.assign(m.defines||{},{AGUA_LITE:''});m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,UW,UCO,{uSun:SKYU.uSun,uZen:SKYU.uZen,uHor:SKYU.uHor});
+// edit_olas.py: rompientes en playas abiertas al océano (Patos). Sitios: [x, z, radio, fuerza]
+const SURF={spots:[[-25,127,12,1]],m:null,pt:null,yOk:false,t:0};
+const USURF={uSurf:{value:[0,1,2].map(i=>{const s=SURF.spots[i];return s?new THREE.Vector4(s[0],s[1],s[2],s[3]):new THREE.Vector4(0,0,1,0)})},uSurfA:{value:.028}};
+const SURF_GLSL=`uniform vec4 uSurf[3];uniform float uSurfA;
+float sh21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float svn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sh21(i),sh21(i+vec2(1,0)),f.x),mix(sh21(i+vec2(0,1)),sh21(i+vec2(1,1)),f.x),f.y);}
+float surfMask(vec2 p){float m=0.;for(int i=0;i<3;i++){vec4 s=uSurf[i];if(s.w>0.)m=max(m,s.w*(1.-smoothstep(s.z*.55,s.z,length(p-s.xy))));}return m;}
+float surfCos(vec2 w){vec2 uv=(w-uCoR.xy)/uCoR.zw;if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.)return 0.;return texture2D(uCos,uv).a;}
+// x = altura (0..1), y = espuma, z = cara empinada de la ola (antes de romper)
+vec3 surf(vec2 p,float cs,float t){
+ float n=svn(p*.55),n2=svn(p*1.7+3.);
+ float q=cs/.15-t/9.+n*1.6;float f=fract(q);                       // f: 0 = cresta, sube mar adentro
+ float set=.55+.45*sin(q*.83+n2*2.);                                 // series: unas olas más grandes que otras
+ float br=smoothstep(.58,.72,cs+(n2-.5)*.14);                         // ya rompió
+ float env=smoothstep(.16,.6,cs)*(1.-.55*br)*(1.-smoothstep(.88,.975,cs))*set;
+ float fr=1.-smoothstep(0.,.07,f);                                  // cara hacia la playa
+ float h=max(f*f*f,fr)*env;
+ float lip=smoothstep(.48,.64,cs+(n-.5)*.1)*(smoothstep(.9,1.,f)+1.-smoothstep(0.,.035,f))*min(env*1.6,1.);
+ float ww=br*(smoothstep(.35,.97,f)*.85+fr)*(1.-smoothstep(.93,.985,cs))*(.5+.5*set);
+ return vec3(h,clamp(lip*1.4+ww,0.,1.),clamp(fr*(1.-br)*env*1.5,0.,1.)-.35*(1.-h)*env*(1.-br));}
+`;
+function surfMesh(){if(SURF.m||window.LITE||!MAPA)return;const img=UCO.uCos.value.image;if(!img||img.width<2||!img.data)return;
+ const W=img.width,H=img.height,d=img.data,R4=UCO.uCoR.value;
+ const csAt=(x,z)=>{const i=Math.max(0,Math.min(W-1,Math.round((x-R4.x)/R4.z*W-.5))),j=Math.max(0,Math.min(H-1,Math.round((z-R4.y)/R4.w*H-.5)));return d[(j*W+i)*4]/255};
+ const st=.035,pos=[],idx=[],csR=(x,z)=>{const i=Math.max(0,Math.min(W-1,Math.round((x-R4.x)/R4.z*W-.5))),j=Math.max(0,Math.min(H-1,Math.round((z-R4.y)/R4.w*H-.5))),k=(j*W+i)*4;return d[k]>=250?1:d[k+3]/255};
+ SURF.spots.forEach(([cx,cz,R],si)=>{const n=Math.ceil(2*R/st),map=new Map();
+  const id=(i,j)=>{const k=i*100000+j;let v=map.get(k);if(v===undefined){v=pos.length/3;pos.push(cx-R+i*st,0,cz-R+j*st);map.set(k,v)}return v};
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const x=cx-R+(i+.5)*st,z=cz-R+(j+.5)*st;if((x-cx)**2+(z-cz)**2>R*R)continue;const c=csR(x,z);if(c<.12||c>.99)continue;
+   if(!SURF.pt&&c>.3&&c<.4)SURF.pt=[x,z];const a=id(i,j),b=id(i+1,j),c2=id(i+1,j+1),e=id(i,j+1);idx.push(a,e,b,b,e,c2)}});
+ if(!idx.length)return;
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pos),3));g.setIndex(new THREE.BufferAttribute(new Uint32Array(idx),1));{const nr=new Float32Array(pos.length);for(let i=1;i<nr.length;i+=3)nr[i]=1;g.setAttribute('normal',new THREE.BufferAttribute(nr,3))}g.computeBoundingSphere();g.boundingSphere.radius+=.05;
+ const m=new THREE.MeshStandardMaterial({color:0x2a3f9a});aguaSamil(m);const prev=m.onBeforeCompile;
+ m.onBeforeCompile=(sh,r)=>{prev(sh,r);
+  sh.vertexShader='uniform sampler2D uCos;uniform vec4 uCoR;uniform float uT;\n'+SURF_GLSL+sh.vertexShader.replace('vWp=(modelMatrix*vec4(position,1.0)).xyz;',
+   'vWp=(modelMatrix*vec4(position,1.0)).xyz;{float sc=surfCos(vWp.xz);transformed.y+=surf(vWp.xz,sc,uT).x*uSurfA*surfMask(vWp.xz)*(1.-smoothstep(.97,.995,sc));}');
+  sh.fragmentShader=sh.fragmentShader.replace('vec2 p=vWp.xz;float cs=costa();','vec2 p=vWp.xz;float cs=costa();if(cs>.985)discard;')};
+ m.customProgramCacheKey=()=>'surfolas';m.polygonOffset=true;m.polygonOffsetFactor=-2;m.polygonOffsetUnits=-2;WATERS.push(m);
+ const me=new THREE.Mesh(g,m);me.name='olas_patos';me.frustumCulled=true;me.receiveShadow=false;me.castShadow=false;me.position.y=(MARG?MARG.position.y:-.036)+.0015;me.visible=false;scene.add(me);SURF.m=me}
+function surfTick(){if(window.LITE||!MAPA)return;const now=performance.now();if(now-SURF.t<1000)return;SURF.t=now;if(!SURF.m){surfMesh();if(!SURF.m)return}
+ const fx=driving?P.x:(typeof ctl!=='undefined'?ctl.target.x:P.x),fz=driving?P.y:(typeof ctl!=='undefined'?ctl.target.z:P.y);
+ const[cx,cz,R]=SURF.spots[0];const cerca=Math.hypot(fx-cx,fz-cz)<R+40;SURF.m.visible=cerca&&!window.__BAJO;
+ if(cerca&&!SURF.yOk&&SURF.pt){const L=[];scene.traverse(o=>{if(o.isMesh&&o!==SURF.m&&o!==MARG&&WATERS.includes(o.material))L.push(o)});
+  const rc=new THREE.Raycaster(new THREE.Vector3(SURF.pt[0],3,SURF.pt[1]),new THREE.Vector3(0,-1,0),0,10);const h=L.length?rc.intersectObjects(L,false)[0]:null;
+  if(h){SURF.m.position.y=Math.max(h.point.y,MARG?MARG.position.y:-9)+.0015;SURF.yOk=true}}}
+function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Object.assign(m.defines||{},{AGUA_LITE:''});m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,UW,UCO,USURF,{uSun:SKYU.uSun,uZen:SKYU.uZen,uHor:SKYU.uHor});
  sh.vertexShader='varying vec3 vWp;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWp=(modelMatrix*vec4(position,1.0)).xyz;');
- sh.fragmentShader='uniform float uT;uniform float uN;uniform sampler2D uCos;uniform vec4 uCoR;uniform vec3 uSun,uZen,uHor;varying vec3 vWp;vec3 aN;float aF;\n'+
+ sh.fragmentShader='uniform float uT;uniform float uN;uniform sampler2D uCos;uniform vec4 uCoR;uniform vec3 uSun,uZen,uHor;varying vec3 vWp;vec3 aN;float aF;float aS;\n'+SURF_GLSL+
  '#ifdef AGUA_LITE\n#define NOLAS 5\n#else\n#define NOLAS 8\n#endif\n'+
  'float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n'+
  'float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}\n'+
@@ -1175,6 +1219,9 @@ function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Obj
   float fw=max(length(fwidth(p)),1e-5);
   float calma=smoothstep(.3,.75,vn(p*.35+vec2(uT*.012,-uT*.008)));             // calmas: manchas lisas que deriva el viento
   vec3 O=olas(p,uT,fw,calma,aw);vec2 gr=O.yz;
+  aS=0.;float sFace=0.;{float sm=surfMask(p)*aw*(1.-smoothstep(.97,.995,cs));if(sm>.002){float e=.025;vec3 S0=surf(p,surfCos(p),uT);   // edit_olas.py: rompiente
+   float hx=surf(p+vec2(e,0.),surfCos(p+vec2(e,0.)),uT).x,hz=surf(p+vec2(0.,e),surfCos(p+vec2(0.,e)),uT).x;
+   gr+=vec2(hx-S0.x,hz-S0.x)/e*uSurfA*sm;aS=S0.y*sm;sFace=S0.z*sm;}}
   #ifndef AGUA_LITE
   {float rz=mix(.25,1.,calma)*smoothstep(1.5,5.,.045/fw);if(rz>.001){vec2 q=p*45.+vec2(uT*.9,-uT*.6);float e=.35,n0=vn(q),nx=vn(q+vec2(e,0.)),nz=vn(q+vec2(0.,e));gr+=vec2(nx-n0,nz-n0)/e*45.*.0016*rz;}}
   #endif
@@ -1185,22 +1232,23 @@ function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Obj
   vec3 col=mix(mid,deep,smoothstep(.0,.6,prof)*(.7+.3*big));
   col=mix(col,shal,smoothstep(.3,.7,cs));col=mix(col,arena,smoothstep(.7,.9,cs)*aw);
   col=mix(col,vec3(.04,.10,.09),(1.-aw)*.6);                                      // dársenas y charcas: agua más turbia
-  col+=vec3(.0,.018,.016)*smoothstep(.6,.95,O.x)*(1.-uN);                            // la luz atraviesa las crestas (verde)
+  col+=vec3(.0,.018,.016)*smoothstep(.6,.95,O.x)*(1.-uN);
+  col=mix(col,vec3(.03,.27,.24),max(sFace,0.)*.75*(1.-uN*.7));col*=1.+min(sFace,0.)*.9;   // la luz atraviesa la cara de la ola; valles más oscuros                            // la luz atraviesa las crestas (verde)
   float fb=sin(cs*34.0-uT*1.6+vn(p*4.0)*4.0);
   float tx=smoothstep(.15,.6,vn(p*20.+uT*vec2(.35,-.2))*.6+vn(p*52.-uT*.3)*.4+.1);
   float foam=(smoothstep(.86,.975,cs)+smoothstep(.74,.94,cs)*smoothstep(.65,.97,fb)*.7)*tx*aw;
   float whc=smoothstep(.9,.99,O.x)*smoothstep(.72,.9,vn(p*1.3+uT*vec2(.1,.04)))*smoothstep(.5,.8,vn(p*7.+uT*.2))*(1.-calma)*prof*.45;   // borreguillos mar adentro
-  aF=clamp(foam+whc*tx,0.,1.);
+  aF=clamp(foam+whc*tx,0.,1.);aS=clamp(aS*(.45+.8*tx),0.,1.);col=mix(col,vec3(.88,.91,.93),aS*(1.0-uN*.6));
   col=mix(col,vec3(.78,.82,.84),aF*(1.0-uN*.6));
   diffuseColor.rgb=col;`).replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
   normal=normalize((viewMatrix*vec4(normalize(mix(aN,vec3(0.,1.,0.),aF*.8)),0.)).xyz);`).replace('#include <opaque_fragment>',`{vec3 N=normalize(mix(aN,vec3(0.,1.,0.),aF));vec3 V=normalize(cameraPosition-vWp);float nv=max(dot(N,V),0.);
    vec3 Rf=reflect(-V,N);Rf.y=abs(Rf.y);
    vec3 sky=mix(uHor,uZen,.35+.65*smoothstep(.0,.5,Rf.y))*.82;
-   float F=min((.02+.98*pow(1.-nv,5.))*1.2+.07+.06*calma,.58)*(1.-aF);                    // reflejo del cielo (Fresnel)
+   float F=min((.02+.98*pow(1.-nv,5.))*1.2+.07+.06*calma,.58)*(1.-max(aF,aS));                    // reflejo del cielo (Fresnel)
    outgoingLight=mix(outgoingLight,sky,F);
    vec3 Ls=normalize(uSun);float sd=max(dot(Rf,Ls),0.);float up=smoothstep(-.02,.12,Ls.y)*(1.-uN);
    vec3 sc=mix(vec3(1.,.5,.25),vec3(1.,.95,.86),smoothstep(.05,.4,Ls.y));
-   outgoingLight+=sc*(pow(sd,700.)*10.+pow(sd,60.)*.35)*up*(1.-aF);}               // destellos y camino del sol
+   outgoingLight+=sc*(pow(sd,700.)*10.+pow(sd,60.)*.35)*up*(1.-max(aF,aS));}               // destellos y camino del sol
   #include <opaque_fragment>`)};m.needsUpdate=true}
 function texturaCosta(){if(!MAPA||UCO.uCos.value.image.width>1)return;const k=4,w=Math.floor(MAPA.w/k),h=Math.floor(MAPA.h/k);
  const land=new Float32Array(w*h),fue=new Uint8Array(w*h);for(let j=0;j<h;j++)for(let i=0;i<w;i++){const t=Math.round(MI[((j*k)*MAPA.w+i*k)*4]/40);land[j*w+i]=(t>=1&&t<=5&&t!==4)?1:0;fue[j*w+i]=t===6?1:0}
@@ -1212,6 +1260,10 @@ function texturaCosta(){if(!MAPA||UCO.uCos.value.image.width>1)return;const k=4,
  for(let j=0;j<h;j++)for(let i=0;i<w;i++){let m=0;for(let d=-r;d<=r;d++){const ii=i+d;if(ii>=0&&ii<w)m=Math.max(m,D[j*w+ii])}A[j*w+i]=m}
  for(let j=0;j<h;j++)for(let i=0;i<w;i++){let m=0;for(let d=-r;d<=r;d++){const jj=j+d;if(jj>=0&&jj<h)m=Math.max(m,A[jj*w+i])}Bm[j*w+i]=m}
  const px=new Uint8Array(w*h*4);for(let n=0;n<w*h;n++){const v=land[n]?255:Math.max(0,255*(1-D[n]/14));const a=Math.min(1,Math.max(0,(Bm[n]-2.5)/4));px[n*4]=v;px[n*4+2]=fue[n]?255:0;px[n*4+1]=Math.round(255*a);px[n*4+3]=255}
+ {const S=new Float32Array(w*h),T=new Float32Array(w*h),r=2;for(let n=0;n<w*h;n++)S[n]=land[n]?0:Math.min(D[n],16);   // edit_olas.py: costa suave (alfa)
+  for(let it=0;it<3;it++){for(let j=0;j<h;j++)for(let i=0;i<w;i++){let m=0,c=0;for(let d=-r;d<=r;d++){const ii=i+d;if(ii>=0&&ii<w){m+=S[j*w+ii];c++}}T[j*w+i]=m/c}
+   for(let j=0;j<h;j++)for(let i=0;i<w;i++){let m=0,c=0;for(let d=-r;d<=r;d++){const jj=j+d;if(jj>=0&&jj<h){m+=T[jj*w+i];c++}}S[j*w+i]=m/c}}
+  for(let n=0;n<w*h;n++)px[n*4+3]=land[n]?255:Math.round(Math.max(0,255*(1-S[n]/14)))}
  const t=new THREE.DataTexture(px,w,h,THREE.RGBAFormat);t.magFilter=t.minFilter=THREE.LinearFilter;t.needsUpdate=true;
  UCO.uCos.value=t;UCO.uCoR.value.set(MAPA.ox,MAPA.oy,w*k/MAPA.res,h*k/MAPA.res);marGlobal()}
 // una sola lámina de mar bajo todas las zonas: tapa las rendijas entre los mares de cada zona (sin líneas en el agua)
@@ -8570,6 +8622,6 @@ function palasBrazo(p,t,k,sola){const B=p.userData.brazos.children[1],c=B.userDa
 
 // enganche para grabar tráilers (cámaras de cine); no hace nada en el juego normal
 window.__G={get CIR(){return CIR},repRuta,gpsCalcular,updateCar,gpsTick,repTick,keys,GPS,repLibre,P,RACE,cell,sueloHeli,groundY,HELI,BVHQ,pcam,look,car,R,POST,ZEP,THREE,cirPos,usarTurbo,sueloOk,get CIR(){return CIR}};
-R.setAnimationLoop(()=>{if(window.LITE){const n_=performance.now();if(n_-(window.__LT||0)<28)return;window.__LT=n_}let dt=Math.min(.25,clock.getDelta());reflejosCoches();reflejosTick();zepelinTick(dt);fuentesTick(clock.elapsedTime);fachadasTick();gaviotasTick(dt);try{nieveTick(dt)}catch(e){if(!window.__nvErr){window.__nvErr=1;console.error(e)}}try{delfinesTick(dt)}catch(e){if(!window.__delErr){window.__delErr=1;console.error(e)}}fondoTick();farosTick();resolucionAdaptativa(dt);if(MAPA&&UCO.uCos.value.image.width===1)texturaCosta();gestionarZonas(dt);const t=clock.elapsedTime;UW.uT.value=t;cielo(dt);nubesTick(dt,t);tiempoTick(dt,t);luzEntorno(dt);riaTick(dt,t);audioTick(t,dt);foco();semaforosTick(dt);paseoTick(t);try{playaSolTick(dt);if(!driving&&PAL.chica&&PAL.chica.visible)palasTick(0)}catch(e){}if(!driving&&F.vida)updateTraffic(Math.min(dt,.05));else if(!driving&&PEA_G){PEA_G.vis(false);for(const c of TRAF)c.g.visible=false}
+R.setAnimationLoop(()=>{if(window.LITE){const n_=performance.now();if(n_-(window.__LT||0)<28)return;window.__LT=n_}let dt=Math.min(.25,clock.getDelta());reflejosCoches();reflejosTick();zepelinTick(dt);fuentesTick(clock.elapsedTime);fachadasTick();gaviotasTick(dt);try{nieveTick(dt)}catch(e){if(!window.__nvErr){window.__nvErr=1;console.error(e)}}try{delfinesTick(dt)}catch(e){if(!window.__delErr){window.__delErr=1;console.error(e)}}fondoTick();farosTick();resolucionAdaptativa(dt);if(MAPA&&UCO.uCos.value.image.width===1)texturaCosta();gestionarZonas(dt);const t=clock.elapsedTime;UW.uT.value=t;try{surfTick()}catch(e){if(!window.__surfErr){window.__surfErr=1;console.error(e)}}cielo(dt);nubesTick(dt,t);tiempoTick(dt,t);luzEntorno(dt);riaTick(dt,t);audioTick(t,dt);foco();semaforosTick(dt);paseoTick(t);try{playaSolTick(dt);if(!driving&&PAL.chica&&PAL.chica.visible)palasTick(0)}catch(e){}if(!driving&&F.vida)updateTraffic(Math.min(dt,.05));else if(!driving&&PEA_G){PEA_G.vis(false);for(const c of TRAF)c.g.visible=false}
  if(driving){pcam.up.set(0,1,0);car.scale.setScalar(.6*(RACE.on?1:VSC));const d0=Math.min(dt,.05);if(RACE.on){carreraTick(d0);if(RACE.nav)navLuz()}else{updateTraffic(d0);const ns=d0>1/45?2:1;for(let i=0;i<ns;i++)updateCar(d0/ns);if(REP.on)repTick(d0)}try{palasTick(d0)}catch(e){console.error(e)}try{mundoNavTick(d0)}catch(e){console.error(e)}}for(const w of WATERS)w.emissive?.setRGB(.02+.02*Math.sin(t*1.3),.03+.02*Math.sin(t*1.3),.08+.03*Math.sin(t*1.1));if(window.__CAM)window.__CAM(dt,window.__G);if(driving){recortar(dt);nombreCalle(dt);gpsTick(dt);try{taxiTick(dt)}catch(e){console.error(e)}pcam.far=/*fondoheli*/FONDO.m&&!window.LITE?260:FOG.far+4;UCUT.uCut.value=MODO==='heli'||window.__CAM?0:1;{const vh=MODO==='moto'?moto:MODO==='pie'?persona:MODO==='skate'&&(SKC.sk||SKT.sk)?(SKC.sk||SKT.sk):car;UCUT.uCar.value.set(P.x,vh.position.y+.03,P.y)}UCUT.uCamP.value.copy(pcam.position)}else UCUT.uCut.value=0;if(driving)drawMini();if(!driving){ctl.update();R.render(scene,cam)}else{pcam.aspect=cv.clientWidth/cv.clientHeight;pcam.updateProjectionMatrix();if(window.__CAMO){const o=window.__CAMO;pcam.position.set(o[0],o[1],o[2]);pcam.lookAt(o[3],o[4],o[5]);FONDO.U.uCam.value.copy(pcam.position)}sombrasTick();if(COMIC.on)comicRender();else if(POST.on)postRender();else R.render(scene,pcam)}});
 </script>
