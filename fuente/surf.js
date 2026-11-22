@@ -231,14 +231,23 @@ function sgFicha(modo){const fin=modo==='fin';SG.ficha=true;
  setTimeout(()=>{const b=SGF.querySelector('.go');b&&b.focus({preventScroll:true})},50);
  if(!fin)try{gtvEv('minijuego/surf-ficha','Surf Patos · ficha')}catch(e){}}
 // ---- GPS: ir a Patos
-function surfIr(){if(REP.on||RACE.on)return;if(!driving){mostrar('🏄 Ponte a conducir o a andar para ir a Patos');return}const sp=sgSpot();if(!sp){mostrar('⏳ Un momento, cargando la costa…');return}
- if(Math.hypot(sp.B[0]-P.x,sp.B[1]-P.y)<1.2){SG.cerca=true;sgFicha('intro');return}
- if(typeof TAXI!=='undefined'&&TAXI.on)taxiFin('otro');gpsIniciar(['🏄 Playa de Patos (Nigrán)',sp.B[0],sp.B[1]]);if(GPS.on){SG.ruta=true;mostrar('🏄 Sigue la línea azul hasta la playa de Patos y busca la tabla en la arena')}}
+function surfIr(){if(REP.on||RACE.on)return;const sp=sgSpot();if(!sp){mostrar('⏳ Un momento, cargando la costa…');return}
+ if(driving&&Math.hypot(sp.B[0]-P.x,sp.B[1]-P.y)<1.2){SG.cerca=true;sgFicha('intro');return}
+ if(typeof TAXI!=='undefined'&&TAXI.on)taxiFin('otro');
+ // la misión empieza en coche: si vas a pie, en moto de agua, nadando o en helicóptero, te subes a uno en la calle más cercana
+ if(!driving)setDrive(true,'coche');
+ if(MODO!=='coche'){const G=gpsGrafo(),i=G?gpsNodo(P.x,P.y):-1;if(i>=0){const A=G.ADJ[i];let a=P.a;if(A&&A.length){const j=A[0];a=Math.atan2(-(G.Y[j]-G.Y[i]),G.X[j]-G.X[i])}Object.assign(P,{x:G.X[i],y:G.Y[i],a,v:0});P.z=groundY(P.x,P.y)}
+  cambiarModo('coche');camInit=false;mostrar('🚗 Te subes a un coche para ir a Patos')}
+ // ruta hasta el aparcamiento de la playa (el punto de la calle más cerca de la tabla en la arena)
+ gpsIniciar(['🏄 Playa de Patos (Nigrán)',sp.B[0],sp.B[1]]);
+ if(GPS.on){SG.ruta=true;SG.fin=GPS.pts[GPS.pts.length-1].slice();setTimeout(()=>{if(SG.ruta)mostrar('🏄 Sigue la línea azul hasta la playa de Patos ('+fmtD(GPS.acc[GPS.acc.length-1])+')')},MODO==='coche'?0:1700)}}
 function surfCancelar(){if(SG.ruta&&GPS.on&&GPS.dest&&/Patos/.test(GPS.dest[0]))gpsParar();SG.ruta=false;mostrar('🏄 Surf cancelado')}
 // ---- cada fotograma conduciendo: marcador, llegada a la playa
 function surfgTick(dt){if(SG.on)return;const sp=SG.sp||(MAPA&&Math.hypot(P.x+25,P.y-128)<40?sgSpot():null);if(!sp)return;
  if(!SG.mk)SG.mk=sgMarca();const d=Math.hypot(sp.B[0]-P.x,sp.B[1]-P.y),mk=SG.mk;mk.visible=d<30&&!RACE.on&&!REP.on;
  if(mk.visible){const now=performance.now()/1000;mk.position.set(sp.B[0],groundY(sp.B[0],sp.B[1]),sp.B[1]);mk.rotation.y=Math.atan2(sp.n[0],sp.n[1]);mk.userData.f.position.y=.12+Math.sin(now*3)*.02;mk.userData.f.rotation.y=now*2;mk.userData.r.material.opacity=.55+.3*Math.sin(now*4)}
+ // fin de la ruta: al llegar al aparcamiento de la playa empieza la misión (aunque no pares del todo)
+ if(SG.ruta&&SG.fin&&!SG.ficha&&MODO==='coche'&&Math.hypot(SG.fin[0]-P.x,SG.fin[1]-P.y)<.32){SG.ruta=false;if(GPS.on)gpsParar();P.v=0;SG.cerca=true;sgFicha('intro');return}
  if(SG.ruta&&(!GPS.on||!GPS.dest||!/Patos/.test(GPS.dest[0])))SG.ruta=false;
  if(d>1.4)SG.cerca=false;
  if(!SG.cerca&&!SG.ficha&&d<.6&&Math.abs(P.v)<.15&&!RACE.on&&!REP.on&&MODO!=='heli'){SG.cerca=true;if(SG.ruta){if(GPS.on)gpsParar();SG.ruta=false}P.v=0;sgFicha('intro')}}
