@@ -4113,10 +4113,10 @@ function padVibra(w,st,ms){try{if(PAD.i==null)return;const g=navigator.getGamepa
 const padK=code=>{for(const t of ['keydown','keyup'])dispatchEvent(new KeyboardEvent(t,{code,key:code==='Enter'?'Enter':code==='Escape'?'Escape':code,bubbles:true,cancelable:true}))};
 const padAviso=t=>{try{if(RACE.on)aviso(t,1.8,'peq');else mostrar(t)}catch(_){}};
 function padSuelta(){if(!PAD.act)return;PAD.act=false;keys.up=keys.down=keys.left=keys.right=keys.alt_up=keys.alt_dn=false;JOY.act=false;JOY.k=1}
-function padConecta(g){if(PAD.i!=null)return;PAD.i=g.index;PAD.prev=g.buttons.map(b=>b.pressed);document.body.classList.add('pad');padAviso('🎮 Mando conectado · RT acelera · LT frena · Ⓐ acción · Ⓧ cámara');padVibra(.4,.4,120)}
+function padConecta(g){if(PAD.i!=null)return;PAD.i=g.index;PAD.prev=g.buttons.map(b=>b.pressed);document.body.classList.add('pad');padAviso('🎮 Mando conectado · RT acelera · LT frena · Ⓐ acción · Ⓑ GPS · Ⓧ cámara');padVibra(.4,.4,120)}
 addEventListener('gamepadconnected',e=>padConecta(e.gamepad));
 addEventListener('gamepaddisconnected',e=>{if(e.gamepad.index===PAD.i){PAD.i=null;padSuelta();document.body.classList.remove('pad');padAviso('🎮 Mando desconectado')}});
-function padMenuVis(){for(const id of ['sgFicha','radioPanel','nFin','rFin','selCar','selz']){const el=document.getElementById(id);if(el&&!el.hidden&&el.getClientRects().length)return el}return null}
+function padMenuVis(){for(const id of [/*mandogps*/'gpsMenu','sgFicha','radioPanel','nFin','rFin','selCar','selz']){const el=document.getElementById(id);if(el&&!el.hidden&&el.getClientRects().length)return el}return null}
 function padTick(){requestAnimationFrame(padTick);let gs;try{gs=navigator.getGamepads?navigator.getGamepads():[]}catch(_){return}
  if(PAD.i==null){for(const g of gs)if(g&&g.connected&&g.buttons.some(b=>b.pressed)){padConecta(g);break}return}
  const g=gs[PAD.i];if(!g||!g.connected){padSuelta();return}
@@ -4131,7 +4131,7 @@ function padTick(){requestAnimationFrame(padTick);let gs;try{gs=navigator.getGam
   if(Math.abs(d)===2&&ov.id==='selCar'){padK(d<0?'ArrowLeft':'ArrowRight');d=0}else if(d)d=Math.sign(d);
   if(d&&bs.length){let i=bs.indexOf(document.activeElement);i=i<0?(d>0?0:bs.length-1):(i+d+bs.length)%bs.length;bs[i].focus({preventScroll:false})}
   if(dn(0)){const a=document.activeElement;if(a&&bs.includes(a)&&a.tagName==='BUTTON')a.click();else if(ov.id==='selCar')padK('Enter');else{const x=bs.find(x=>x.tagName==='BUTTON');x&&x.click()}}
-  if(dn(1)&&ov.id!=='selCar'){const m=ov.querySelector('.menu');m&&m.click()}
+  if(dn(1)&&ov.id==='gpsMenu'){ov.hidden=true}else if(dn(1)&&ov.id!=='selCar'){const m=ov.querySelector('.menu');m&&m.click()}
   return}
  // conducción
  if(SG.on){sgPad(b,ax,dn);return}
@@ -4141,7 +4141,7 @@ function padTick(){requestAnimationFrame(padTick);let gs;try{gs=navigator.getGam
  const nad=MODO==='nado';PAD.ry=nad?ry:0;const aU=(heli||nad)&&(P_(5)||ry<-.3),aD=(heli||nad)&&(P_(4)||ry>.3);
  if(up||down||L||R_||aU||aD){PAD.act=true;keys.up=up;keys.down=down;keys.left=L;keys.right=R_;keys.alt_up=aU;keys.alt_dn=aD;
   if(dl||dr){JOY.act=false;JOY.k=1}else{JOY.act=true;JOY.k=Math.min(1,Math.max(.3,(Math.abs(lx)-.18)/.62))}}else padSuelta();
- if(dn(0))padK('KeyE');if(dn(1))padK('KeyR');if(dn(2))padK('KeyC');if(dn(3))padK('KeyM');if(dn(8))padK('KeyG');if(dn(9))padK('Escape');
+ if(dn(0))padK('KeyE');if(dn(1)){const bg=document.getElementById('bGPS');if(bg&&bg.getClientRects().length){bg.click();padVibra(.2,0,60)}else padK('KeyR')}if(dn(2))padK('KeyC');if(dn(3))padK('KeyM');if(dn(8))padK('KeyG');if(dn(9))padK('Escape');
  if(dn(5)&&!heli&&RACE.on)usarTurbo();if(dn(4)&&!heli&&MODO!=='nado')pitar()}
 requestAnimationFrame(padTick);
 // ---------- pantalla completa
