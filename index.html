@@ -1200,9 +1200,56 @@ function surfTick(){if(window.LITE||!MAPA)return;const now=performance.now();if(
  if(cerca&&!SURF.yOk&&SURF.pt){const L=[];scene.traverse(o=>{if(o.isMesh&&o!==SURF.m&&o!==MARG&&WATERS.includes(o.material))L.push(o)});
   const rc=new THREE.Raycaster(new THREE.Vector3(SURF.pt[0],3,SURF.pt[1]),new THREE.Vector3(0,-1,0),0,10);const h=L.length?rc.intersectObjects(L,false)[0]:null;
   if(h){SURF.m.position.y=Math.max(h.point.y,MARG?MARG.position.y:-9)+.0015;SURF.yOk=true}}}
-function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Object.assign(m.defines||{},{AGUA_LITE:''});m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,UW,UCO,USURF,{uSun:SKYU.uSun,uZen:SKYU.uZen,uHor:SKYU.uHor});
- sh.vertexShader='varying vec3 vWp;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWp=(modelMatrix*vec4(position,1.0)).xyz;');
- sh.fragmentShader='uniform float uT;uniform float uN;uniform sampler2D uCos;uniform vec4 uCoR;uniform vec3 uSun,uZen,uHor;varying vec3 vWp;vec3 aN;float aF;float aS;\n'+SURF_GLSL+
+// ---------- edit_aguapro.py: reflejo de verdad en el agua (espejo plano bajo la cámara)
+const URF={uRf:{value:null},uRfOn:{value:0},uRfM:{value:new THREE.Matrix4()}};
+const ARF={rt:null,cam:new THREE.PerspectiveCamera(),h:-.036,tH:-1e9,tL:-1e9,tV:-1e9,vis:false,L:[],mal:false,esc:.5,
+ ds:[],rm:new THREE.Matrix4(),cw:new THREE.Vector3(),
+ vw:new THREE.Vector3(),lk:new THREE.Vector3(),tg:new THREE.Vector3(),n:new THREE.Vector3(0,1,0),o:new THREE.Vector3(),
+ rc:new THREE.Raycaster(),dn:new THREE.Vector3(0,-1,0),d:new THREE.Vector3(),cc:new THREE.Color()};window.__ARF=ARF;
+// costa en un punto (0 = mar hondo … 255 = tierra), para pruebas desde la consola: __ARF.mar(x,z)
+ARF.mar=(x,z)=>{const img=UCO.uCos.value.image,R4=UCO.uCoR.value;if(!img||!img.data)return -1;const u=(x-R4.x)/R4.z,v=(z-R4.y)/R4.w;if(u<0||v<0||u>1||v>1)return 0;return img.data[(Math.min(img.height-1,Math.floor(v*img.height))*img.width+Math.min(img.width-1,Math.floor(u*img.width)))*4]};
+function aguaAltura(now){
+ if(now-ARF.tL>5000){ARF.tL=now;const L=[],ds=new Set();scene.traverse(o=>{if(!o.isMesh)return;if(WATERS.includes(o.material)){if(o.name!=='olas_patos')L.push(o);return}
+  for(const m of [].concat(o.material))if(m&&m.side===THREE.DoubleSide&&!m.isShaderMaterial)ds.add(m)});ARF.L=L;ARF.ds=[...ds]}
+ if(now-ARF.tH<1000)return;ARF.tH=now;const d=ARF.d;pcam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-6)d.set(0,0,-1);d.normalize();
+ for(const k of [1.5,0,4,8]){ARF.o.set(pcam.position.x+d.x*k,6,pcam.position.z+d.z*k);ARF.rc.set(ARF.o,ARF.dn);ARF.rc.far=20;
+  const h=ARF.rc.intersectObjects(ARF.L,false)[0];if(h){ARF.h=h.point.y;return}}}
+// ¿hay agua cerca de lo que se mira? (textura de la costa: rojo < 0,97 es mar)
+function aguaVista(now){if(now-ARF.tV<400)return ARF.vis;ARF.tV=now;
+ const img=UCO.uCos.value.image;if(!img||!img.data||img.width<2){ARF.vis=true;return true}
+ const W=img.width,H=img.height,D=img.data,R4=UCO.uCoR.value,d=ARF.d;pcam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-6)d.set(0,0,-1);d.normalize();
+ const cx=pcam.position.x+d.x*5,cz=pcam.position.z+d.z*5;let ok=false;
+ for(let j=-4;j<=4&&!ok;j++)for(let i=-4;i<=4;i++){const x=cx+i*1.6,z=cz+j*1.6,u=(x-R4.x)/R4.z,v=(z-R4.y)/R4.w;
+  if(u<0||v<0||u>1||v>1){ok=true;break}const k=(Math.min(H-1,Math.floor(v*H))*W+Math.min(W-1,Math.floor(u*W)))*4;if(D[k]<247){ok=true;break}}
+ ARF.vis=ok;return ok}
+function aguaReflejo(){URF.uRfOn.value=0;
+ if(window.LITE||ARF.mal||!driving||!(typeof POST!=='undefined'&&POST.on)||window.__BAJO||!MAPA)return;
+ const now=performance.now();pcam.updateMatrixWorld();aguaAltura(now);if(!aguaVista(now))return;
+ const h=ARF.h,cam=pcam,vc=ARF.cam;if(cam.position.y<h+.0008)return;
+ const cv_=R.domElement,w=Math.max(16,Math.round(cv_.width*ARF.esc)),hh=Math.max(16,Math.round(cv_.height*ARF.esc));
+ if(!ARF.rt){ARF.rt=new THREE.WebGLRenderTarget(w,hh,{type:THREE.HalfFloatType});ARF.rt.texture.generateMipmaps=false;URF.uRf.value=ARF.rt.texture}
+ else if(ARF.rt.width!==w||ARF.rt.height!==hh)ARF.rt.setSize(w,hh);
+ // cámara reflejada (como THREE.Reflector, con plano horizontal a la altura del agua)
+ const N=ARF.n,cw=ARF.cw.setFromMatrixPosition(cam.matrixWorld),P0=ARF.o.set(cw.x,h,cw.z);
+ const vw=ARF.vw.subVectors(P0,cw).reflect(N).negate().add(P0);
+ ARF.rm.extractRotation(cam.matrixWorld);const lk=ARF.lk.set(0,0,-1).applyMatrix4(ARF.rm).add(cw);
+ const tg=ARF.tg.subVectors(P0,lk).reflect(N).negate().add(P0);
+ vc.position.copy(vw);vc.up.set(0,1,0).applyMatrix4(ARF.rm).reflect(N);vc.lookAt(tg);
+ vc.fov=cam.fov;vc.aspect=cam.aspect;vc.zoom=cam.zoom;vc.near=cam.near;vc.far=cam.far;
+ vc.updateProjectionMatrix();vc.updateMatrixWorld();
+ const M=URF.uRfM.value;M.set(.5,0,0,.5, 0,.5,0,.5, 0,0,.5,.5, 0,0,0,1);M.multiply(vc.projectionMatrix);M.multiply(vc.matrixWorldInverse);
+ // dibujar sin el mar, con el cielo centrado en la cámara reflejada, sin sombras nuevas y sin el recorte de árboles;
+ // las láminas de dos caras (suelos, jardines, montes del fondo) solo por delante: desde abajo no deben tapar los edificios
+ const wv=WATERS.map(m=>m.visible),sv=sky.visible,sp=sky.position.clone(),ss=sky.scale.clone(),sh=R.shadowMap,au=sh.autoUpdate,nu=sh.needsUpdate,cut=UCUT.uCut.value,prev=R.getRenderTarget(),
+  ca=R.getClearAlpha(),cc=R.getClearColor(ARF.cc),fm=(typeof FONDO!=='undefined'&&FONDO.mar)?FONDO.mar.visible:null,fu=(typeof FONDO!=='undefined')?FONDO.U.uCam.value.clone():null;
+ try{for(const m of WATERS)m.visible=false;for(const m of ARF.ds)m.side=THREE.FrontSide;sky.visible=true;sky.position.copy(vc.position);sky.scale.setScalar(vc.far*.9);sky.updateMatrixWorld();if(fm!==null)FONDO.mar.visible=false;if(fu){FONDO.U.uCam.value.copy(vc.position);FONDO.U.uCorte.value=h;FONDO.U.uNear.value+=12}
+  sh.autoUpdate=false;UCUT.uCut.value=0;R.setClearColor(0x000000,0);R.setRenderTarget(ARF.rt);R.clear();R.render(scene,vc)}
+ finally{WATERS.forEach((m,i)=>m.visible=wv[i]);for(const m of ARF.ds)m.side=THREE.DoubleSide;sky.visible=sv;sky.position.copy(sp);sky.scale.copy(ss);sky.updateMatrixWorld();if(fm!==null)FONDO.mar.visible=fm;if(fu){FONDO.U.uCam.value.copy(fu);FONDO.U.uCorte.value=-99;FONDO.U.uNear.value-=12}
+  sh.autoUpdate=au;sh.needsUpdate=nu;UCUT.uCut.value=cut;R.setClearColor(cc,ca);R.setRenderTarget(prev)}
+ URF.uRfOn.value=1}
+function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Object.assign(m.defines||{},{AGUA_LITE:''});m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,UW,UCO,USURF,URF,{uSun:SKYU.uSun,uZen:SKYU.uZen,uHor:SKYU.uHor});
+ sh.vertexShader='varying vec3 vWp;uniform mat4 uRfM;varying vec4 vRfUv;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWp=(modelMatrix*vec4(position,1.0)).xyz;vRfUv=uRfM*vec4(vWp,1.0);');
+ sh.fragmentShader='uniform float uT;uniform float uN;uniform sampler2D uCos;uniform vec4 uCoR;uniform vec3 uSun,uZen,uHor;varying vec3 vWp;uniform sampler2D uRf;uniform float uRfOn;varying vec4 vRfUv;vec3 aN;float aF;float aS;\n'+SURF_GLSL+
  '#ifdef AGUA_LITE\n#define NOLAS 5\n#else\n#define NOLAS 8\n#endif\n'+
  'float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n'+
  'float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}\n'+
@@ -1244,8 +1291,9 @@ function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Obj
   normal=normalize((viewMatrix*vec4(normalize(mix(aN,vec3(0.,1.,0.),aF*.8)),0.)).xyz);`).replace('#include <opaque_fragment>',`{vec3 N=normalize(mix(aN,vec3(0.,1.,0.),aF));vec3 V=normalize(cameraPosition-vWp);float nv=max(dot(N,V),0.);
    vec3 Rf=reflect(-V,N);Rf.y=abs(Rf.y);
    vec3 sky=mix(uHor,uZen,.35+.65*smoothstep(.0,.5,Rf.y))*.82;
-   float F=min((.02+.98*pow(1.-nv,5.))*1.2+.07+.06*calma,.58)*(1.-max(aF,aS));                    // reflejo del cielo (Fresnel)
-   outgoingLight=mix(outgoingLight,sky,F);
+   float F=min((.02+.98*pow(1.-nv,5.))*1.2+.07+.06*calma,mix(.58,.74,uRfOn))*(1.-max(aF,aS));                    // reflejo del cielo (Fresnel)
+   vec3 rfl=sky;if(uRfOn>.5){vec2 ru=clamp(vRfUv.xy/vRfUv.w+N.xz*.06,.001,.999);vec4 rc=texture2D(uRf,ru);rfl=mix(sky,rc.rgb*.92,clamp(rc.a,0.,1.));}   // edit_aguapro.py: reflejo de verdad
+   outgoingLight=mix(outgoingLight,rfl,F);
    vec3 Ls=normalize(uSun);float sd=max(dot(Rf,Ls),0.);float up=smoothstep(-.02,.12,Ls.y)*(1.-uN);
    vec3 sc=mix(vec3(1.,.5,.25),vec3(1.,.95,.86),smoothstep(.05,.4,Ls.y));
    outgoingLight+=sc*(pow(sd,700.)*10.+pow(sd,60.)*.35)*up*(1.-max(aF,aS));}               // destellos y camino del sol
@@ -6763,17 +6811,17 @@ function gaviotasTick(dt){if(!RACE.on)UPUB.uT.value+=dt;const fx=driving?P.x:ctl
  GAV.im.count=n;GAV.im.instanceMatrix.needsUpdate=true}
 // ---------- fondo lejano: relieve real del Morrazo, las Cíes, Galiñeiro y los montes de la ría (malla gruesa, solo más allá de la niebla)
 // se funde con el color del horizonte según la distancia; cerca no se dibuja (allí está la maqueta de verdad)
-const FONDO={m:null,mar:null,U:{uCam:{value:new THREE.Vector3()},uNear:{value:20},uHor:SKYU.uHor,uZen:SKYU.uZen,uNight:SKYU.uNight,uSun:SKYU.uSun}};
+const FONDO={m:null,mar:null,U:{uCam:{value:new THREE.Vector3()},uNear:{value:20},uCorte:{value:-99},uHor:SKYU.uHor,uZen:SKYU.uZen,uNight:SKYU.uNight,uSun:SKYU.uSun}};
 fetch('vigo_fondo.json').then(r=>r.ok?r.json():null).then(j=>{if(!j)return;const b=Uint8Array.from(atob(j.z),c=>c.charCodeAt(0));const nx=j.nx,ny=j.ny,P=new Float32Array(nx*ny*3),I=[];
  const H=(i,k)=>b[k*nx+i]/255*j.zmax*1.6;
  for(let k=0;k<ny;k++)for(let i=0;i<nx;i++){const o=(k*nx+i)*3;P[o]=j.x0+i*j.c;P[o+1]=H(i,k)-.04;P[o+2]=j.y0+k*j.c}
  for(let k=0;k<ny-1;k++)for(let i=0;i<nx-1;i++){const a=k*nx+i,bb=a+1,c=a+nx,d=c+1;if(b[a]+b[bb]+b[c]+b[d]<6)continue;I.push(a,c,bb,bb,c,d)}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setIndex(I);g.computeVertexNormals();
  const vs='varying vec3 vW;varying vec3 vN;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;vN=normal;gl_Position=projectionMatrix*viewMatrix*w;}';
- const comun=`uniform vec3 uCam,uHor,uZen,uSun;uniform float uNear,uNight;varying vec3 vW;varying vec3 vN;
+ const comun=`uniform vec3 uCam,uHor,uZen,uSun;uniform float uNear,uNight,uCorte;varying vec3 vW;varying vec3 vN;
   vec3 neblina(vec3 c,float d){float h=smoothstep(uNear,uNear+160.,d);vec3 aire=mix(uHor,uZen,.35)*vec3(.82,.88,1.)*(1.-.7*uNight);return mix(c,aire,clamp(.12+.5*h,0.,.65));}`;
  const m=new THREE.ShaderMaterial({uniforms:FONDO.U,vertexShader:vs,fragmentShader:comun+`
-  void main(){float d=distance(vW.xz,uCam.xz);if(d<uNear)discard;float y=vW.y;vec3 n=normalize(vN);
+  void main(){float d=distance(vW.xz,uCam.xz);if(d<uNear||vW.y<uCorte)discard;float y=vW.y;vec3 n=normalize(vN);
    vec3 c=mix(vec3(.30,.40,.26),vec3(.40,.44,.34),smoothstep(1.2,3.5,y));c=mix(c,vec3(.52,.5,.47),smoothstep(3.6,5.,y)*smoothstep(.6,.3,n.y));
    float l=.55+.5*max(dot(n,normalize(uSun+vec3(0.,.2,0.))),0.);c*=l*(1.-.75*uNight);gl_FragColor=vec4(neblina(c,d),1.);
    #include <colorspace_fragment>
@@ -6781,7 +6829,7 @@ fetch('vigo_fondo.json').then(r=>r.ok?r.json():null).then(j=>{if(!j)return;const
  FONDO.m=new THREE.Mesh(g,m);FONDO.m.frustumCulled=false;FONDO.m.renderOrder=-2;scene.add(FONDO.m);FONDO.m.visible=false;
  const mg=new THREE.PlaneGeometry(700,700);mg.rotateX(-Math.PI/2);
  const mm=new THREE.ShaderMaterial({uniforms:FONDO.U,vertexShader:vs,fragmentShader:comun+`
-  void main(){float d=distance(vW.xz,uCam.xz);if(d<uNear)discard;vec3 c=mix(vec3(.16,.33,.45),vec3(.25,.45,.55),.5)*(1.-.8*uNight);gl_FragColor=vec4(neblina(c,d),1.);
+  void main(){float d=distance(vW.xz,uCam.xz);if(d<uNear||vW.y<uCorte)discard;vec3 c=mix(vec3(.16,.33,.45),vec3(.25,.45,.55),.5)*(1.-.8*uNight);gl_FragColor=vec4(neblina(c,d),1.);
    #include <colorspace_fragment>
   }`});
  FONDO.mar=new THREE.Mesh(mg,mm);FONDO.mar.position.set(40,-.06,60);FONDO.mar.frustumCulled=false;FONDO.mar.renderOrder=-3;scene.add(FONDO.mar);FONDO.mar.visible=false}).catch(()=>{});
@@ -9017,5 +9065,5 @@ function palasBrazo(p,t,k,sola){const B=p.userData.brazos.children[1],c=B.userDa
 // enganche para grabar tráilers (cámaras de cine); no hace nada en el juego normal
 window.__G={get CIR(){return CIR},repRuta,gpsCalcular,updateCar,gpsTick,repTick,keys,GPS,repLibre,P,RACE,cell,sueloHeli,groundY,HELI,BVHQ,pcam,look,car,R,POST,ZEP,THREE,cirPos,usarTurbo,sueloOk,get CIR(){return CIR}};
 R.setAnimationLoop(()=>{if(window.LITE){const n_=performance.now();if(n_-(window.__LT||0)<28)return;window.__LT=n_}let dt=Math.min(.25,clock.getDelta());reflejosCoches();reflejosTick();zepelinTick(dt);fuentesTick(clock.elapsedTime);fachadasTick();gaviotasTick(dt);try{nieveTick(dt)}catch(e){if(!window.__nvErr){window.__nvErr=1;console.error(e)}}try{delfinesTick(dt)}catch(e){if(!window.__delErr){window.__delErr=1;console.error(e)}}fondoTick();farosTick();resolucionAdaptativa(dt);if(MAPA&&UCO.uCos.value.image.width===1)texturaCosta();gestionarZonas(dt);const t=clock.elapsedTime;UW.uT.value=t;try{surfTick()}catch(e){if(!window.__surfErr){window.__surfErr=1;console.error(e)}}cielo(dt);nubesTick(dt,t);tiempoTick(dt,t);luzEntorno(dt);riaTick(dt,t);audioTick(t,dt);foco();semaforosTick(dt);paseoTick(t);try{playaSolTick(dt);if(!driving&&PAL.chica&&PAL.chica.visible)palasTick(0)}catch(e){}if(!driving&&F.vida)updateTraffic(Math.min(dt,.05));else if(!driving&&PEA_G){PEA_G.vis(false);for(const c of TRAF)c.g.visible=false}
- if(driving){pcam.up.set(0,1,0);car.scale.setScalar(.6*(RACE.on?1:VSC));const d0=Math.min(dt,.05);if(RACE.on){carreraTick(d0);if(RACE.nav)navLuz()}else{updateTraffic(d0);const ns=d0>1/45?2:1;for(let i=0;i<ns;i++)updateCar(d0/ns);if(REP.on)repTick(d0)}try{palasTick(d0)}catch(e){console.error(e)}try{mundoNavTick(d0)}catch(e){console.error(e)}}for(const w of WATERS)w.emissive?.setRGB(.02+.02*Math.sin(t*1.3),.03+.02*Math.sin(t*1.3),.08+.03*Math.sin(t*1.1));if(window.__CAM)window.__CAM(dt,window.__G);if(driving){recortar(dt);nombreCalle(dt);gpsTick(dt);try{taxiTick(dt)}catch(e){console.error(e)}try{surfgTick(dt)}catch(e){if(!window.__sgErr){window.__sgErr=1;console.error(e)}}pcam.far=SG.on?230:/*fondoheli*/FONDO.m&&!window.LITE?260:FOG.far+4;UCUT.uCut.value=MODO==='heli'||window.__CAM?0:1;{const vh=MODO==='moto'?moto:MODO==='pie'?persona:MODO==='skate'&&(SKC.sk||SKT.sk)?(SKC.sk||SKT.sk):car;UCUT.uCar.value.set(P.x,vh.position.y+.03,P.y)}UCUT.uCamP.value.copy(pcam.position)}else UCUT.uCut.value=0;if(driving)drawMini();if(!driving){ctl.update();R.render(scene,cam)}else{pcam.aspect=cv.clientWidth/cv.clientHeight;pcam.updateProjectionMatrix();if(window.__CAMO){const o=window.__CAMO;pcam.position.set(o[0],o[1],o[2]);pcam.lookAt(o[3],o[4],o[5]);FONDO.U.uCam.value.copy(pcam.position)}sombrasTick();if(COMIC.on)comicRender();else if(POST.on)postRender();else R.render(scene,pcam)}});
+ if(driving){pcam.up.set(0,1,0);car.scale.setScalar(.6*(RACE.on?1:VSC));const d0=Math.min(dt,.05);if(RACE.on){carreraTick(d0);if(RACE.nav)navLuz()}else{updateTraffic(d0);const ns=d0>1/45?2:1;for(let i=0;i<ns;i++)updateCar(d0/ns);if(REP.on)repTick(d0)}try{palasTick(d0)}catch(e){console.error(e)}try{mundoNavTick(d0)}catch(e){console.error(e)}}for(const w of WATERS)w.emissive?.setRGB(.02+.02*Math.sin(t*1.3),.03+.02*Math.sin(t*1.3),.08+.03*Math.sin(t*1.1));if(window.__CAM)window.__CAM(dt,window.__G);if(driving){recortar(dt);nombreCalle(dt);gpsTick(dt);try{taxiTick(dt)}catch(e){console.error(e)}try{surfgTick(dt)}catch(e){if(!window.__sgErr){window.__sgErr=1;console.error(e)}}pcam.far=SG.on?230:/*fondoheli*/FONDO.m&&!window.LITE?260:FOG.far+4;UCUT.uCut.value=MODO==='heli'||window.__CAM?0:1;{const vh=MODO==='moto'?moto:MODO==='pie'?persona:MODO==='skate'&&(SKC.sk||SKT.sk)?(SKC.sk||SKT.sk):car;UCUT.uCar.value.set(P.x,vh.position.y+.03,P.y)}UCUT.uCamP.value.copy(pcam.position)}else UCUT.uCut.value=0;if(driving)drawMini();if(!driving){URF.uRfOn.value=0;ctl.update();R.render(scene,cam)}else{pcam.aspect=cv.clientWidth/cv.clientHeight;pcam.updateProjectionMatrix();if(window.__CAMO){const o=window.__CAMO;pcam.position.set(o[0],o[1],o[2]);pcam.lookAt(o[3],o[4],o[5]);FONDO.U.uCam.value.copy(pcam.position)}try{aguaReflejo()}catch(e){ARF.mal=true;URF.uRfOn.value=0;console.warn('reflejo agua',e)}sombrasTick();if(COMIC.on)comicRender();else if(POST.on)postRender();else R.render(scene,pcam)}});
 </script>
