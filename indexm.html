@@ -4621,7 +4621,8 @@ function taxiTick(dt){
 //  - En la ola: ◀ ▶ subes y bajas por la pared (abajo vas más rápido, arriba haces maniobras). La ola rompe detrás de ti:
 //    si te pilla la espuma te caes; si te alejas demasiado, se queda sin fuerza.
 //    🌀 Giro (C / Ⓧ): cutback, vuelves hacia la rompiente. 🚀 Aéreo (↑ / Espacio / Ⓐ cerca de la cresta y con velocidad).
-//    Al subir a la cresta y bajar de golpe: snap. Metido justo bajo el labio: ¡tubo! El equilibrio se pierde si te pasas
+//    Al subir a la cresta y bajar de golpe: snap. Metido bajo el labio enroscado (sin subir, o te come el labio): ¡tubo!,
+//    y la cámara se mete dentro como una GoPro: ves el techo de agua verde a contraluz y la salida al fondo. El equilibrio se pierde si te pasas
 //    de la cresta, si te quedas abajo del todo o con el picado del mar.
 //  - Siempre de día o al atardecer (se elige en la ficha; nunca de noche). Al terminar vuelve la hora que había.
 //  - Cada maniobra seguida sube el multiplicador (hasta x5). Retos: 3 cutbacks, aguantar 20 s en una ola y 5 olas seguidas
@@ -4632,7 +4633,7 @@ const SG={on:false,ficha:false,ruta:false,cerca:false,sp:null,fase:'',t:0,tt:0,p
 let SGD=null;try{SGD=JSON.parse(localStorage.getItem('gtvigo_surf')||'null')}catch(e){}
 SGD=Object.assign({nivel:1,olas:1,mejor:0,retos:{},racha:0,tabla:0,sesiones:0},SGD||{});
 function sgGuardar(){try{localStorage.setItem('gtvigo_surf',JSON.stringify(SGD))}catch(e){}}
-const SG_NIV=[null,{n:'Pequeñas',H:.085,T:22,vc:.16,chop:.22},{n:'Medianas',H:.105,T:27,vc:.19,chop:.32},{n:'Grandes',H:.13,T:33,vc:.225,chop:.42}];
+const SG_NIV=[null,{n:'Pequeñas',H:.085,T:22,vc:.16,chop:.22,km:.82},{n:'Medianas',H:.105,T:27,vc:.19,chop:.32,km:.93},{n:'Grandes',H:.13,T:33,vc:.225,chop:.42,km:1}];
 const SG_TABLAS=[{n:'Clásica',c:0xf4f1e8,f:0x1f6fd0,traje:0x1b1d22,acento:0x1f6fd0,niv:1},{n:'Cíes',c:0x3fd0c9,f:0xffffff,traje:0x0f3f4a,acento:0x3fd0c9,niv:2},{n:'Monteferro',c:0xd8352a,f:0x15171c,traje:0x241414,acento:0xff9f1a,niv:3}];
 const SG_RETOS=[{id:'cut3',n:'Haz 3 cutbacks',ico:'🌀'},{id:'t20',n:'Aguanta 20 segundos en una ola',ico:'⏱️'},{id:'seq5',n:'Surfea 5 olas seguidas sin caerte',ico:'🔥'}];
 const SG_DUR=180;
@@ -4670,6 +4671,7 @@ body.surfg #bNoche,body.surfg .bar,body.surfg #pad,body.surfg #mini,body.surfg #
 #sgHud .retos{position:absolute;top:calc(84px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:3px}
 #sgHud .retos div{background:rgba(6,30,44,.6);border-radius:8px;padding:3px 8px;font:600 11px var(--body)}#sgHud .retos div.ok{background:rgba(20,128,74,.85)}
 #sgHud .msg{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);text-align:center;font:900 30px/1.1 var(--body);text-shadow:0 3px 12px rgba(0,0,0,.55);white-space:nowrap;opacity:0;transition:opacity .2s}
+#sgHud .tfx{position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse 62% 55% at 60% 46%,rgba(255,255,220,0) 38%,rgba(120,150,60,.28) 66%,rgba(20,60,45,.62) 100%)}
 #sgHud .msg small{display:block;font:700 15px var(--body)}#sgHud .msg.on{opacity:1;animation:sgPop .35s}
 @keyframes sgPop{0%{transform:translate(-50%,-50%) scale(.6)}70%{transform:translate(-50%,-50%) scale(1.12)}100%{transform:translate(-50%,-50%) scale(1)}}
 #sgHud .rema{position:absolute;bottom:calc(150px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:min(240px,56vw);height:14px;border-radius:8px;background:rgba(6,30,44,.6);overflow:hidden;border:2px solid #fff}
@@ -4684,7 +4686,7 @@ body.surfg #bNoche,body.surfg .bar,body.surfg #pad,body.surfg #mini,body.surfg #
 // ---- HTML: ficha y HUD
 const SGF=document.createElement('div');SGF.id='sgFicha';SGF.hidden=true;document.body.appendChild(SGF);
 const SGH=document.createElement('div');SGH.id='sgHud';SGH.hidden=true;SGH.innerHTML=`<div class="top"><div class="pt"><b>0</b><small>puntos</small></div><div class="mul"><b>x1</b><small>combo</small></div><div class="tm"><b>3:00</b><small>tiempo</small></div><div class="ol"><b>0</b><small>olas</small></div><button class="x" title="Salir del surf" aria-label="Salir del surf">✕</button></div>
-<div class="bal"><i></i><span>EQUILIBRIO</span></div><div class="retos"></div><div class="msg"></div><div class="rema" hidden><i></i></div><div class="tip"></div>
+<div class="bal"><i></i><span>EQUILIBRIO</span></div><div class="retos"></div><div class="tfx"></div><div class="msg"></div><div class="rema" hidden><i></i></div><div class="tip"></div>
 <div class="ctl"><div class="g"><button data-k="l" aria-label="Izquierda"><span>◀</span></button><button data-k="r" aria-label="Derecha"><span>▶</span></button></div>
 <div class="g"><button data-k="b" class="bB" aria-label="Giro"><span>🌀</span>Giro</button><button data-k="a" class="bA" aria-label="Remar"><span>🏊</span>Remar</button></div></div>`;document.body.appendChild(SGH);
 SGH.querySelector('.x').onclick=()=>sgTerminar('menu');
@@ -4728,38 +4730,58 @@ function sgMarca(){const g=new THREE.Group();const tb=new THREE.Mesh(new THREE.S
  const c=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.6,16,1,true),new THREE.MeshBasicMaterial({color:0x1fb5c9,transparent:true,opacity:.25,side:THREE.DoubleSide,depthWrite:false,fog:false}));c.position.y=.3;g.add(c);
  const f=new THREE.Mesh(new THREE.ConeGeometry(.02,.036,4),new THREE.MeshBasicMaterial({color:0x1fb5c9,fog:false}));f.rotation.x=Math.PI;f.position.y=.12;g.add(f);g.userData.f=f;
  g.visible=false;scene.add(g);return g}
-// ---- la ola del minijuego: una malla que se rehace cada fotograma (pared, labio que se enrosca, espuma detrás)
-const SGW={NR:64,NC:22,m:null,pos:null,col:null,sec:new Float32Array(22*3)};
-function sgOlaInit(){if(SGW.m)return;const NR=SGW.NR,NC=SGW.NC,g=new THREE.BufferGeometry();SGW.pos=new Float32Array(NR*NC*3);SGW.col=new Float32Array(NR*NC*4);
- g.setAttribute('position',new THREE.BufferAttribute(SGW.pos,3));g.setAttribute('color',new THREE.BufferAttribute(SGW.col,4));
+// ---- la ola del minijuego: una malla que se rehace cada fotograma (edit «ola de Patos y tubo»)
+// Cada franja es una sección: espalda → cresta → labio que se lanza hacia delante (cara de arriba y techo del tubo, con grosor)
+// → pared (casi vertical donde hace tubo) → seno → llano. Colores de Patos: azul marino abajo, verde azulado en la pared,
+// labio verde translúcido que deja pasar la luz (amarillo verdoso a contraluz, dorado al atardecer), rayas del agua que sube
+// por la pared, manchas de espuma y espuma blanca donde ya rompió.
+const SGW={NR:100,NC:44,m:null,pos:null,col:null,ext:null,sec:new Float32Array(44*5),u:{uT:{value:0},uDia:{value:1},uOca:{value:0}}};
+function sgOlaInit(){if(SGW.m)return;const NR=SGW.NR,NC=SGW.NC,g=new THREE.BufferGeometry();SGW.pos=new Float32Array(NR*NC*3);SGW.col=new Float32Array(NR*NC*4);SGW.ext=new Float32Array(NR*NC*4);
+ g.setAttribute('position',new THREE.BufferAttribute(SGW.pos,3));g.setAttribute('color',new THREE.BufferAttribute(SGW.col,4));g.setAttribute('aX',new THREE.BufferAttribute(SGW.ext,4));
  const idx=[];for(let r=0;r<NR-1;r++)for(let c=0;c<NC-1;c++){const a=r*NC+c,b=a+1,d=a+NC,e=d+1;idx.push(a,b,d,b,e,d)}g.setIndex(idx);
- SGW.m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,roughness:.22,metalness:0,side:THREE.DoubleSide}));SGW.m.frustumCulled=false;SGW.m.renderOrder=2;SGW.m.visible=false;scene.add(SGW.m)}
+ const m=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,roughness:.34,metalness:0,side:THREE.DoubleSide});
+ m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,SGW.u);
+  sh.vertexShader='attribute vec4 aX;varying vec4 vX;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvX=aX;');
+  sh.fragmentShader='uniform float uT,uDia,uOca;varying vec4 vX;\nfloat sgh(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat sgn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sgh(i),sgh(i+vec2(1,0)),f.x),mix(sgh(i+vec2(0,1)),sgh(i+vec2(1,1)),f.x),f.y);}\n'+sh.fragmentShader
+   .replace('#include <color_fragment>','#include <color_fragment>\n{float st=sin(vX.z*230.+sin(vX.w*9.+uT*.6)*3.+sgn(vec2(vX.w*5.,vX.z*18.))*5.);diffuseColor.rgb*=.8+.3*smoothstep(-.3,1.,st);\n float fn=sgn(vec2(vX.w*20.,vX.z*50.-uT*.9))*.62+sgn(vec2(vX.w*55.,vX.z*130.+uT*.3))*.38;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.9,.94,.95),smoothstep(.55,.7,fn)*vX.y);}')
+   .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\ntotalEmissiveRadiance+=mix(mix(vec3(.06,.26,.22),vec3(.6,.68,.26),uDia),vec3(.85,.55,.18),uOca)*vX.x*(.3+.7*uDia);')};
+ m.customProgramCacheKey=()=>'sgola2';
+ SGW.m=new THREE.Mesh(g,m);SGW.m.frustumCulled=false;SGW.m.renderOrder=2;SGW.m.visible=false;scene.add(SGW.m)}
 // parámetros de cada franja de la ola según su distancia a la rompiente (σ>0 por delante, σ<0 ya rota)
+// k: cuánto se enrosca el labio (1 = tubo cerrado). El tubo ocupa desde la rompiente hasta ~0,3 por delante y se abre hacia el hombro.
 function sgFila(W,sg){let b,k,H;
  if(W.rota){b=1;k=0;H=W.H*.42}
- else{const pk=W.pk;b=(1-sgSm(-.35,-.05,sg))*pk;k=sgSm(-.3,-.08,sg)*(1-.95*sgSm(.05,1.1,sg))*pk;
-  H=W.H*(1-.5*b)*(1-.7*sgSm(1.1,3.2,sg))*(pk+(1-pk)*(1-.55*sgSm(.4,3.2,Math.abs(sg))))}
+ else{const pk=W.pk;b=(1-sgSm(-.35,-.05,sg))*pk;k=sgSm(-.28,-.04,sg)*(1-.85*sgSm(.2,.48,sg))*(1-sgSm(.8,1.3,sg))*pk*(W.km||1);
+  H=W.H*(1-.5*b)*(1-.7*sgSm(1.15,3.2,sg))*(pk+(1-pk)*(1-.55*sgSm(.4,3.2,Math.abs(sg))))}
  const ed=sgSm(-2.6,-1.9,sg)*(1-sgSm(2.9,3.6,sg));return{b,k,H:H*ed,ed}}
-// sección de la ola: [d (hacia la orilla), y, parte] · parte 0 espalda, 1 labio, 2 pared, 3 llano
-function sgSeccion(H,k,out){const Bw=4.2*H+.05,Fw=2.6*H+.03;let i=0;const put=(d,y,p)=>{out[i*3]=d;out[i*3+1]=y;out[i*3+2]=p;i++};
- for(let j=0;j<6;j++){const d=-Bw*(1-j/6);put(d,H*Math.exp(-Math.pow(2*d/Bw,2)),0)}
- put(0,H,1);const R=.55*H*k;for(let j=1;j<=5;j++){const th=j/5*2.5*k;put(R*Math.sin(th),H-R*(1-Math.cos(th))+.12*H*k*Math.sin(th),1)}
- const f0=.22*H*k;for(let j=0;j<8;j++){const u=j/7,d=f0+(Fw-f0)*u;put(d,H*(1-.35*k)*Math.pow(1-u,2),2)}
- put(Fw+.12,0,3);put(Fw+.4,0,3);return{Bw,Fw,f0}}
+// sección: por punto [d (hacia la orilla), y, parte, a (avance dentro de la parte), fino]
+// partes: 0 espalda, 1 labio por fuera, 2 techo del tubo (labio por dentro), 3 pared, 4 llano · la pared son los puntos 31..41
+function sgSeccion(H,k,out){const Bw=4.2*H+.05,Fw=2.6*H+.03,ax=.55*Fw,by=.5*H,a0=.35,cx=ax*Math.sin(a0),cy=H-by*Math.cos(a0),am=.95*Math.PI*k,th0=.2*H*k;let i=0;
+ const put=(d,y,p,a,e)=>{const o=i*5;out[o]=d;out[o+1]=y;out[o+2]=p;out[o+3]=a;out[o+4]=e;i++};
+ for(let j=0;j<8;j++){const d=-Bw*(1-j/8);put(d,H*Math.exp(-Math.pow(2*d/Bw,2)),0,j/8,0)}
+ const lab=(j,s_)=>{const a=am*j/11,si=Math.sin(a-a0),co=Math.cos(a-a0),x=cx+ax*si,y=cy+by*co,nx=si/ax,ny=co/by,l=Math.hypot(nx,ny)||1,t=th0*(1-.82*a/Math.PI);return[x+nx/l*t*s_,y+ny/l*t*s_,t]};
+ for(let j=0;j<12;j++){const[x,y]=lab(j,.3);put(x,y,1,j/11,0)}
+ for(let j=11;j>=0;j--){const[x,y,t]=lab(j,-.7);put(x,y,2,j/11,th0>1e-6?1-t/th0:0)}
+ const X0=out[31*5],Ht=out[31*5+1];
+ for(let j=1;j<=10;j++){const u=j/10,xo=X0+(Fw-X0)*u,yo=Ht*Math.pow(1-u,2),xb=X0+Fw*(-.08*Math.sin(Math.PI*u)+.32*u+.6*Math.pow(u,6)),yb=Ht*Math.pow(1-u,1.6);put(sgL(xo,xb,k),sgL(yo,yb,k),3,u,0)}
+ put(Fw+.12,0,4,0,0);put(Fw+.4,0,4,1,0);return{Bw,Fw}}
+function sgOlaUpd(){const W=SG.W,sp=SG.sp;if(!W||!SGW.m)return;const NR=SGW.NR,NC=SGW.NC,pos=SGW.pos,col=SGW.col,ex=SGW.ext,sec=SGW.sec,n=sp.n,t=sp.t,o=sp.o,WY=sgWY()+.0025,tt=SG.tt;
+ SGW.u.uT.value=tt;SGW.u.uDia.value=1-CIELO.nf;SGW.u.uOca.value=SKYU.uDusk.value;
+ for(let r=0;r<NR;r++){const sg=-2.6+6.2*r/(NR-1),F=sgFila(W,sg),L=(W.c+sg)*W.dir;sgSeccion(Math.max(F.H,.0005),F.k,sec);
+  for(let c=0;c<NC;c++){const o5=c*5,d=sec[o5],y0=sec[o5+1],pa=sec[o5+2],aa=sec[o5+3],fi=sec[o5+4],w=W.wc+d,x=o[0]+t[0]*L+n[0]*w,z=o[1]+t[1]*L+n[1]*w,i=r*NC+c;
+   const lm=1-sgSm(.82,.95,sp.cs(x,z));pos[i*3]=x;pos[i*3+1]=WY+y0*lm;pos[i*3+2]=z;
+   const hh=F.H>.001?Math.min(1,y0/F.H):0;let cr,cg,cb,gl=0,fm=0;
+   if(pa===0){const q=hh*hh;cr=sgL(.02,.05,q);cg=sgL(.09,.27,q);cb=sgL(.2,.32,q)}
+   else if(pa===1){const f=F.k*sgSm(.3,.95,aa)*.85;cr=sgL(.07,.9,f);cg=sgL(.36,.94,f);cb=sgL(.36,.95,f);gl=F.k*aa*.25}
+   else if(pa===2){cr=sgL(.06,.16,fi);cg=sgL(.33,.5,fi);cb=sgL(.3,.36,fi);gl=F.k*(.25+.75*fi)*.75;fm=F.k*aa*.25}
+   else if(pa===3){const q=Math.pow(hh,1.1);cr=sgL(.025,.09,q);cg=sgL(.13,.4,q);cb=sgL(.28,.35,q);gl=F.k*q*.2;fm=(1-hh)*(.25+.5*F.k)}
+   else{cr=.03;cg=.15;cb=.36;fm=.25}
+   const fo=F.b*(.72+.28*Math.sin(L*23+w*31-tt*3)*Math.sin(L*7-tt*1.3+w*9))*(pa===4?.4:1);if(fo>0){cr=sgL(cr,.93,fo);cg=sgL(cg,.96,fo);cb=sgL(cb,.97,fo);gl*=1-fo;fm=Math.max(fm,fo*.5)}
+   const ae=(c===0||c===NC-1)?0:(c===1||c===NC-2)?.3:c===NC-3?.75:1;col[i*4]=cr;col[i*4+1]=cg;col[i*4+2]=cb;col[i*4+3]=ae*F.ed*lm*W.alfa;
+   ex[i*4]=gl;ex[i*4+1]=fm;ex[i*4+2]=c/(NC-1);ex[i*4+3]=L}}
+ const g=SGW.m.geometry;g.attributes.position.needsUpdate=true;g.attributes.color.needsUpdate=true;g.attributes.aX.needsUpdate=true;g.computeVertexNormals();SGW.m.visible=true}
 // altura del agua de la ola en un punto (para flotar esperando)
 function sgAltura(H,d){const Bw=4.2*H+.05,Fw=2.6*H+.03;return d<0?H*Math.exp(-Math.pow(2*d/Bw,2)):d<Fw?H*Math.pow(1-d/Fw,2):0}
-function sgOlaUpd(){const W=SG.W,sp=SG.sp;if(!W||!SGW.m)return;const NR=SGW.NR,NC=SGW.NC,pos=SGW.pos,col=SGW.col,sec=SGW.sec,n=sp.n,t=sp.t,o=sp.o,WY=sgWY()+.0025,tt=SG.tt;
- for(let r=0;r<NR;r++){const sg=-2.6+6.2*r/(NR-1),F=sgFila(W,sg),L=(W.c+sg)*W.dir;sgSeccion(Math.max(F.H,.0005),F.k,sec);
-  for(let c=0;c<NC;c++){const d=sec[c*3],y0=sec[c*3+1],pa=sec[c*3+2],w=W.wc+d,x=o[0]+t[0]*L+n[0]*w,z=o[1]+t[1]*L+n[1]*w,i=r*NC+c;
-   const lm=1-sgSm(.82,.95,sp.cs(x,z));let y=y0*lm;pos[i*3]=x;pos[i*3+1]=WY+y;pos[i*3+2]=z;
-   const hh=F.H>.001?Math.min(1,y0/F.H):0;let cr,cg,cb;
-   if(pa===0){cr=sgL(.025,.07,hh*hh);cg=sgL(.15,.38,hh*hh);cb=sgL(.36,.46,hh*hh)}
-   else if(pa===1){cr=sgL(.09,.85,F.k*.75);cg=sgL(.45,.92,F.k*.75);cb=sgL(.48,.94,F.k*.75)}
-   else if(pa===2){const q=Math.pow(hh,1.2);cr=sgL(.03,.14,q);cg=sgL(.18,.6,q);cb=sgL(.38,.54,q);if(hh>.8){const lf=(hh-.8)*5*F.k*.6;cr=sgL(cr,.9,lf);cg=sgL(cg,.94,lf);cb=sgL(cb,.95,lf)}}
-   else{cr=.03;cg=.16;cb=.4}
-   const fo=F.b*(.7+.3*Math.sin(L*23+w*31-tt*3)*Math.sin(L*7-tt*1.3+w*9))*(pa===3?.35:1);if(fo>0){cr=sgL(cr,.93,fo);cg=sgL(cg,.96,fo);cb=sgL(cb,.97,fo)}
-   const ae=(c===0||c===NC-1)?0:(c===1||c===NC-2)?.3:c===NC-3?.75:1;col[i*4]=cr;col[i*4+1]=cg;col[i*4+2]=cb;col[i*4+3]=ae*F.ed*lm*W.alfa}}
- const g=SGW.m.geometry;g.attributes.position.needsUpdate=true;g.attributes.color.needsUpdate=true;g.computeVertexNormals();SGW.m.visible=true}
 // ---- espuma y salpicaduras (partículas)
 const SGP={N:600,i:0,pos:null,vel:null,life:null,pts:null};
 function sgPartInit(){if(SGP.pts)return;const N=SGP.N;SGP.pos=new Float32Array(N*3);SGP.vel=new Float32Array(N*3);SGP.life=new Float32Array(N);for(let i=0;i<N;i++)SGP.pos[i*3+1]=-99;
@@ -4892,8 +4914,8 @@ window.surfgSalir=()=>{sgTerminar('salir');SGF.hidden=true;SG.ficha=false};windo
 function sgNuevaOla(primera){const N=SG_NIV[SGD.olas]||SG_NIV[1],sp=SG.sp;
  // la ola rompe hacia el lado con más agua (la playa es curva)
  let dir=Math.random()<.5?1:-1;{const at=s=>{const x=sp.o[0]+sp.t[0]*s*4-sp.n[0]*.6,z=sp.o[1]+sp.t[1]*s*4-sp.n[1]*.6;return sp.cs(x,z)};const a=at(1),b=at(-1);if(Math.abs(a-b)>.12)dir=a<b?1:-1}
- SG.W={wc:-3.7+1.75,H:N.H,va:.34,vw:0,c:0,vc:N.vc,pk:0,rota:false,dir,alfa:0,peel:false,t:0};
- SG.S=Object.assign(SG.S||{},{s:0,h:.5,hv:0,vs:0,inst:0,air:0,cut:0,rem:0,ws:0,yaw:Math.atan2(sp.n[1],-sp.n[0]),rideT:0,tubo:0,topT:0,snapT:0,fallT:0,aireY:0,spin:0,lado:Math.PI/2,popT:0,cutN:0});
+ SG.W={km:N.km,wc:-3.7+1.75,H:N.H,va:.34,vw:0,c:0,vc:N.vc,pk:0,rota:false,dir,alfa:0,peel:false,t:0};
+ SG.S=Object.assign(SG.S||{},{s:0,h:.5,hv:0,vs:0,inst:0,air:0,cut:0,rem:0,ws:0,yaw:Math.atan2(sp.n[1],-sp.n[0]),rideT:0,tubo:0,enTubo:false,topT:0,snapT:0,fallT:0,aireY:0,spin:0,lado:Math.PI/2,popT:0,cutN:0});
  SG.fase='llega';SG.W.wc=-3.7;SG.S.ws=-1.75+(Math.random()-.5)*.1;
  sgMsg(primera?'🌊 Espera la ola':'🌊 ¡Viene otra ola!',primera?'mira al mar: cuando llegue, ¡rema!':'',1.6);sgTip('Espera sentado · cuando se acerque la ola, rema (↑ / Espacio / Remar)')}
 function sgMsg(t,s='',d=1.1){const m=SGH.querySelector('.msg');m.innerHTML=t+(s?`<small>${s}</small>`:'');m.classList.remove('on');void m.offsetWidth;m.classList.add('on');SG.msgT=d}
@@ -4928,7 +4950,7 @@ function surfUpdate(dt){dt=window.__SGPAUSA?0:Math.min(dt,.05);const sp=SG.sp,W=
    const quiere=Math.atan2(-n[1],n[0]);if(dd<.9){let dy=quiere-S.yaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));S.yaw+=dy*Math.min(1,dt*3)}
    if(dd<.75)sgTip(S.rem>.05?'¡Más! ¡Rema, rema!':'🏊 ¡REMA! (↑ / Espacio / botón Remar varias veces)');
    if(dd<.75&&!S.avisoRema){S.avisoRema=1;sgMsg('🏊 ¡REMA!','',1)}
-   if(S.rem>=1&&dd<.28&&dd>-.06){SG.fase='pie';S.popT=0;W.peel=true;W.c=-.12;W.vw=(-.5-S.ws)/N.T;S.s=0;S.h=.55;S.vs=W.vc;S.rideT=0;S.rem=0;S.avisoRema=0;sgSnd('ola');
+   if(S.rem>=1&&dd<.28&&dd>-.06){SG.fase='pie';S.popT=0;W.peel=true;W.c=-.32;W.vw=(-.5-S.ws)/N.T;S.s=0;S.h=.55;S.vs=W.vc;S.rideT=0;S.rem=0;S.avisoRema=0;sgSnd('ola');
     S.lado=null;sgMsg('⬆️ ¡De pie!','',.8);sgTip('◀ ▶ sube y baja por la pared · 🌀 giro · 🚀 aéreo en la cresta')}
    else if(dd<-.06){SG.fase='pasa';W.rota=true;S.avisoRema=0;S.rem=0;sgMsg('😅 Se escapó…','¡a por la siguiente!',1.4);S.pasaT=0}}
   else{S.pasaT+=dt;W.alfa=Math.max(0,1-S.pasaT/2.4);if(S.pasaT>2.4){if(SG.t<=0){sgTerminar('fin');return}sgNuevaOla(false)}}
@@ -4955,24 +4977,29 @@ function surfUpdate(dt){dt=window.__SGPAUSA?0:Math.min(dt,.05);const sp=SG.sp,W=
    // equilibrio
    let pr=N.chop*.22*(.4+Math.abs(Math.sin(SG.tt*2.3+Math.sin(SG.tt*.7)*3)));
    if(S.h>.95&&!S.air)pr+=(S.h-.95)*6;if(S.h<.07)pr+=.5;if(g<0&&g>-.07)pr+=.25;if(S.cut>0)pr+=.1;
+   const kS=sgFila(W,g).k;if(kS>.55&&S.h>.76&&!S.air){pr+=2.4*(kS-.5);if(!S.avLab){S.avLab=1;sgMsg('⚠️ ¡Cuidado con el labio!','baja o te come',.9)}}else S.avLab=0;   // en la zona del tubo, si subes te come el labio
+   if(S.enTubo)pr+=.12;
    S.inst=Math.max(0,S.inst+pr*dt-(pr<.25?.32*dt:0));
    // snap: tocar la cresta y bajar de golpe
    if(S.h>.92&&!S.air)S.topT=.6;else S.topT=Math.max(0,S.topT-dt);S.snapT=Math.max(0,S.snapT-dt);
    if(S.topT>0&&S.hv<-.9&&S.snapT<=0&&!S.cut&&!S.air){S.snapT=1.4;S.topT=0;sgPuntos(150,'💥 ¡SNAP!');sgSnd('giro');const p=SG.sf.g.position;sgSpray(p.x,p.y+.004,p.z,-n[0]*.06,.12,-n[1]*.06,26,.12)}
    // tubo
-   if(g<0&&g>-.07&&S.h>.25&&S.h<.8&&!S.air){if(S.tubo===0)sgMsg('🌀 ¡TUBO!','',1);S.tubo+=dt;SG.pts+=Math.round(60*dt*SG.mult)}else if(S.tubo>0){if(S.tubo>.8&&g>=0)sgPuntos(200+Math.round(S.tubo*150),'🌀 ¡Salida del tubo!');S.tubo=0}
+   S.enTubo=kS>.55&&g>-.06&&S.h>.08&&S.h<.76&&!S.air&&!S.cut;
+   if(S.enTubo){if(S.tubo===0)sgMsg('🌀 ¡TUBO!','',1);S.tubo+=dt;SG.pts+=40*dt*SG.mult}
+   else if(S.tubo>0){if(S.tubo>.8&&g>=-.06){sgPuntos(200+Math.round(S.tubo*150),'🌀 ¡Salida del tubo! '+S.tubo.toFixed(1).replace('.',',')+' s');const p=SG.sf.g.position;sgSpray(p.x-td[0]*.03,p.y+.02,p.z-td[1]*.03,td[0]*.35,.05,td[1]*.35,60,.08);sgSnd('salpica')}S.tubo=0}
    SG.pts+=10*dt*SG.mult;
    if(S.rideT>=20&&!SG.retoHecho.t20)sgReto('t20');
-   if(g<-.07){sgCaer('te pilló la espuma');return}
-   if(S.inst>=1){sgCaer(S.h>.95?'te pasaste de la cresta':S.h<.07?'clavaste la punta':'perdiste el equilibrio');return}
+   if(g<-.07){S.enTubo=false;sgCaer(S.tubo>0?'el tubo se cerró':'te pilló la espuma');return}
+   if(S.inst>=1){S.enTubo=false;sgCaer(kS>.55&&S.h>.76?'te comió el labio':S.h>.95?'te pasaste de la cresta':S.h<.07?'clavaste la punta':'perdiste el equilibrio');return}
    if(g>2.5){sgOlaHecha('🏄 La ola se quedó sin fuerza');return}
    if(S.rideT>=N.T||W.wc>-.52){sgOlaHecha('🏄 ¡Ola completada!');return}
    if(Math.floor(S.rideT*4)!==Math.floor((S.rideT-dt)*4))sgRetosHud()}
   if(SG.fase==='caida'||SG.fase==='fin'){S.fallT+=dt;W.alfa=SG.fase==='fin'?Math.max(.2,1-S.fallT/2):1;if(SG.fase==='fin'){S.h=Math.min(1.25,S.h+dt*.8);S.s+=W.vc*.3*dt}
    if(S.fallT>(SG.fase==='caida'?1.8:1.6)){if(SG.t<=0){sgTerminar('fin');return}sgNuevaOla(false)}}
   // posición en la pared
-  const F=sgFila(W,S.s-W.c),sec=sgSeccion(Math.max(F.H,.001),F.k,SGW.sec),hh=Math.min(1,S.h),u=1-hh,d=sec.f0+(sec.Fw-sec.f0)*u*.94+.004,H1=F.H*(1-.35*F.k);
-  let y=H1*Math.pow(1-((d-sec.f0)/(sec.Fw-sec.f0)),2);if(S.h>1)y+=(S.h-1)*F.H*.6;const sl=-2*H1*(1-(d-sec.f0)/(sec.Fw-sec.f0))/(sec.Fw-sec.f0);
+  const F=sgFila(W,S.s-W.c),sec=sgSeccion(Math.max(F.H,.001),F.k,SGW.sec),s5=SGW.sec,Ht=s5[31*5+1],hy=Math.min(1,S.h)*Ht;let j=31;while(j<40&&s5[(j+1)*5+1]>hy)j++;
+  const y1=s5[j*5+1],y2=s5[(j+1)*5+1],x1=s5[j*5],x2=s5[(j+1)*5],qq=y1-y2>1e-6?Math.min(1,(y1-hy)/(y1-y2)):0,d=sgL(x1,x2,qq)+.004;
+  let y=hy;if(S.h>1)y+=(S.h-1)*F.H*.6;const sl=x2-x1>.002?Math.max(-3,(y2-y1)/(x2-x1)):-3;
   const L=(W.c+(S.s-W.c))*W.dir,w=W.wc+d;px=o[0]+tv[0]*L+n[0]*w;pz=o[1]+tv[1]*L+n[1]*w;py=WY+.0025+y+.0012+(S.aireY||0);
   // rumbo: a lo largo de la ola y arriba/abajo
   const fx=S.vs*td[0]-S.hv*sec.Fw*n[0]*.9,fz=S.vs*td[1]-S.hv*sec.Fw*n[1]*.9;yaw=Math.atan2(-fz,fx);
@@ -4980,7 +5007,8 @@ function surfUpdate(dt){dt=window.__SGPAUSA?0:Math.min(dt,.05);const sp=SG.sp,W=
   pose=SG.fase==='pie'?(S.popT<.25?'rema':'pie'):SG.fase==='caida'?'cae':S.air>0?'aire':'pie';
   if(S.lado==null){const fr=[Math.cos(yaw),-Math.sin(yaw)],zr=[-fr[1],fr[0]];S.lado=(zr[0]*-n[0]+zr[1]*-n[1])>0?-Math.PI/2:Math.PI/2}
   // espuma: el labio que rompe y la estela de la tabla
-  if(SG.fase!=='caida'){const cL=W.c*W.dir,cw=W.wc+.01;for(let k=0;k<3;k++){const s_=(Math.random()-.6)*.25,x=o[0]+tv[0]*(cL+s_*W.dir)+n[0]*(cw+.03),z=o[1]+tv[1]*(cL+s_*W.dir)+n[1]*(cw+.03);sgSpray(x,WY+W.H*(.75+Math.random()*.3),z,n[0]*.06,.04,n[1]*.06,1,.08)}
+  if(SG.fase!=='caida'){const cL=W.c*W.dir,Fw_=2.6*W.H+.03;for(let k=0;k<3;k++){const s_=(Math.random()-.7)*.25,dl=.42*Fw_,x=o[0]+tv[0]*(cL+s_*W.dir)+n[0]*(W.wc+dl),z=o[1]+tv[1]*(cL+s_*W.dir)+n[1]*(W.wc+dl);sgSpray(x,WY+W.H*(.05+Math.random()*.25),z,n[0]*.05-td[0]*.04,.09,n[1]*.05-td[1]*.04,1,.1)}
+   if(W.pk>.5&&Math.random()<.7){const s_=.4+Math.random()*1.8,Fh=sgFila(W,s_).H,x=o[0]+tv[0]*(W.c+s_)*W.dir+n[0]*W.wc,z=o[1]+tv[1]*(W.c+s_)*W.dir+n[1]*W.wc;sgSpray(x,WY+Fh*1.02,z,-n[0]*.09,.05,-n[1]*.09,1,.03)}
    if(SG.fase==='ola'&&!S.air){const sp_=Math.abs(S.hv)*.5+S.vs*.6;if(Math.random()<sp_*dt*60*.5)sgSpray(px-td[0]*.02,py,pz-td[1]*.02,-n[0]*.05*Math.sign(S.hv||1),.07,-n[1]*.05*Math.sign(S.hv||1),1,.06)}}
   sgRugido(.22+.18*W.pk)}
  SG.S.yaw=yaw;
@@ -4999,11 +5027,15 @@ function surfUpdate(dt){dt=window.__SGPAUSA?0:Math.min(dt,.05);const sp=SG.sp,W=
  {const up=SG.fase==='llega'||SG.fase==='pasa';const tg=new THREE.Vector3(px,py,pz),want=new THREE.Vector3(),lk=new THREE.Vector3();
   if(up){want.set(px+n[0]*.3+td[0]*.04,py+.085,pz+n[1]*.3+td[1]*.04);lk.set(px-n[0]*.9,py+.05,pz-n[1]*.9)}
   else if(SG.fase==='caida'){want.copy(SG.cam.p);lk.copy(tg)}
-  else{want.set(px-td[0]*.34+n[0]*.15,py+.12-(S.aireY||0)*.5,pz-td[1]*.34+n[1]*.15);lk.set(px+td[0]*.3-n[0]*.04,py+.015,pz+td[1]*.3-n[1]*.04)}
-  want.y=Math.max(want.y,WY+.035);
-  if(!SG.cam.ini){SG.cam.p.copy(want);SG.cam.l.copy(lk);SG.cam.ini=true}else{SG.cam.p.lerp(want,Math.min(1,dt*3));SG.cam.l.lerp(lk,Math.min(1,dt*4.5))}
+  else{want.set(px-td[0]*.34+n[0]*.15,py+.12-(S.aireY||0)*.5,pz-td[1]*.34+n[1]*.15);lk.set(px+td[0]*.3-n[0]*.04,py+.015,pz+td[1]*.3-n[1]*.04);want.y=Math.max(want.y,WY+.035)}
+  SG.tb=sgL(SG.tb||0,S.enTubo&&SG.fase==='ola'?1:0,Math.min(1,dt*(S.enTubo?5:2.5)));
+  // dentro del tubo: vista en primera persona (a la altura de la cabeza, con la punta de la tabla abajo) mirando a la salida
+  if(SG.tb>.01){const tb=SG.tb;want.lerp(new THREE.Vector3(px-td[0]*.014,py+.034,pz-td[1]*.014),tb);lk.lerp(new THREE.Vector3(px+td[0]*.6+n[0]*.025,py+.03,pz+td[1]*.6+n[1]*.025),tb)}
+  SG.sf.p.visible=(SG.tb||0)<.55;
+  if(!SG.cam.ini){SG.cam.p.copy(want);SG.cam.l.copy(lk);SG.cam.ini=true}else{const tb=SG.tb||0;SG.cam.p.lerp(want,Math.min(1,dt*(3+12*tb)));SG.cam.l.lerp(lk,Math.min(1,dt*(4.5+10*tb)))}
   if(window.__SGCAM){const c=window.__SGCAM;SG.cam.p.set(c[0],c[1],c[2]);SG.cam.l.set(c[3],c[4],c[5])}   // para revisar la ola desde fuera
-  pcam.position.copy(SG.cam.p);pcam.lookAt(SG.cam.l);pcam.far=230;pcam.fov=(cv.clientWidth<cv.clientHeight?74:62)+(SG.fase==='ola'?8*Math.min(1,S.vs/(W.vc*1.6)):0);pcam.updateProjectionMatrix()}
+  pcam.position.copy(SG.cam.p);pcam.lookAt(SG.cam.l);pcam.far=230;pcam.fov=sgL((cv.clientWidth<cv.clientHeight?74:62)+(SG.fase==='ola'?8*Math.min(1,S.vs/(W.vc*1.6)):0),cv.clientWidth<cv.clientHeight?108:96,SG.tb||0);pcam.updateProjectionMatrix();
+  if(SG.tb>.01)pcam.rotateZ(-.16*W.dir*SG.tb*(S.lado>0?1:-1));SGH.querySelector('.tfx').style.opacity=(SG.tb||0).toFixed(2)}
  {const Wt=TIEMPO.W;FOG.far=34*(1-.7*Wt.fog)*(1-.3*Wt.rain);FOG.near=7*(1-.85*Wt.fog)}
  // HUD
  const s_=Math.max(0,Math.ceil(SG.t));SGH.querySelector('.pt b').textContent=Math.floor(SG.pts);SGH.querySelector('.mul b').textContent='x'+SG.mult;SGH.querySelector('.tm b').textContent=Math.floor(s_/60)+':'+String(s_%60).padStart(2,'0');
