@@ -9,6 +9,7 @@ Juego 3D en el navegador (three.js) ambientado en Vigo y su ría: calles de Open
 | `index.html` | Mundo abierto: coche, moto de agua, lancha, helicóptero y a pie por todo Vigo. Empieza en la pantalla de inicio, donde eliges coche, moto o helicóptero |
 | `gp.html` | Gran Premio: carreras por un circuito urbano |
 | `indexm.html` | Mundo abierto para móvil (versión LITE, como `navm.html`; además, en la maqueta los árboles y farolas de cada zona se dibujan juntos, se cargan menos zonas a la vez y los botones van en una fila. En un móvil `index.html` salta sola aquí; con `?pc=1` se queda en la de gráficos completos) |
+| `gpu.html` | **Prueba de WebGPU** (fase 1): el mismo mundo abierto con three.js 0.187 y el motor WebGPU (si el navegador no lo tiene, vuelve solo a WebGL2; con `?webgl=1` se fuerza WebGL2 para comparar). Arriba a la izquierda dice qué motor usa y los fps. De momento sin los efectos propios (agua realista, asfalto, césped, fachadas, reflejos, posprocesado): se irán pasando uno a uno. Se genera con `fuente/edit_webgpu.py` a partir de `index.html` |
 | `nav.html` | **GT Vigo · Edición Navideña**, el enlace para compartir: solo el reparto de Navidad con la elección de personaje (sin mundo abierto, sin carrera y sin la maqueta de Vigo al cargar; en las cargas sale la portada `portada_navidad.jpg`). En el móvil salta solo a `navm.html` |
 | `navm.html` | Reparto de Navidad para móvil (versión LITE: sin sombras ni efectos, 30 fps, piezas quietas agrupadas en lotes y botones adaptados al móvil en vertical) |
 
