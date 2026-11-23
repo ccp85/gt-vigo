@@ -978,7 +978,7 @@ window.GPUMAT=(T,p={})=>{const u=p.uniforms||{},cielo=/topColor|uTop|uZenit|ciel
  if(!cielo){m.colorWrite=false}m.uniforms=u;m.defines=p.defines||{};m.isGpuSustituto=true;m.vertexShader=p.vertexShader||'';m.fragmentShader=p.fragmentShader||'';return m};
 window.GPU_INFO={motor:'…',fps:0};
 </script>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.webgpu.min.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.webgpu.min.js","three/tsl":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.tsl.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.18/build/index.module.js","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.webgpu.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.webgpu.js","three/tsl":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.tsl.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.18/build/index.module.js","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>
 <script>/* móvil: el reparto de Navidad con gráficos completos salta solo a la versión móvil (navm.html) */
 (()=>{const movil=matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<=820;
  if(!movil||window.LITE||/[?&]pc=1/.test(location.search))return;
@@ -6648,27 +6648,29 @@ function aoPass(){const fq=new THREE.Mesh(new THREE.PlaneGeometry(2,2));fq.frust
 // el mapa del mundo es diminuto (1 u ≈ 40 m): la cámara de sombra se ciñe en profundidad y el sesgo se reduce para que farolas,
 // coches y árboles den sombra; y el suelo, fachadas y tejados, que antes no recibían sombra, pasan a recibirla mientras dure.
 let SOMB_ON=false,SOMB_F=0,SOMB_T=0,SOMB_OLD=null;const SOMB_RS=new Set();function sombrasRecv(){window.__SUNF.parent.traverse(o=>{if(!o.isMesh||o.receiveShadow||!o.visible)return;const m=o.material;if(!m||Array.isArray(m)||m.transparent||!(m.isMeshStandardMaterial||m.isMeshLambertMaterial||m.isMeshPhongMaterial))return;o.receiveShadow=true;SOMB_RS.add(o)})}function sombrasSet(on){const c=sun.shadow.camera;if(on){SOMB_OLD={b:sun.shadow.bias,nb:sun.shadow.normalBias,n:c.near,f:c.far};sun.shadow.bias=-.00004;sun.shadow.normalBias=.004;sunFollow();Object.assign(c,{near:60,far:120});c.updateProjectionMatrix();sombrasRecv();SOMB_T=performance.now()}else{for(const o of SOMB_RS)o.receiveShadow=false;SOMB_RS.clear();if(SOMB_OLD){sun.shadow.bias=SOMB_OLD.b;sun.shadow.normalBias=SOMB_OLD.nb;Object.assign(c,{near:SOMB_OLD.n,far:SOMB_OLD.f});c.updateProjectionMatrix();SOMB_OLD=null}}}function sombrasTick(){if(window.LITE||!driving||RACE.on){if(SOMB_ON){SOMB_ON=false;sombrasSet(false);if(!RACE.on)R.shadowMap.autoUpdate=true}return}const want=POST.on&&!COMIC.on&&CIELO.nf<.6;if(want!==SOMB_ON){SOMB_ON=want;sun.castShadow=want;R.shadowMap.autoUpdate=!want;sombrasSet(want)}if(want){sunFollow();SOMB_F=(SOMB_F+1)%2;if(SOMB_F===0)R.shadowMap.needsUpdate=true;const t=performance.now();if(t-SOMB_T>2000){SOMB_T=t;sombrasRecv()}}}
-function postInit(){if(POST.comp)return;const rt=new THREE.WebGLRenderTarget(2,2,{type:THREE.HalfFloatType,samples:4,depthTexture:new THREE.DepthTexture(2,2)});
- const c=new EffectComposer(R,rt);c.addPass(new RenderPass(scene,pcam));try{POST.ao=aoPass();c.addPass(POST.ao)}catch(e){console.error(e)}
- const b=new UnrealBloomPass(new THREE.Vector2(256,256),.32,.55,.92);c.addPass(b);
- c.addPass(new OutputPass());
- const g=new ShaderPass({uniforms:{tDiffuse:{value:null},uWarm:{value:new THREE.Vector3(1,1,1)},uCool:{value:new THREE.Vector3(1,1,1)},uSat:{value:1.08},uCon:{value:1.06}},
-  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-  fragmentShader:`uniform sampler2D tDiffuse;uniform vec3 uWarm,uCool;uniform float uSat,uCon;varying vec2 vUv;
-   void main(){vec4 c=texture2D(tDiffuse,vUv);vec3 x=c.rgb;float l=dot(x,vec3(.2126,.7152,.0722));
-    x=mix(vec3(l),x,uSat);                                         // saturación
-    x=clamp((x-.5)*uCon+.5,0.,1.);x=x*x*(3.-2.*x)*.25+x*.75;         // contraste en curva suave
-    float ll=dot(x,vec3(.2126,.7152,.0722));x*=mix(uCool,uWarm,smoothstep(.15,.75,ll));   // sombras frías, luces cálidas
-    gl_FragColor=vec4(x,c.a);}`});
- c.addPass(g);try{POST.smaa=new SMAAPass(2,2);c.addPass(POST.smaa)}catch(e){console.warn('smaa',e)}POST.comp=c;POST.bloom=b;POST.grade=g;window.POST=POST}   // edit_suavizado.py: bordes suaves al final
-function postRender(){postInit();const w=cv.clientWidth,h=cv.clientHeight,pr=R.getPixelRatio();
- if(w!==POST.w||h!==POST.h||pr!==POST.pr){POST.w=w;POST.h=h;POST.pr=pr;POST.comp.setPixelRatio(pr);POST.comp.setSize(w,h);POST.bloom.resolution.set(w*pr/4,h*pr/4);POST.bloom.setSize(Math.round(w*pr/4),Math.round(h*pr/4))}
+// calidad alta en WebGPU: cadena de posprocesado en TSL (escena con MSAA → bloom → tono y sRGB → gradación de color)
+// three/webgpu y three/tsl se cargan sin minificar para que el bloom de addons use los mismos nudos que el motor
+function postFallo(e){console.error('posprocesado WebGPU',e);POST.fallo=true;POST.on=false;POST.cargando=false;POST.comp=null;
+ try{localStorage.setItem('gtvigo_post','0')}catch(_){}const t_='⚡ Calidad alta no disponible en este equipo';try{if(RACE.on)aviso(t_,2,'peq');else mostrar(t_)}catch(_){}}
+function postInit(){if(POST.comp||POST.cargando||POST.fallo)return;POST.cargando=true;
+ import('three/addons/tsl/display/BloomNode.js').then(({bloom})=>{const T=TSL;
+  const sp=T.pass(scene,pcam,{samples:4});const col=sp.getTextureNode('output');
+  const b=bloom(col,.32,.55,.92);
+  const U={uWarm:T.uniform(new THREE.Vector3(1,1,1)),uCool:T.uniform(new THREE.Vector3(1,1,1)),uSat:T.uniform(1.08),uCon:T.uniform(1.06)};
+  const grade=T.Fn(([c])=>{let x=c.rgb;const l=T.luminance(x);
+   x=T.mix(T.vec3(l),x,U.uSat);                                              // saturación
+   x=T.clamp(x.sub(.5).mul(U.uCon).add(.5),0,1);x=x.mul(x).mul(T.float(3).sub(x.mul(2))).mul(.25).add(x.mul(.75));   // contraste en curva suave
+   x=x.mul(T.mix(U.uCool,U.uWarm,T.smoothstep(.15,.75,T.luminance(x))));   // sombras frías, luces cálidas
+   return T.vec4(x,c.a)});
+  const pp=new THREE.RenderPipeline(R);pp.outputColorTransform=false;pp.outputNode=grade(T.renderOutput(col.add(b)));
+  POST.comp=pp;POST.bloom=b;POST.U=U;POST.cargando=false;window.POST=POST}).catch(postFallo)}
+function postRender(){postInit();if(!POST.comp){R.render(scene,pcam);return}
  // gradación según la hora: día limpio, tarde dorada, noche azulada con luces cálidas
- const nf=CIELO.nf,du=Math.max(0,1-Math.abs(CIELO.h-20)/2.2)*(1-nf);const U=POST.grade.uniforms;
+ const nf=CIELO.nf,du=Math.max(0,1-Math.abs(CIELO.h-20)/2.2)*(1-nf),U=POST.U,b=POST.bloom;
  U.uWarm.value.set(1.03+.06*du+.04*nf,1.0+.02*du,.96-.08*du-.02*nf);U.uCool.value.set(.96-.04*nf,.99,1.03+.07*nf);
  U.uSat.value=1.08+.08*du-.12*nf;U.uCon.value=1.06+.04*du;
- POST.bloom.strength=.18+.2*du+.16*nf;POST.bloom.threshold=nf>.5?.88:.93;POST.bloom.radius=.4;
- POST.comp.render()}
+ b.strength.value=.18+.2*du+.16*nf;b.threshold.value=nf>.5?.88:.93;b.radius.value=.4;
+ try{POST.comp.render()}catch(e){postFallo(e);R.render(scene,pcam)}}
 
 // ---------- estilo cómic: contorno negro (bordes por profundidad y por pliegues) y paleta luminosa tipo animación japonesa
 const COMIC={on:false,rt:null,q:null,mat:null,w:0,h:0};
