@@ -3158,13 +3158,13 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
  let rs=7;const rn=()=>(rs=(rs*16807)%2147483647)/2147483647;
  const HOR=M(0xb9b4aa,{roughness:.95}),GRA=M(0x9c968c,{roughness:.95}),GRAO=M(0x6f6a62,{roughness:1}),BLA=M(0xf1efe8),BLA2=M(0xdedbd2),
   TEJ=M(0x5b5450,{roughness:.9}),VID=M(0x26303c,{roughness:.25,metalness:.2}),HIE=M(0x5f656d,{metalness:.6,roughness:.4}),MAD=M(0x8a6440),MADO=M(0x5e4430),
-  TRO=M(0x5a4532),HO1=M(0x3b5a2a,{roughness:.9}),HO2=M(0x4c6e33,{roughness:.9}),PIN=M(0x2f4a2a,{roughness:.9}),CES=M(0x7a9858,{roughness:1,...PO}),
+  TRO=M(0x5a4532),HO1=M(0x3b5a2a,{roughness:.9}),HO2=M(0x4c6e33,{roughness:.9}),PIN=M(0x2f4a2a,{roughness:.9}),OCR=M(0x958459,{roughness:1,...PO}),CES=M(0x7a9858,{roughness:1,...PO}),
   TIE=M(0xc9b38a,{roughness:1,...PO}),DUN=M(0xffffff,{roughness:1,vertexColors:true}),MAT=M(0x6e6a40),MAT2=M(0x9a8656),BARR=M(0xd9cf9a),
   ARM=M(0xd8ccb0,{roughness:1,...PO}),MOJ=M(0xb8ab8c,{roughness:.55,transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide,...PO}),
   AGUAF=new THREE.MeshStandardMaterial({color:0x58b8b0,roughness:.12,metalness:.05,transparent:true,opacity:.82,emissive:0x0d3b3a,emissiveIntensity:.35,depthWrite:false,side:THREE.DoubleSide,...PO}),
   AGUAH=new THREE.MeshStandardMaterial({color:0x2f8a8c,roughness:.1,transparent:true,opacity:.7,emissive:0x082a2c,emissiveIntensity:.3,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}),
   PIS=new THREE.MeshStandardMaterial({color:0x6fd3ef,roughness:.1,emissive:0x0e5a78,emissiveIntensity:.35}),
-  ROC=M(0x5a554e,{roughness:1}),ROR=M(0x8b5b45,{roughness:1}),ALG=M(0x3e4a2a,{roughness:1}),FAR=M(0xfff3cf,{emissive:0xffdc8a,emissiveIntensity:.7});
+  ROC=M(0x5e4433,{roughness:1}),RMA=M(0x5e4433,{roughness:1}),RG1=M(0x6a4c37,{roughness:1}),ROR=M(0x8b5b45,{roughness:1}),ALG=M(0x3e4a2a,{roughness:1}),FAR=M(0xfff3cf,{emissive:0xffdc8a,emissiveIntensity:.7});
  const BCOL=[0xf4f4f0,0xf4f4f0,0x2f6fb0,0x3f8f5a,0xd9d2c0,0x7fb7d9,0xb84a3a].map(c=>M(c,{roughness:.6}));
  const cil=(a,b,h,s=8)=>new THREE.CylinderGeometry(a,b,h,s),cub=(a,b,c)=>new THREE.BoxGeometry(a,b,c);
  // grafitis: textura propia (letras y tags inventados) sobre hormigón
@@ -3195,7 +3195,7 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
    const bb=g.boundingBox.clone().applyMatrix4(o.matrixWorld);if(bb.max.x<17||bb.min.x>23.6||bb.max.z<73.5||bb.min.z>78.6)return;const mw=o.matrixWorld;let ch=0;
    const I=j=>ix?ix.getX(j):j,cnt=ix?ix.count:pos.count;
    for(let i=0;i+2<cnt;i+=3){a.fromBufferAttribute(pos,I(i)).applyMatrix4(mw);b.fromBufferAttribute(pos,I(i+1)).applyMatrix4(mw);c.fromBufferAttribute(pos,I(i+2)).applyMatrix4(mw);
-    const mx=(a.x+b.x+c.x)/3,mz=(a.z+b.z+c.z)/3,my=Math.max(a.y,b.y,c.y);if(prueba(o.name,mx,mz,my)){if(ix){const i0=ix.getX(i);ix.setX(i+1,i0);ix.setX(i+2,i0)}else{for(const j of[i+1,i+2])pos.setXYZ(j,pos.getX(i),pos.getY(i),pos.getZ(i))}ch++}}
+    const mx=(a.x+b.x+c.x)/3,mz=(a.z+b.z+c.z)/3,my=Math.max(a.y,b.y,c.y);if(prueba(o.name,mx,mz,my,o.material&&o.material.color?o.material.color.getHex():null)){if(ix){const i0=ix.getX(i);ix.setX(i+1,i0);ix.setX(i+2,i0)}else{for(const j of[i+1,i+2])pos.setXYZ(j,pos.getX(i),pos.getY(i),pos.getZ(i))}ch++}}
    if(ch){if(ix)ix.needsUpdate=true;else pos.needsUpdate=true;k+=ch;if(o.geometry.boundsTree)try{o.geometry.computeBoundsTree()}catch(e){}}});return k};
  // zonas (en u,v)
  const PARQ=[.35,.85],DORN=[.95,1.65],DUNA=[1.75,3.0],COMP=[3.05,5.3],FIN=L0;
@@ -3207,9 +3207,11 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
  const rioD=(x,z)=>{let m=1e9,w=.1;for(let i=1;i<RIO.length;i++){const p=RIO[i-1],q=RIO[i],dx=q[0]-p[0],dz=q[1]-p[1],l2=dx*dx+dz*dz,f=Math.max(0,Math.min(1,((x-p[0])*dx+(z-p[1])*dz)/l2)),d=Math.hypot(x-p[0]-f*dx,z-p[1]-f*dz);if(d<m){m=d;w=AR[i-1]*(1-f)+AR[i]*f}}return[m,w]};
  CALZ.rioD=rioD;
  ocultar((x,z)=>enComp(x,z)||enPlaya(x,z)&&!(UV(x,z)[0]<PARQ[1]&&UV(x,z)[1]>.6)||rioD(x,z)[0]<rioD(x,z)[1]+.04);
- CALZ.col=colapsar((nm,x,z,y)=>{if(/^muro_costa/.test(nm)){const[u,v]=UV(x,z);return u>U0&&u<FIN+.05&&v>-.6&&v<.6}
+ const ARB=[0x5a4332,0x335f34,0x386b39,0x497935,0x54803d,0x4e7e37,0x5d8b43,0x6a9b4f];
+ CALZ.col=colapsar((nm,x,z,y,col)=>{if(/^muro_costa/.test(nm)){const[u,v]=UV(x,z);return u>U0&&u<FIN+.05&&v>-.6&&v<.6}
   if(/^(agua|playa|playita|calzada|aceras|labio|zocalo|lineas|ori|tierra|puentes)/.test(nm))return false;
   if(enComp(x,z)&&y>gy(x,z)+.008)return true;                                   // edificios del catastro del conjunto
+  if(/^piezas/.test(nm)&&col!=null&&ARB.includes(col)){const[u,v]=UV(x,z);if(u>PARQ[1]+.05&&u<FIN&&v<.45)return true}
   if(/^(verde|faldon)/.test(nm)){const[u,v]=UV(x,z);if(u>PARQ[0]&&u<FIN+.1&&v<.42)return true}  // franja verde pegada al agua sobre la arena
   const[d,w]=rioD(x,z);if(d<w&&y>gy(x,z)+.006&&!/^(edificios|tejado)/.test(nm))return true;return false});
  {let nT=TROZOS.length,veces=0;const iv=setInterval(()=>{if(TROZOS.length!==nT){nT=TROZOS.length;ocultar((x,z)=>enComp(x,z)||enPlaya(x,z)||rioD(x,z)[0]<rioD(x,z)[1]+.04)}if(++veces>90)clearInterval(iv)},2000)}
@@ -3228,7 +3230,7 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
   baranda(pts,(x,z)=>top(x,z)+.003);
   for(let u=U0;u<PARQ[0];u+=.025){const[x,z]=W(u,-.02-rn()*.03),r=.008+rn()*.012,g=new THREE.DodecahedronGeometry(r,0);g.scale(1,.7,1);add(g,rn()<.3?ALG:ROC,x,-.004+r*.3,z,rn()*6)}}
  // ---- bolos de granito en el agua frente a la plaza (pardo-rojizos con algas) y alguna roca en la orilla
- for(let k=0;k<(LT?14:24);k++){const u=-1.0+rn()*3.2,v=-.25-rn()*1.1,[x,z]=W(u,v);if(t(x,z)!==0)continue;const r=.008+rn()*.016,g=new THREE.DodecahedronGeometry(r,0);g.scale(1.2+rn()*.5,.4,1+rn()*.4);add(g,rn()<.5?ROC:GRAO,x,-.016+rn()*.01,z,rn()*6)}
+ for(let k=0;k<(LT?14:24);k++){const u=-1.0+rn()*3.2,v=-.25-rn()*1.1,[x,z]=W(u,v);if(t(x,z)!==0)continue;const r=.008+rn()*.016,g=new THREE.DodecahedronGeometry(r,0);g.scale(1.2+rn()*.5,.4,1+rn()*.4);add(g,rn()<.5?RMA:RG1,x,-.016+rn()*.01,z,rn()*6)}
  for(let k=0;k<10;k++){const u=PARQ[1]+rn()*1.2,v=-.04-rn()*.08,[x,z]=W(u,v),r=.006+rn()*.01,g=new THREE.DodecahedronGeometry(r,0);g.scale(1,.5,1);add(g,ROC,x,gy(x,z)-.001,z,rn()*6)}
 
  // ---- plaza de As Barcas (u -0.05..0.5): plataforma de hormigón sobre la arena con árboles, fuente, mesas y bancos
@@ -3270,7 +3272,7 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
  // ---- hierba con dornas y chalanas varadas (las barcas que dan nombre a la playa)
  {const pos=[];const tri=(a,b,c)=>pos.push(...a,...b,...c);const q=(u,v)=>{const[x,z]=W(u,v);return[x,gy(x,z)+.004,z]};
   for(let u=DORN[0];u<DORN[1];u+=.05){const va=.34+.05*Math.sin(u*9),vb=.34+.05*Math.sin((u+.05)*9);tri(q(u,va),q(u,.7),q(u+.05,vb));tri(q(u+.05,vb),q(u,.7),q(u+.05,.7))}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();add(g,CES,0,0,0);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();add(g,OCR,0,0,0);
   const barca=(len,anch,alt)=>{const g=new THREE.BoxGeometry(len,alt,anch,6,1,2);const p=g.attributes.position;for(let k=0;k<p.count;k++){const f=Math.abs(p.getX(k))/(len/2),y=p.getY(k);p.setZ(k,p.getZ(k)*(1-Math.pow(f,2.2)*.85)*(y<0?.75:1));p.setY(k,y+(f>.6?(f-.6)*alt*.9:0))}g.computeVertexNormals();return g};
   for(let k=0;k<(LT?9:15);k++){const u=DORN[0]+.05+rn()*(DORN[1]-DORN[0]-.1),v=.4+rn()*.25,[x,z]=W(u,v),len=.035+rn()*.02,ry=ANG+Math.PI/2+(rn()-.5)*.7,boca=rn()<.45;
    const cm=BCOL[(rn()*BCOL.length)|0];const y=gy(x,z)+.006;const h=barca(len,.014+len*.12,.008);if(boca)h.rotateX(Math.PI);add(h,cm,x,y+(boca?.001:0),z,ry,0,(rn()-.5)*.12);
@@ -3318,17 +3320,26 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
 
  // ---- (2ª pasada, fotos aéreas) grandes lajas de granito en el agua: plataformas planas y estratificadas, gris pardo,
  //      con la base oscura de algas; una frente al centro de la playa, otra más afuera al oeste y otra pequeña junto a la plaza
- {const RG=[M(0x8c8273,{roughness:1}),M(0x7a7063,{roughness:1}),M(0x968b7a,{roughness:1})],RGB=M(0x3f3a2f,{roughness:1}),GRI=M(0x5a5448,{roughness:1});
+ {const RG=[M(0x7a5a42,{roughness:1}),M(0x6a4c37,{roughness:1}),M(0x86664a,{roughness:1})],RGB=M(0x3a2b20,{roughness:1}),GRI=M(0x4a3628,{roughness:1});
   const laja=(u,v,R,el,ang,top,capas=4)=>{const[cx,cz]=W(u,v);let a0=rn()*6;for(let c=0;c<capas;c++){const sh_=new THREE.Shape(),n=22,k=1-c*.2,rr=R*k,ox=(rn()-.5)*R*.25*c,oz=(rn()-.5)*R*.2*c;
     for(let i=0;i<n;i++){const a=i/n*6.283,rad=rr*(.72+.28*Math.sin(a*3+a0+c)+.12*(rn()-.5)),px=Math.cos(a)*rad*el,py=Math.sin(a)*rad;i?sh_.lineTo(px,py):sh_.moveTo(px,py)}
     const th=c===0?.016:.0055,g=new THREE.ExtrudeGeometry(sh_,{depth:th,bevelEnabled:false,curveSegments:1});g.rotateX(-Math.PI/2);g.rotateY(ang);
     const y=c===0?top-.0165-.0055*(capas-1)+.0005:top-.0055*(capas-c);add(g,c===0?RGB:RG[c%3],cx+ox,y,cz+oz)}
    // grietas y escalones de los estratos encima
    for(let k=0;k<Math.round(R*(LT?60:140));k++){const a=rn()*6.28,d=rn()*R*.55,len=.008+rn()*.03;add(cub(len,.0012,.0022),GRI,cx+Math.cos(a)*d*el,top-.0004,cz+Math.sin(a)*d,ang+rn()*.5-.25)}};
-  const fuera=(u,v)=>{const[x,z]=W(u,v);return t(x,z)===0};
-  for(const[u,v,R,el,an,top,cp]of[[1.4,-.78,.28,1.7,.5,.007,5],[.3,-1.2,.32,1.6,.3,.009,5],[-.45,-.8,.2,1.5,.9,.005,4],[2.15,-1.05,.14,1.4,.2,-.002,3],[.85,-.5,.1,1.5,.6,.003,3],[2.6,-.7,.06,1.3,1.1,-.006,2]])if(fuera(u,v))laja(u,v,R,el,an,top,cp);
+  const fuera=(u,v)=>{const[x,z]=W(u,v);return t(x,z)===0};const LJ=[];
+  for(const[u,v,R,el,an,top,cp]of[[1.4,-.78,.28,1.7,.5,.007,5],[.3,-1.2,.32,1.6,.3,.009,5],[-.45,-.8,.2,1.5,.9,.005,4],[2.15,-1.05,.14,1.4,.2,-.002,3],[.85,-.5,.1,1.5,.6,.003,3],[2.6,-.7,.06,1.3,1.1,-.006,2]])if(fuera(u,v)){laja(u,v,R,el,an,top,cp);LJ.push([...W(u,v),R*el])}
+  // barcas fondeadas entre las rocas (chalanas y dornas con su boya), y alguna varada en las rocas de la orilla
+  {const casco=(len,anch,alt)=>{const g=new THREE.BoxGeometry(len,alt,anch,6,1,2);const p=g.attributes.position;for(let k=0;k<p.count;k++){const f=Math.abs(p.getX(k))/(len/2),y=p.getY(k);p.setZ(k,p.getZ(k)*(1-Math.pow(f,2.2)*.85)*(y<0?.75:1));p.setY(k,y+(f>.6?(f-.6)*alt*.9:0))}g.computeVertexNormals();return g};
+   const BOYA=M(0xe8572e,{roughness:.6});let puestas=0;
+   for(let k=0;k<120&&puestas<(LT?10:18);k++){const u=-1.1+rn()*3.3,v=-.18-rn()*1.15;if(!fuera(u,v))continue;const[x,z]=W(u,v);if(LJ.some(([lx,lz,R])=>Math.hypot(x-lx,z-lz)<R+.03))continue;
+    const len=.045+rn()*.02,ry=rn()*6.28,cm=BCOL[(rn()*BCOL.length)|0],Y=-.004;add(casco(len,.015+len*.12,.009),cm,x,Y,z,ry);add(cub(len*.8,.0012,.003),MADO,x,Y+.005,z,ry);add(cub(.003,.0013,.014),MADO,x,Y+.0055,z,ry);
+    if(rn()<.5)add(cub(.006,.005,.006),BLA2,x-Math.cos(ry)*len*.42,Y+.006,z+Math.sin(ry)*len*.42,ry);  // motor fueraborda
+    add(new THREE.SphereGeometry(.0035,6,4),BOYA,x+Math.cos(ry)*len*.9,Y-.001,z-Math.sin(ry)*len*.9);puestas++}
+   for(let k=0;k<6;k++){const u=-.9+rn()*1.1,[x,z]=W(u,-.05-rn()*.05),ry=ANG+(rn()-.5)*.8,len=.035+rn()*.015;add(casco(len,.014,.008),BCOL[(rn()*BCOL.length)|0],x,Math.max(gy(x,z),-.012)+.006,z,ry,0,(rn()-.5)*.25)}
+   CALZ.barcas=puestas}
   // hilera de rocas que sale de la playa hacia el agua (se ve en bajamar)
-  for(let k=0;k<26;k++){const f=k/25,u=1.05+f*.06+(rn()-.5)*.02,v=.06-f*.5,[x,z]=W(u,v),r=.004+rn()*.006,g=new THREE.DodecahedronGeometry(r,0);g.scale(1.3,.5,1);add(g,rn()<.5?ROC:ALG,x,Math.max(gy(x,z),-.012)+r*.15,z,rn()*6)}
+  for(let k=0;k<26;k++){const f=k/25,u=1.05+f*.06+(rn()-.5)*.02,v=.06-f*.5,[x,z]=W(u,v),r=.004+rn()*.006,g=new THREE.DodecahedronGeometry(r,0);g.scale(1.3,.5,1);add(g,rn()<.5?RMA:ALG,x,Math.max(gy(x,z),-.012)+r*.15,z,rn()*6)}
   // manchas oscuras de algas y roca bajo el agua clara
   const MANCHA=new THREE.MeshStandardMaterial({color:0x1d3a35,roughness:1,transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   for(let k=0;k<(LT?14:26);k++){const u=-.8+rn()*2.8,v=-.2-rn()*1.1;if(!fuera(u,v))continue;const[x,z]=W(u,v),g=new THREE.CircleGeometry(.02+rn()*.05,9);const p=g.attributes.position;for(let i=1;i<p.count;i++){const q=.6+rn()*.6;p.setXY(i,p.getX(i)*q*1.5,p.getY(i)*q)}g.rotateX(-Math.PI/2);g.rotateY(rn()*6);g.translate(x,-.018,z);const m=new THREE.Mesh(g,MANCHA);m.renderOrder=1;G.add(m)}}
@@ -3340,7 +3351,7 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
  {const COLC=[0xf4f4f2,0x2b2f3a,0x9aa3b0,0xb8423a,0x3a4a6a,0x5d7fb0,0xd8d4ca,0x7a1f1f],CM=COLC.map(c=>M(c,{roughness:.4,metalness:.25}));
   for(let u=U0+.1;u<PARQ[0]-.05;u+=.03){if(rdv(u)<.09||rn()<.2)continue;const[x,z]=W(u,.06),y=gy(x,z),cm=CM[(rn()*CM.length)|0],ry=ANG+Math.PI/2;
    add(cub(.042,.012,.018),cm,x,y+.009,z,ry);add(cub(.022,.009,.016),VID,x,y+.019,z,ry);add(cub(.021,.002,.017),cm,x,y+.024,z,ry)}}
- for(const[mat,gs]of PARTS){const m=new THREE.Mesh(mergeGeometries(gs),mat);m.castShadow=!LT&&![CES,TIE,ARM,MOJ].includes(mat);m.receiveShadow=true;G.add(m)}
+ for(const[mat,gs]of PARTS){const m=new THREE.Mesh(mergeGeometries(gs),mat);m.castShadow=!LT&&![CES,OCR,TIE,ARM,MOJ].includes(mat);m.receiveShadow=true;G.add(m)}
  scene.add(G);CALZ.G=G}
 // ---------- fin de calzoa.js
 function subePaso(){const tA=performance.now();while(SUBE.cola.length&&performance.now()-tA<12)subeUno();if(!SUBE.cola.length){SUBE.on=false;return}setTimeout(subePaso,30)}
