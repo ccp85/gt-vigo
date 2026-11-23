@@ -3191,7 +3191,7 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
   scene.traverse(o=>{if(!o.isInstancedMesh||o.parent===G||o.count>5000)return;let ch=false;for(let k=0;k<o.instanceMatrix.count;k++){o.getMatrixAt(k,mm);mm.decompose(pp,q,sc);if(sc.x<=0)continue;const w=pp.clone().applyMatrix4(o.matrixWorld);if(dentro(w.x,w.z)){sc.setScalar(0);mm.compose(pp,q,sc);o.setMatrixAt(k,mm);ch=true;n++}}if(ch)o.instanceMatrix.needsUpdate=true});CALZ.oc=(CALZ.oc||0)+n};
  // ---- piezas fijas de la zona que sobran: edificios del catastro donde va el conjunto escalonado y el verde pegado al agua
  const colapsar=(prueba)=>{const a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();let k=0;CALZ.root.updateMatrixWorld(true);
-  CALZ.root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||GROUND.includes(o)&&!/^(verde|faldon)/.test(o.name))return;const g=o.geometry,ix=g.index,pos=g.attributes.position;if(!pos)return;if(!g.boundingBox)g.computeBoundingBox();
+  CALZ.root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||GROUND.includes(o)||o.userData.suelo||/^(verde|tierra|playa|playita|calzada|aceras|agua)/.test(o.name))return;const g=o.geometry,ix=g.index,pos=g.attributes.position;if(!pos)return;if(!g.boundingBox)g.computeBoundingBox();
    const bb=g.boundingBox.clone().applyMatrix4(o.matrixWorld);if(bb.max.x<17||bb.min.x>23.6||bb.max.z<73.5||bb.min.z>78.6)return;const mw=o.matrixWorld;let ch=0;
    const I=j=>ix?ix.getX(j):j,cnt=ix?ix.count:pos.count;
    for(let i=0;i+2<cnt;i+=3){a.fromBufferAttribute(pos,I(i)).applyMatrix4(mw);b.fromBufferAttribute(pos,I(i+1)).applyMatrix4(mw);c.fromBufferAttribute(pos,I(i+2)).applyMatrix4(mw);
@@ -3212,7 +3212,7 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
   if(/^(agua|playa|playita|calzada|aceras|labio|zocalo|lineas|ori|tierra|puentes)/.test(nm))return false;
   if(enComp(x,z)&&y>gy(x,z)+.008)return true;                                   // edificios del catastro del conjunto
   if(/^piezas/.test(nm)&&col!=null&&ARB.includes(col)){const[u,v]=UV(x,z);if(u>PARQ[1]+.05&&u<FIN&&v<.45)return true}
-  if(/^(verde|faldon)/.test(nm)){const[u,v]=UV(x,z);if(u>PARQ[0]&&u<FIN+.1&&v<.42||u>U0&&u<=PARQ[0]&&v<.05)return true}  // franja verde pegada al agua sobre la arena
+  if(/^faldon/.test(nm)){const[u,v]=UV(x,z);if(u>PARQ[0]&&u<FIN+.1&&v<.42||u>U0&&u<=PARQ[0]&&v<.05)return true}  // franja verde pegada al agua sobre la arena
   const[d,w]=rioD(x,z);if(d<w&&y>gy(x,z)+.006&&!/^(edificios|tejado)/.test(nm))return true;return false});
  {let nT=TROZOS.length,veces=0;const iv=setInterval(()=>{if(TROZOS.length!==nT){nT=TROZOS.length;ocultar((x,z)=>enComp(x,z)||enPlaya(x,z)||rioD(x,z)[0]<rioD(x,z)[1]+.04)}if(++veces>90)clearInterval(iv)},2000)}
 
@@ -3349,6 +3349,13 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
   // manchas oscuras de algas y roca bajo el agua clara
   const MANCHA=new THREE.MeshStandardMaterial({color:0x1d3a35,roughness:1,transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   for(let k=0;k<(LT?14:26);k++){const u=-.8+rn()*2.8,v=-.2-rn()*1.1;if(!fuera(u,v))continue;const[x,z]=W(u,v),g=new THREE.CircleGeometry(.02+rn()*.05,9);const p=g.attributes.position;for(let i=1;i<p.count;i++){const q=.6+rn()*.6;p.setXY(i,p.getX(i)*q*1.5,p.getY(i)*q)}g.rotateX(-Math.PI/2);g.rotateY(rn()*6);g.translate(x,-.018,z);const m=new THREE.Mesh(g,MANCHA);m.renderOrder=1;G.add(m)}}
+ // ---- arena por encima de la franja verde pegada al agua (el suelo no se toca: se tapa)
+ {const AR_=M(0xeadcbc,{roughness:1,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});const pos=[];const D=.03;
+  const h=(u,v)=>{const[x,z]=W(u,v);let y=null;try{y=sueloRap(x,z)}catch(e){}return y==null||y<-.005?null:[x,y+.0025,z]};
+  for(let u=U0;u<FIN-.3;u+=D)for(let v=-.75;v<.42;v+=D){if(u>PARQ[0]-.05&&u<PARQ[1]+.05&&v>.05)continue;if(u>DORN[0]-.05&&u<DORN[1]+.05&&v>.3)continue;const a=h(u,v),b=h(u+D,v),c=h(u+D,v+D),d=h(u,v+D);if(!a||!b||!c||!d)continue;
+   const mx=(a[0]+c[0])/2,mz=(a[2]+c[2])/2;if(rioD(mx,mz)[0]<rioD(mx,mz)[1]*1.4)continue;if(Math.max(a[1],b[1],c[1],d[1])<.009)continue; // solo donde el suelo está alto (la franja), no la arena baja
+   pos.push(...a,...c,...b,...a,...d,...c)}
+  if(pos.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();const m=new THREE.Mesh(g,AR_);m.receiveShadow=true;G.add(m)}}
  // ---- arena mojada de bajamar delante de la playa (más oscura y brillante)
  {const pos=[],idx=[];let n=0;for(let u=PARQ[0];u<=FIN-.25;u+=.05){for(const v of[-.32+.06*Math.sin(u*4),.05]){const[x,z]=W(u,v);pos.push(x,Math.max(gy(x,z),-.004)+.0025,z)}if(n){const k=(n-1)*2;idx.push(k,k+2,k+1,k+1,k+2,k+3)}n++}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
