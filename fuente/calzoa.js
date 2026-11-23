@@ -107,7 +107,7 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
   baranda(pts,(x,z)=>top(x,z)+.003);
   for(let u=U0;u<PARQ[0];u+=.025){const[x,z]=W(u,-.02-rn()*.03),r=.008+rn()*.012,g=new THREE.DodecahedronGeometry(r,0);g.scale(1,.7,1);add(g,rn()<.3?ALG:ROC,x,-.004+r*.3,z,rn()*6)}}
  // ---- bolos de granito en el agua frente a la plaza (pardo-rojizos con algas) y alguna roca en la orilla
- for(let k=0;k<(LT?26:46);k++){const u=-1.2+rn()*2.6,v=-.12-rn()*.75,[x,z]=W(u,v);if(t(x,z)!==0)continue;const r=.012+rn()*.03,g=new THREE.DodecahedronGeometry(r,1);g.scale(1+rn()*.6,.22+rn()*.15,1+rn()*.4);add(g,rn()<.6?ROR:ROC,x,-.022+rn()*.014,z,rn()*6)}
+ for(let k=0;k<(LT?14:24);k++){const u=-1.0+rn()*3.2,v=-.25-rn()*1.1,[x,z]=W(u,v);if(t(x,z)!==0)continue;const r=.008+rn()*.016,g=new THREE.DodecahedronGeometry(r,0);g.scale(1.2+rn()*.5,.4,1+rn()*.4);add(g,rn()<.5?ROC:GRAO,x,-.016+rn()*.01,z,rn()*6)}
  for(let k=0;k<10;k++){const u=PARQ[1]+rn()*1.2,v=-.04-rn()*.08,[x,z]=W(u,v),r=.006+rn()*.01,g=new THREE.DodecahedronGeometry(r,0);g.scale(1,.5,1);add(g,ROC,x,gy(x,z)-.001,z,rn()*6)}
 
  // ---- plaza de As Barcas (u -0.05..0.5): plataforma de hormigón sobre la arena con árboles, fuente, mesas y bancos
@@ -170,7 +170,8 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
  {const bloque=(u,v,fondo,pisos,tejado,dsh)=>{for(let p=0;p<pisos;p++){const re=p*.02,hh=.03,[x,z]=W(u,v+re+dsh),y=gy(...W(u,v))+.004+p*hh;const w=.07,d=fondo-re;
     add(cub(w,hh*.62,d),BLA,x+IN[0]*d/2,y+hh*.31+hh*.38,z+IN[1]*d/2,ANG);              // muro del piso
     add(cub(w*.92,hh*.4,d*.9),VID,x+IN[0]*d/2-IN[0]*.003,y+hh*.2,z+IN[1]*d/2-IN[1]*.003,ANG); // cristales retranqueados
-    add(cub(w+.004,.0018,d+.012),BLA2,x+IN[0]*(d/2-.006),y+.0009,z+IN[1]*(d/2-.006),ANG)}    // losa de terraza volada
+    add(cub(w+.004,.0018,d+.012),BLA2,x+IN[0]*(d/2-.006),y+.0009,z+IN[1]*(d/2-.006),ANG);    // losa de terraza volada
+    add(cub(w*.9,.004,.004),p%2?HO2:HO1,x-IN[0]*.008,y+.0038,z-IN[1]*.008,ANG)}            // jardinera con plantas colgando
    const re=(pisos-1)*.02,[x,z]=W(u,v+re+dsh),d=fondo-re,y=gy(...W(u,v))+.004+pisos*.03;add(cub(.074,.003,d+.004),tejado,x+IN[0]*d/2,y+.0015,z+IN[1]*d/2,ANG)};
   // fila de delante: tejados oscuros, 3 pisos; cada módulo se desplaza en diagonal (zigzag)
   for(let i=0;i<22;i++){const u=COMP[0]+.08+i*.07;if(u>COMP[1]-.4)break;const z_=(i%4<2?i%2:1-i%2)*.03;bloque(u,.52+z_,.11,3,TEJ,0)}
@@ -193,6 +194,31 @@ function calCrea(){const LT=!!window.LITE,G=new THREE.Group();G.name='calzoa';
   {const pts=[];for(let u=COMP[1]-.35;u<=COMP[1]+.1;u+=.05)pts.push(W(u,.48));muro(pts,.02,.01,GRAO,GRA,-.006)}
   CALZ.comp=1}
 
+
+ // ---- (2ª pasada, fotos aéreas) grandes lajas de granito en el agua: plataformas planas y estratificadas, gris pardo,
+ //      con la base oscura de algas; una frente al centro de la playa, otra más afuera al oeste y otra pequeña junto a la plaza
+ {const RG=[M(0x8c8273,{roughness:1}),M(0x7a7063,{roughness:1}),M(0x968b7a,{roughness:1})],RGB=M(0x3f3a2f,{roughness:1}),GRI=M(0x5a5448,{roughness:1});
+  const laja=(u,v,R,el,ang,top,capas=4)=>{const[cx,cz]=W(u,v);let a0=rn()*6;for(let c=0;c<capas;c++){const sh_=new THREE.Shape(),n=22,k=1-c*.2,rr=R*k,ox=(rn()-.5)*R*.25*c,oz=(rn()-.5)*R*.2*c;
+    for(let i=0;i<n;i++){const a=i/n*6.283,rad=rr*(.72+.28*Math.sin(a*3+a0+c)+.12*(rn()-.5)),px=Math.cos(a)*rad*el,py=Math.sin(a)*rad;i?sh_.lineTo(px,py):sh_.moveTo(px,py)}
+    const th=c===0?.016:.0055,g=new THREE.ExtrudeGeometry(sh_,{depth:th,bevelEnabled:false,curveSegments:1});g.rotateX(-Math.PI/2);g.rotateY(ang);
+    const y=c===0?top-.0165-.0055*(capas-1)+.0005:top-.0055*(capas-c);add(g,c===0?RGB:RG[c%3],cx+ox,y,cz+oz)}
+   // grietas y escalones de los estratos encima
+   for(let k=0;k<Math.round(R*(LT?60:140));k++){const a=rn()*6.28,d=rn()*R*.55,len=.008+rn()*.03;add(cub(len,.0012,.0022),GRI,cx+Math.cos(a)*d*el,top-.0004,cz+Math.sin(a)*d,ang+rn()*.5-.25)}};
+  const fuera=(u,v)=>{const[x,z]=W(u,v);return t(x,z)===0};
+  for(const[u,v,R,el,an,top,cp]of[[1.4,-.78,.28,1.7,.5,.007,5],[.3,-1.2,.32,1.6,.3,.009,5],[-.45,-.8,.2,1.5,.9,.005,4],[2.15,-1.05,.14,1.4,.2,-.002,3],[.85,-.5,.1,1.5,.6,.003,3],[2.6,-.7,.06,1.3,1.1,-.006,2]])if(fuera(u,v))laja(u,v,R,el,an,top,cp);
+  // hilera de rocas que sale de la playa hacia el agua (se ve en bajamar)
+  for(let k=0;k<26;k++){const f=k/25,u=1.05+f*.06+(rn()-.5)*.02,v=.06-f*.5,[x,z]=W(u,v),r=.004+rn()*.006,g=new THREE.DodecahedronGeometry(r,0);g.scale(1.3,.5,1);add(g,rn()<.5?ROC:ALG,x,Math.max(gy(x,z),-.012)+r*.15,z,rn()*6)}
+  // manchas oscuras de algas y roca bajo el agua clara
+  const MANCHA=new THREE.MeshStandardMaterial({color:0x1d3a35,roughness:1,transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+  for(let k=0;k<(LT?14:26);k++){const u=-.8+rn()*2.8,v=-.2-rn()*1.1;if(!fuera(u,v))continue;const[x,z]=W(u,v),g=new THREE.CircleGeometry(.02+rn()*.05,9);const p=g.attributes.position;for(let i=1;i<p.count;i++){const q=.6+rn()*.6;p.setXY(i,p.getX(i)*q*1.5,p.getY(i)*q)}g.rotateX(-Math.PI/2);g.rotateY(rn()*6);g.translate(x,-.018,z);const m=new THREE.Mesh(g,MANCHA);m.renderOrder=1;G.add(m)}}
+ // ---- arena mojada de bajamar delante de la playa (más oscura y brillante)
+ {const pos=[],idx=[];let n=0;for(let u=PARQ[0];u<=FIN-.25;u+=.05){for(const v of[-.32+.06*Math.sin(u*4),.05]){const[x,z]=W(u,v);pos.push(x,Math.max(gy(x,z),-.004)+.0025,z)}if(n){const k=(n-1)*2;idx.push(k,k+2,k+1,k+1,k+2,k+3)}n++}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x9a8c72,roughness:.35,transparent:true,opacity:.45,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));m.renderOrder=1;G.add(m)}
+ // ---- coches aparcados en batería sobre el malecón, entre el muro y la carretera
+ {const COLC=[0xf4f4f2,0x2b2f3a,0x9aa3b0,0xb8423a,0x3a4a6a,0x5d7fb0,0xd8d4ca,0x7a1f1f],CM=COLC.map(c=>M(c,{roughness:.4,metalness:.25}));
+  for(let u=U0+.1;u<PARQ[0]-.05;u+=.03){if(rdv(u)<.09||rn()<.2)continue;const[x,z]=W(u,.06),y=gy(x,z),cm=CM[(rn()*CM.length)|0],ry=ANG+Math.PI/2;
+   add(cub(.042,.012,.018),cm,x,y+.009,z,ry);add(cub(.022,.009,.016),VID,x,y+.019,z,ry);add(cub(.021,.002,.017),cm,x,y+.024,z,ry)}}
  for(const[mat,gs]of PARTS){const m=new THREE.Mesh(mergeGeometries(gs),mat);m.castShadow=!LT&&![CES,TIE,ARM,MOJ].includes(mat);m.receiveShadow=true;G.add(m)}
  scene.add(G);CALZ.G=G}
 // ---------- fin de calzoa.js
