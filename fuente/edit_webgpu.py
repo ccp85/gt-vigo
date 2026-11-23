@@ -4,8 +4,9 @@
 # Lo que aún no está pasado al sistema nuevo de shaders (TSL) se apaga en esta página:
 #  - los efectos hechos con onBeforeCompile (agua realista, asfalto, césped, arena...) no se aplican: se ve el material base;
 #  - los ShaderMaterial (GLSL) pasan a un material básico invisible;
-#  - fase 2: el cielo y el mar sí están pasados a TSL (gpu_tsl.js), sin el reflejo de la ciudad ni las olas de Patos;
-#  - sin posprocesado (bloom, color, suavizado SMAA), sin reflejos de coches, charcos ni del mar.
+#  - fase 2: el cielo y el mar están pasados a TSL (gpu_tsl.js);
+#  - fase 3: reflejo de la ciudad en el mar, olas de Patos, asfalto, marcas, charcos, césped, fachadas, tejados y escaparates;
+#  - sin posprocesado (bloom, color, suavizado SMAA) ni reflejo de la ciudad en coches y charcos (los charcos reflejan el cielo).
 # Con ?webgl=1 se fuerza el motor nuevo sobre WebGL2 (para comparar en el mismo aparato).
 # Sirve para medir el rendimiento en cada dispositivo antes de ir pasando efectos uno a uno.
 import sys,os,re
@@ -49,7 +50,6 @@ r('<script type="importmap">',SHIM+'<script type="importmap">',1)
 # 4) sin posprocesado ni reflejos por ahora
 r("if(window.LITE)POST.on=false;","POST.on=false;",1)
 r("const RCUBO={cc:null,rt:null,pm:null,out:null,face:0,t:-99,mal:false,","const RCUBO={cc:null,rt:null,pm:null,out:null,face:0,t:-99,mal:true,",1)
-r("const ARF={rt:null,cam:new THREE.PerspectiveCamera(),h:-.036,tH:-1e9,tL:-1e9,tV:-1e9,vis:false,L:[],mal:false,","const ARF={rt:null,cam:new THREE.PerspectiveCamera(),h:-.036,tH:-1e9,tL:-1e9,tV:-1e9,vis:false,L:[],mal:true,",1)
 # 5) cosas del motor viejo que no existen en el nuevo
 r("aa:R.getContext().getContextAttributes().antialias","aa:true",1)
 s=s.replace("R.info.render.calls","(R.info.render.drawCalls??R.info.render.calls)")
@@ -64,8 +64,20 @@ TSLJS=open(os.path.join(D,'gpu_tsl.js'),encoding='utf8').read().strip('\n')+'\n'
 r("import * as THREE from 'three';","import * as THREE from 'three';\nconst TSL=THREE.TSL;   // TSL del mismo módulo que el motor (three/tsl trae otra copia de los nudos)",1)
 r("function aguaSamil(m){",TSLJS+"function aguaSamil(m){",1)
 r("window.CIELO=CIELO;sky.renderOrder=-10;","window.CIELO=CIELO;try{sky.material=gpuCielo()}catch(e){console.warn('cielo TSL',e)}sky.renderOrder=-10;",1)
-r("aguaSamil(m);WATERS.push(m);water=m;","aguaSamil(m);WATERS.push(m);water=m;try{o.material=gpuAgua(false)}catch(e){console.warn('agua TSL',e)}",1)
-r("MARG=new THREE.Mesh(g,m);MARG.name='mar_global';","let mg=m;try{mg=gpuAgua(true)}catch(e){console.warn('mar TSL',e)}MARG=new THREE.Mesh(g,mg);MARG.name='mar_global';",1)
-r("SURF.m=me}","SURF.m=me;me.material=new THREE.MeshBasicMaterial({visible:false})}",1)
+r("aguaSamil(m);WATERS.push(m);water=m;","aguaSamil(m);WATERS.push(m);water=m;try{o.material=gpuAgua(false);WATERS.push(o.material)}catch(e){console.warn('agua TSL',e)}",1)
+r("MARG=new THREE.Mesh(g,m);MARG.name='mar_global';","let mg=m;try{mg=gpuAgua(true);WATERS.push(mg)}catch(e){console.warn('mar TSL',e)}MARG=new THREE.Mesh(g,mg);MARG.name='mar_global';",1)
+r("const me=new THREE.Mesh(g,m);me.name='olas_patos';","let ms=m;try{ms=gpuAgua(false,true);WATERS.push(ms)}catch(e){console.warn('olas TSL',e);m.visible=false}const me=new THREE.Mesh(g,ms);me.name='olas_patos';",1)
+# fase 3: reflejo de la ciudad en el mar (aguaReflejo dibuja con la cámara reflejada; aquí no depende del posprocesado)
+r("if(window.LITE||ARF.mal||!driving||!(typeof POST!=='undefined'&&POST.on)||","if(window.LITE||ARF.mal||!driving||",1)
+# fase 3: suelos, fachadas, tejados y escaparates (cada función añade su versión TSL al material)
+for a,b in [("'|asf';m.needsUpdate=true;return m}","'|asf';m.needsUpdate=true;gpuFx('asf',m);return m}"),
+            ("'|mv';m.needsUpdate=true;return m}","'|mv';m.needsUpdate=true;gpuFx('mv',m);return m}"),
+            ("'|ces';m.needsUpdate=true;return m}","'|ces';m.needsUpdate=true;gpuFx('ces',m);return m}"),
+            ("'|mo';m.needsUpdate=true}","'|mo';m.needsUpdate=true;gpuFx('mo',m,k)}"),
+            ("m.customProgramCacheKey=()=>'fr'+k;m.needsUpdate=true}","m.customProgramCacheKey=()=>'fr'+k;m.needsUpdate=true;gpuFx('fr',m,k)}"),
+            ("'|tj';m.needsUpdate=true}","'|tj';m.needsUpdate=true;gpuFx('tj',m)}"),
+            ("m.customProgramCacheKey=()=>'vit';m.needsUpdate=true}","m.customProgramCacheKey=()=>'vit';m.needsUpdate=true;gpuFx('vit',m)}"),
+            ("m.needsUpdate=true}\n// edit_olas.py","m.needsUpdate=true;gpuFx('fv',m)}\n// edit_olas.py")]:
+    r(a,b,1)
 s=s.replace('<title>GT Vigo','<title>GT Vigo · WebGPU (prueba)',1)
 open(DST,'w',encoding='utf8').write(s);print('ok webgpu',DST)
