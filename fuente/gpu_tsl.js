@@ -185,6 +185,67 @@ function gpuPoints(geo,mat){const T=TSL,{vec2,vec3,vec4,float,uniform,clamp,sele
  }catch(e){console.warn('gpuPoints',e)}
  Object.defineProperty(g,'renderOrder',{get(){return this._ro||0},set(v){this._ro=v;if(this.userData&&this.userData.sprite)this.userData.sprite.renderOrder=v}});
  return g}
+// ---------- fondo marino (fondomar.js) en TSL: arena con ondulaciones, rocas con coralina y algas, algas que se mecen, peces que
+// nadan, pulpos que mueven los brazos; cáusticas del sol y pérdida de color con la distancia (el rojo primero)
+GT.h31=p=>TSL.fract(TSL.sin(TSL.dot(p,TSL.vec3(127.1,311.7,74.7))).mul(43758.5453));
+GT.vn3=p=>{const{floor,fract,mix,vec3,float}=TSL;const i=floor(p),f0=fract(p),f=f0.mul(f0).mul(float(3).sub(f0.mul(2))),h=o=>GT.h31(i.add(vec3(...o)));
+ return mix(mix(mix(h([0,0,0]),h([1,0,0]),f.x),mix(h([0,1,0]),h([1,1,0]),f.x),f.y),mix(mix(h([0,0,1]),h([1,0,1]),f.x),mix(h([0,1,1]),h([1,1,1]),f.x),f.y),f.z)};
+GT.caus=(uv0,t)=>{const{vec2,float,mod,sin,cos,length,pow,abs,clamp}=TSL;const p=mod(uv0.mul(6.2832),6.2832).sub(250);let i=p,c=float(1);const inten=.005;
+ for(let n=0;n<(window.LITE?2:4);n++){const tt=t.mul(1-3.5/(n+1));i=p.add(vec2(cos(tt.sub(i.x)).add(sin(tt.add(i.y))),sin(tt.sub(i.y)).add(cos(tt.add(i.x)))));
+  c=c.add(float(1).div(length(vec2(p.x.div(sin(i.x.add(tt)).div(inten)),p.y.div(cos(i.y.add(tt)).div(inten))))))}
+ c=c.div(window.LITE?2:4);c=float(1.17).sub(pow(c,1.4));return clamp(pow(abs(c),8),0,2.5)};
+function gpuFondo(B,kind,m){try{if(m.userData.gfm)return;m.userData.gfm=1;GT.ini();
+ const T=TSL,{vec2,vec3,vec4,float,normalize,max,min,mix,pow,dot,smoothstep,step,sin,cos,abs,clamp,select,length,fwidth,exp,fract,floor,positionWorld,positionGeometry,positionLocal,normalWorld,cameraPosition,instanceIndex,output,transformNormalToView}=T;
+ const LT=!!window.LITE,vn2=GT.vn,h21=GT.h21,vn3=GT.vn3,uT=GT.U(B.FU.uT),uWY=GT.U(B.FU.uWY),uNf=GT.U(B.FU.uNf),uSun=GT.U(B.FU.uSun),uO=GT.U(B.FU.uO);
+ const vWB=positionWorld.sub(uO),vNB=normalize(normalWorld),vLY=positionGeometry.y,vLX=positionGeometry.x,fcz=uWY.sub(vWB.y);
+ const iph=float(instanceIndex).mul(1.37);   // fase propia de cada instancia (algas y peces)
+ // movimiento en el vértice
+ if(kind==='alga'){const hh=max(positionGeometry.y,0),s2=hh.mul(hh),ph=uT.mul(1.05).add(iph);
+  m.positionNode=positionLocal.add(vec3(sin(ph.add(hh.mul(2.2))).mul(.3).add(.22).mul(s2).mul(.35).add(sin(uT.mul(4).add(hh.mul(9)).add(iph.mul(3))).mul(.012).mul(s2)),0,cos(ph.mul(.8).add(hh.mul(3.1))).mul(.22).mul(s2).mul(.35)))}
+ if(kind==='pez'){const ph=uT.mul(13).add(iph.mul(2.3));m.positionNode=positionLocal.add(vec3(0,0,sin(ph.add(positionGeometry.x.mul(2.6))).mul(.2).mul(smoothstep(.4,-1.5,positionGeometry.x))))}
+ const PU=kind==='pulpo';let pk;
+ if(PU){const uSw=T.uniform(0).onRenderUpdate(()=>m.userData.U&&m.userData.U.uSw?m.userData.U.uSw.value:0),A=(n,t)=>T.attribute(n,t);
+  const aK=A('aK','float'),aT=A('aT','float'),aA=A('aA','float'),aC=A('aC','vec3'),o=T.modelWorldMatrix.element(3).xyz,ph=o.x.mul(370).add(o.z.mul(230)),P=positionGeometry;
+  const an=aA.mul(.785398).add(.39),off=P.sub(aC),b=vec3(cos(an).mul(.35),.3,sin(an).mul(.35)),rr0=aC.sub(b),w=sin(uT.mul(.9).add(aA.mul(1.7)).add(ph)).mul(.4).mul(aT),cw=cos(w),sw2=sin(w);
+  const rr=vec3(rr0.x.mul(cw).sub(rr0.z.mul(sw2)),rr0.y,rr0.x.mul(sw2).add(rr0.z.mul(cw))),lift=sin(uT.mul(1.4).add(aA.mul(2.3)).sub(aT.mul(5)).add(ph)).mul(.5).add(.5).mul(aT).mul(aT).mul(.8);
+  const cr=b.add(rr).add(vec3(0,lift,0)),ct=vec3(aT.mul(2.8).add(.2),sin(an).mul(.25).mul(aT.mul(.6).oneMinus()).add(.8).add(sin(uT.mul(9).sub(aT.mul(7)).add(aA)).mul(.12).mul(aT)),cos(an).mul(.25).mul(aT.mul(.6).oneMinus()).add(cos(uT.mul(8).sub(aT.mul(6)).add(aA)).mul(.1).mul(aT)));
+  const brazo=mix(cr,ct,uSw).add(off.mul(uSw.mul(.3).oneMinus())),mc=vec3(-.55,1,0),pu=sin(uT.mul(uSw.mul(11).add(1.6))).mul(uSw.mul(.13).add(.03)).mul(smoothstep(-.1,-.6,P.x)).add(1),manto=mc.add(P.sub(mc).mul(pu));
+  m.positionNode=select(aK.greaterThan(.5).and(aK.lessThan(1.5)),brazo,select(aK.lessThan(.5),manto,P));
+  const fq=P.mul(7).add(o.mul(500)),fmo=vn3(fq.mul(.45)).mul(.6).add(vn3(fq.mul(1.3)).mul(.4));let fc=mix(vec3(.30,.10,.055),vec3(.52,.28,.17),smoothstep(.3,.75,fmo));
+  fc=fc.mul(smoothstep(.7,.8,vn3(fq.mul(3.2))).mul(.3).oneMinus());fc=mix(fc,vec3(.7,.56,.45),smoothstep(.8,.9,vn3(fq.mul(4.5).add(7))).mul(.4));
+  const fcam=sin(uT.mul(.35).add(o.x.mul(300)).add(o.z.mul(170))).mul(.5).add(.5);fc=mix(fc,mix(vec3(.36,.31,.22),vec3(.28,.25,.2),fmo),fcam.mul(.38));
+  const fsk=smoothstep(.35,.7,A('aU','float')).mul(step(.5,fract(aT.mul(34)))).mul(step(.5,aK)).mul(step(aK,1.5));fc=mix(fc,vec3(.7,.55,.48),fsk.mul(.8));
+  fc=select(aK.greaterThan(2.5),vec3(.02),select(aK.greaterThan(1.5),vec3(.62,.52,.28),fc));m.colorNode=fc}
+ let ext=null;
+ if(kind==='arena'){const q=vWB.xz,fm1=vn2(q.mul(9)),fm2=vn2(q.mul(31).add(7)),fm3=vn2(q.mul(140)),fdeep=smoothstep(.15,.3,fcz);
+  let fc=mix(mix(vec3(.30,.27,.20),vec3(.41,.37,.28),fm1),vec3(.12,.12,.09),fdeep.mul(fm2.mul(.45).add(.55)));
+  const fdir=normalize(vec2(.8,.6).add(vec2(vn2(q.mul(4)),vn2(q.mul(4).add(9))).sub(.5).mul(.9))),fph=dot(q,fdir).mul(260).add(vn2(q.mul(12)).mul(7));
+  const ffw=length(fwidth(q)),frip=fdeep.mul(.75).oneMinus().mul(smoothstep(.0025,.008,ffw).oneMinus());
+  fc=fc.mul(sin(fph).mul(.2).mul(frip).add(1));fc=mix(fc,vec3(.11,.10,.07),smoothstep(.5,.95,sin(fph).negate()).mul(.35).mul(frip));
+  fc=mix(fc,vec3(.58,.55,.48),step(.985,h21(floor(q.mul(900)))).mul(smoothstep(.45,.2,length(fract(q.mul(900)).sub(.5)))).mul(smoothstep(.0008,.003,ffw).oneMinus()).mul(.45));
+  fc=mix(fc,vec3(.16,.15,.13),smoothstep(.62,.8,vn2(q.mul(2.3).add(4))).mul(.35));m.colorNode=fc.mul(fm3.mul(.3).add(.85));
+  if(!LT){const fs=cos(fph).add(cos(fph.mul(2)).mul(.35));let fg=fdir.mul(fs).mul(.5).mul(frip);const e=.004,n0=vn2(q.mul(90));fg=fg.add(vec2(vn2(q.add(vec2(e,0)).mul(90)).sub(n0),vn2(q.add(vec2(0,e)).mul(90)).sub(n0)).div(e).mul(.0011));
+   m.normalNode=transformNormalToView(normalize(vNB.add(vec3(fg.x.negate(),0,fg.y.negate()).mul(max(vNB.y,.2)))))}}
+ else if(kind==='roca'){const q=vWB,fg1=vn3(q.mul(45)),fg2=vn3(q.mul(160)),fg3=vn3(q.mul(520));
+  let fc=mix(vec3(.23,.22,.21),vec3(.37,.34,.31),fg1);fc=mix(fc,vec3(.05),step(.76,fg3).mul(.85));fc=mix(fc,vec3(.55,.51,.47),step(.8,fg3.oneMinus()).mul(.5));
+  const ftop=smoothstep(.1,.75,vNB.y),fc1=vn3(q.mul(22).add(3)),fc2=vn3(q.mul(55).add(9));
+  fc=mix(fc,vec3(.34,.12,.14).mul(fg2.mul(.5).add(.75)),smoothstep(.48,.6,fc2).mul(ftop.oneMinus().mul(.65).add(.35)).mul(.9));      // coralina rosa
+  fc=mix(fc,mix(vec3(.06,.10,.03),vec3(.15,.11,.04),fc1).mul(fg2.mul(.7).add(.65)),smoothstep(.32,.58,fc1).mul(ftop));                // algas encima
+  fc=mix(fc,vec3(.62,.62,.57),step(.93,vn3(q.mul(900))).mul(smoothstep(.06,.15,fcz).oneMinus()).mul(.85));m.colorNode=fc;
+  if(!LT){const fp=q.mul(70),e=.18,n0=vn3(fp);let fg=vec3(vn3(fp.add(vec3(e,0,0))).sub(n0),vn3(fp.add(vec3(0,e,0))).sub(n0),vn3(fp.add(vec3(0,0,e))).sub(n0)).div(e).mul(.55);
+   m.normalNode=transformNormalToView(normalize(vNB.sub(fg.sub(vNB.mul(dot(fg,vNB))))))}}
+ else if(kind==='alga'){m.colorNode=T.materialColor.mul(mix(.75,1.25,smoothstep(0,1,vLY))).mul(vn2(vWB.xz.mul(300).add(vLY.mul(20))).mul(.3).add(.85));
+  ext=T.materialColor.mul(.55).mul(uNf.oneMinus()).mul(exp(fcz.mul(-4))).mul(vLY.mul(.4).add(.6))}
+ else if(kind==='pez'){const fb=smoothstep(-.04,.16,vLY),side=mix(vec3(.78,.8,.82),vec3(.55,.6,.64),smoothstep(-.22,.02,vLY));
+  m.colorNode=mix(side,T.materialColor,fb).mul(smoothstep(-1,-1.4,vLX).mul(.35).oneMinus());
+  const V=normalize(cameraPosition.sub(positionWorld)),fr=pow(abs(dot(vNB,V)).oneMinus(),2.5);
+  ext=vec3(.55,.72,.78).mul(fr.mul(.35).add(pow(max(0,sin(uT.mul(2).add(vWB.x.mul(90)).add(vWB.z.mul(70)))),12).mul(.25))).mul(fb.oneMinus()).mul(uNf.mul(.7).oneMinus())}
+ // cáusticas del sol y absorción del color con la distancia y la profundidad
+ const fcz2=max(fcz,0),fcf=exp(fcz2.mul(-2.6)).mul(smoothstep(-.35,.75,vNB.y)).mul(uNf.mul(.92).oneMinus());
+ const fcp=vWB.xz.add(uSun.xz.div(max(uSun.y,.25)).mul(fcz2).mul(.6)).div(.085),fca=GT.caus(fcp,uT.mul(.55).add(11)).mul(.7).add(LT?float(0):GT.caus(fcp.mul(1.31).add(.37),uT.mul(.47).add(3)).mul(.45));
+ const dif=m.colorNode||T.materialColor;let L=output.rgb.add(vec3(dif).mul(fca).mul(vec3(.85,1,.95)).mul(7).mul(fcf));if(ext)L=L.add(ext);
+ const fdd=length(vWB.sub(cameraPosition.sub(uO)));m.outputNode=vec4(L.mul(exp(vec3(2.6,.62,.5).negate().mul(fdd.mul(1.05).add(fcz2.mul(1.5))))).mul(.8),output.a);
+ m.needsUpdate=true}catch(e){console.warn('gpuFondo',kind,e)}}
 // ---------- suelos y fachadas (edit_asfalto, edit_charcos, edit_cesped, fachadas del centro, tejados y escaparates) ----------
 // Cada efecto añade su paso a la cadena de color del material (colorNode); el motor nuevo copia los nudos al convertirlo.
 GT.hF=p=>TSL.fract(TSL.sin(TSL.dot(p,TSL.vec3(12.9898,78.233,37.719))).mul(43758.5453));
