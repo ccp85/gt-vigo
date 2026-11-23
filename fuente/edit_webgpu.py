@@ -66,6 +66,8 @@ s=s.replace("location.replace('indexm.html'+location.search+location.hash)","voi
 # 7b) fase 4: nubes de puntos como sprites (WebGPU solo dibuja puntos de 1 píxel) y foto de 6 caras para reflejos
 s=s.replace('new THREE.Points(','gpuPoints(')
 r("RCUBO.rt=new THREE.CubeRenderTarget(128,","RCUBO.rt=RCUBO.rt||new THREE.CubeRenderTarget(128,",1)
+# 7c) fondo marino (fondomar.js): arena, rocas, algas, peces y pulpos con sus texturas, cáusticas y color bajo el agua
+r("m.customProgramCacheKey=()=>'fm_'+kind;return m}","m.customProgramCacheKey=()=>'fm_'+kind;gpuFondo(B,kind,m);return m}",1)
 # 8) fase 2: cielo y agua en TSL (gpu_tsl.js)
 TSLJS=open(os.path.join(D,'gpu_tsl.js'),encoding='utf8').read().strip('\n')+'\n'
 r("import * as THREE from 'three';","import * as THREE from 'three';\nconst TSL=THREE.TSL;   // TSL del mismo módulo que el motor (three/tsl trae otra copia de los nudos)",1)
