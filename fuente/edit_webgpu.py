@@ -3,7 +3,8 @@
 # y si no lo hay, el propio three.js vuelve solo a WebGL2. Arriba a la izquierda sale qué motor está usando y los fps.
 # Lo que aún no está pasado al sistema nuevo de shaders (TSL) se apaga en esta página:
 #  - los efectos hechos con onBeforeCompile (agua realista, asfalto, césped, arena...) no se aplican: se ve el material base;
-#  - los ShaderMaterial (GLSL) pasan a un material básico invisible, salvo el cielo, que queda como color de fondo;
+#  - los ShaderMaterial (GLSL) pasan a un material básico invisible;
+#  - fase 2: el cielo y el mar sí están pasados a TSL (gpu_tsl.js), sin el reflejo de la ciudad ni las olas de Patos;
 #  - sin posprocesado (bloom, color, suavizado SMAA), sin reflejos de coches, charcos ni del mar.
 # Con ?webgl=1 se fuerza el motor nuevo sobre WebGL2 (para comparar en el mismo aparato).
 # Sirve para medir el rendimiento en cada dispositivo antes de ir pasando efectos uno a uno.
@@ -58,5 +59,13 @@ r("R.setAnimationLoop(()=>{",r"""{const d=document.createElement('div');d.id='gp
 R.setAnimationLoop(()=>{""",1)
 # 7) en el móvil no salta a indexm.html: esta página es la prueba también en móvil
 s=s.replace("location.replace('indexm.html'+location.search+location.hash)","void 0")
+# 8) fase 2: cielo y agua en TSL (gpu_tsl.js)
+TSLJS=open(os.path.join(D,'gpu_tsl.js'),encoding='utf8').read().strip('\n')+'\n'
+r("import * as THREE from 'three';","import * as THREE from 'three';\nconst TSL=THREE.TSL;   // TSL del mismo módulo que el motor (three/tsl trae otra copia de los nudos)",1)
+r("function aguaSamil(m){",TSLJS+"function aguaSamil(m){",1)
+r("window.CIELO=CIELO;sky.renderOrder=-10;","window.CIELO=CIELO;try{sky.material=gpuCielo()}catch(e){console.warn('cielo TSL',e)}sky.renderOrder=-10;",1)
+r("aguaSamil(m);WATERS.push(m);water=m;","aguaSamil(m);WATERS.push(m);water=m;try{o.material=gpuAgua(false)}catch(e){console.warn('agua TSL',e)}",1)
+r("MARG=new THREE.Mesh(g,m);MARG.name='mar_global';","let mg=m;try{mg=gpuAgua(true)}catch(e){console.warn('mar TSL',e)}MARG=new THREE.Mesh(g,mg);MARG.name='mar_global';",1)
+r("SURF.m=me}","SURF.m=me;me.material=new THREE.MeshBasicMaterial({visible:false})}",1)
 s=s.replace('<title>GT Vigo','<title>GT Vigo · WebGPU (prueba)',1)
 open(DST,'w',encoding='utf8').write(s);print('ok webgpu',DST)
