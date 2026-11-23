@@ -21,7 +21,7 @@ def r(a,b,n=None):
 V='0.187.0'
 # 1) three.js nuevo con WebGPU (el mismo módulo para el juego y los addons)
 s=re.sub(r'<script type="importmap">.*?</script>',
-  '<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@%s/build/three.webgpu.min.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@%s/build/three.webgpu.min.js","three/tsl":"https://cdn.jsdelivr.net/npm/three@%s/build/three.tsl.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@%s/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.18/build/index.module.js","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>'%(V,V,V,V),s,count=1,flags=re.S)
+  '<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@%s/build/three.webgpu.js","three/webgpu":"https://cdn.jsdelivr.net/npm/three@%s/build/three.webgpu.js","three/tsl":"https://cdn.jsdelivr.net/npm/three@%s/build/three.tsl.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@%s/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.18/build/index.module.js","fflate":"https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"}}</script>'%(V,V,V,V),s,count=1,flags=re.S)
 # 1b) el posprocesado viejo (WebGL) no carga con el módulo de WebGPU: clases vacías (está apagado en esta página)
 for n in ['EffectComposer','RenderPass','UnrealBloomPass','ShaderPass','OutputPass','SMAAPass']:
     a="import {%s} from 'three/addons/postprocessing/%s.js';"%(n,n)
@@ -29,18 +29,23 @@ for n in ['EffectComposer','RenderPass','UnrealBloomPass','ShaderPass','OutputPa
     s=s.replace(a,"class %s{constructor(){throw new Error('sin posprocesado en WebGPU (fase 1)')}}"%n)
 # 1c) los trozos de shader GLSL de three.js no existen en WebGPU (solo los usa el reparto de sombras en cascada)
 r("{const CH=THREE.ShaderChunk,","{const CH={lights_fragment_begin:''},",1)
+# 1d) posprocesado en TSL (calidad alta, tecla G): bloom, gradación de color según la hora y SMAA (gpu_post.js)
+a=s.index('function postInit(){');b=s.index('\n\n// ---------- estilo cómic',a)
+s=s[:a]+open(os.path.join(D,'gpu_post.js'),encoding='utf8').read().rstrip('\n')+s[b:]
 # 2) motor de dibujo
 r('new THREE.WebGLRenderer(','new THREE.WebGPURenderer(')
 r("powerPreference:'high-performance'});","powerPreference:'high-performance',forceWebGL:/[?&]webgl=1/.test(location.search)});await R.init();",1)
-# la pantalla de inicio tiene su propio motor 3D: en la prueba se usan los dibujos planos de reserva
-r("try{rd=new THREE.WebGPURenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'low-power'})}catch(e){emojis();return false}","emojis();return false;",1)
+# la pantalla de inicio tiene su propio motor 3D: se espera a que arranque antes de preparar la luz y dibujar
+r("try{rd=new THREE.WebGPURenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'low-power'})}","try{rd=new THREE.WebGPURenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'low-power',forceWebGL:/[?&]webgl=1/.test(location.search)})}",1)
+r("env=new THREE.PMREMGenerator(rd).fromScene(new RoomEnvironment(),.04).texture;","env=null;rd.__ok=false;rd.init().then(()=>{try{env=new THREE.PMREMGenerator(rd).fromScene(new RoomEnvironment(),.04).texture;for(const v of views||[])v.sc.environment=env}catch(e){console.warn('inicio env',e)}rd.__ok=true}).catch(e=>{console.warn('inicio',e);emojis()});",1)
+r(" requestAnimationFrame(frame);\n const dt=Math.min(.05,(now-last)/1000||0)"," requestAnimationFrame(frame);if(!rd||!rd.__ok||!views)return;\n const dt=Math.min(.05,(now-last)/1000||0)",1)
 r('THREE.WebGLCubeRenderTarget','THREE.CubeRenderTarget')
 # 3) materiales GLSL → sustituto (se conservan los uniforms para que el código que los actualiza siga funcionando)
 r('new THREE.ShaderMaterial(','window.GPUMAT(THREE,')
 s=s.replace('new THREE.RawShaderMaterial(','window.GPUMAT(THREE,')
 SHIM=r"""<script>
 // gpu.html: sustituto de los ShaderMaterial (GLSL) mientras no estén pasados a TSL
-window.GPUMAT=(T,p={})=>{const u=p.uniforms||{},cielo=/topColor|uTop|uZenit|cielo|sky/i.test(Object.keys(u).join(' '));
+window.GPUMAT=(T,p={})=>{{const t=window.GPU_TSLMAT&&window.GPU_TSLMAT(p);if(t)return t}const u=p.uniforms||{},cielo=/topColor|uTop|uZenit|cielo|sky/i.test(Object.keys(u).join(' '));
  const m=new T.MeshBasicMaterial({color:cielo?0x9cc8ec:0xffffff,transparent:true,opacity:cielo?1:0,depthWrite:false,side:p.side??T.FrontSide,fog:false});
  if(!cielo){m.colorWrite=false}m.uniforms=u;m.defines=p.defines||{};m.isGpuSustituto=true;m.vertexShader=p.vertexShader||'';m.fragmentShader=p.fragmentShader||'';return m};
 window.GPU_INFO={motor:'…',fps:0};
@@ -49,7 +54,6 @@ window.GPU_INFO={motor:'…',fps:0};
 r('<script type="importmap">',SHIM+'<script type="importmap">',1)
 # 4) sin posprocesado ni reflejos por ahora
 r("if(window.LITE)POST.on=false;","POST.on=false;",1)
-r("const RCUBO={cc:null,rt:null,pm:null,out:null,face:0,t:-99,mal:false,","const RCUBO={cc:null,rt:null,pm:null,out:null,face:0,t:-99,mal:true,",1)
 # 5) cosas del motor viejo que no existen en el nuevo
 r("aa:R.getContext().getContextAttributes().antialias","aa:true",1)
 s=s.replace("R.info.render.calls","(R.info.render.drawCalls??R.info.render.calls)")
@@ -59,6 +63,9 @@ r("R.setAnimationLoop(()=>{",r"""{const d=document.createElement('div');d.id='gp
 R.setAnimationLoop(()=>{""",1)
 # 7) en el móvil no salta a indexm.html: esta página es la prueba también en móvil
 s=s.replace("location.replace('indexm.html'+location.search+location.hash)","void 0")
+# 7b) fase 4: nubes de puntos como sprites (WebGPU solo dibuja puntos de 1 píxel) y foto de 6 caras para reflejos
+s=s.replace('new THREE.Points(','gpuPoints(')
+r("RCUBO.rt=new THREE.CubeRenderTarget(128,","RCUBO.rt=RCUBO.rt||new THREE.CubeRenderTarget(128,",1)
 # 8) fase 2: cielo y agua en TSL (gpu_tsl.js)
 TSLJS=open(os.path.join(D,'gpu_tsl.js'),encoding='utf8').read().strip('\n')+'\n'
 r("import * as THREE from 'three';","import * as THREE from 'three';\nconst TSL=THREE.TSL;   // TSL del mismo módulo que el motor (three/tsl trae otra copia de los nudos)",1)

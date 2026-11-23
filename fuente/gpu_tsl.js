@@ -99,6 +99,92 @@ function gpuAgua(glob,surfM){GT.ini();const{vec2,vec3,float,normalize,max,min,mi
   const{positionLocal,modelWorldMatrix,vec4}=TSL,wp=modelWorldMatrix.mul(vec4(positionLocal,1)).xz,sc2=GT.surfCos(wp),k2=GT.surfK(wp);   // la malla fina de Patos sube y baja con cada ola
   m.positionNode=positionLocal.add(vec3(0,GT.surf(wp,sc2,uT).x.mul(GT.U(USURF.uSurfA)).mul(k2).mul(smoothstep(.97,.995,sc2).oneMinus()),0))}
  return m}
+// ---------- materiales GLSL sueltos → TSL (cielo de los reflejos, haz de los faros, montes y mar lejanos, bajo el agua) ----------
+// window.GPUMAT (en la cabecera) pregunta aquí antes de poner el sustituto invisible; se reconoce cada shader por un trozo suyo.
+GT.pxW=null;   // tamaño en el mundo de un píxel a 1 u de distancia (para pasar gl_PointSize a sprites)
+function gpuShaderTSL(p){try{GT.ini();const T=TSL,{vec2,vec3,vec4,float,normalize,max,min,mix,pow,dot,smoothstep,step,sin,cos,abs,clamp,select,length,positionLocal,positionWorld,normalWorld,cameraPosition,uv,refract,mod,exp,atan}=T;
+ const fs=p.fragmentShader||'',vs=p.vertexShader||'',u=p.uniforms||{},U=k=>GT.U(u[k]);
+ const basic=(o)=>{const m=new THREE.MeshBasicNodeMaterial(Object.assign({side:p.side??THREE.FrontSide,transparent:!!p.transparent,depthWrite:p.depthWrite!==false,depthTest:p.depthTest!==false,blending:p.blending??THREE.NormalBlending,fog:false},o||{}));m.uniforms=u;return m};
+ if(fs.includes('uSuelo')){                       // cielo para el reflejo de los coches (envCoches)
+  const d=normalize(positionLocal),uZen=U('uZen'),uHor=U('uHor'),uSun=U('uSun'),uSunC=U('uSunC'),uSuelo=U('uSuelo');
+  let c=select(d.y.greaterThan(0),mix(uHor,uZen,pow(max(d.y,0),.6)),mix(uHor.mul(.6),uSuelo,smoothstep(0,.25,d.y.negate())));
+  const s_=max(dot(d,normalize(uSun)),0);c=c.add(uSunC.mul(pow(s_,600).mul(30).add(pow(s_,12).mul(.5))).mul(step(0,uSun.y.add(.05))));
+  c=c.mul(smoothstep(.35,0,abs(d.y.sub(.08))).mul(.35).oneMinus());const m=basic();m.colorNode=c;return m}
+ if(vs.includes('vL=abs(position.x)/3.')){        // haz giratorio de los faros
+  const a=pow(clamp(abs(positionLocal.x).div(3).oneMinus(),0,1),1.6).mul(U('uO'));const m=basic();m.colorNode=vec3(1,.93,.72).mul(a);m.opacityNode=a;return m}
+ if(fs.includes('neblina(')){                      // montes del fondo y mar lejano (vigo_fondo.json)
+  const uCam=U('uCam'),uNear=U('uNear'),uCorte=U('uCorte'),uHor=U('uHor'),uZen=U('uZen'),uNight=U('uNight'),uSun=U('uSun'),W=positionWorld,d=W.xz.sub(uCam.xz).length();
+  const neb=c=>{const h=smoothstep(uNear,uNear.add(160),d),aire=mix(uHor,uZen,.35).mul(vec3(.82,.88,1)).mul(uNight.mul(.7).oneMinus());return mix(c,aire,clamp(h.mul(.5).add(.12),0,.65))};
+  let c;if(fs.includes('vec3(.30,.40,.26)')){const y=W.y,n=normalize(normalWorld);c=mix(vec3(.30,.40,.26),vec3(.40,.44,.34),smoothstep(1.2,3.5,y));c=mix(c,vec3(.52,.5,.47),smoothstep(3.6,5,y).mul(smoothstep(.6,.3,n.y)));
+   c=c.mul(max(dot(n,normalize(uSun.add(vec3(0,.2,0)))),0).mul(.5).add(.55)).mul(uNight.mul(.75).oneMinus())}
+  else c=mix(vec3(.16,.33,.45),vec3(.25,.45,.55),.5).mul(uNight.mul(.8).oneMinus());
+  const m=basic();m.colorNode=neb(c);m.alphaTest=.5;m.opacityNode=select(d.lessThan(uNear).or(W.y.lessThan(uCorte)),float(0),float(1));return m}
+ if(fs.includes('refract(V,-N,1.333)')){           // la superficie vista desde abajo (ventana de Snell)
+  const uT=U('uT'),uNf=U('uNf'),uZen=U('uZen'),uHor=U('uHor'),uSun=U('uSun'),uFog=U('uFog'),W=positionWorld,V=normalize(W.sub(cameraPosition)),q=W.xz;
+  const wv=pp=>{const p2=mod(pp,10);return GT.vn(p2.mul(40).add(vec2(uT.mul(.7),uT.mul(.3)))).mul(.6).add(GT.vn(p2.mul(95).sub(vec2(uT.mul(.9),uT.mul(-.5)))).mul(.4))};
+  const e=.002,h0=wv(q),g=vec2(wv(q.add(vec2(e,0))).sub(h0),wv(q.add(vec2(0,e))).sub(h0)).div(e).mul(.004),N=normalize(vec3(g.x.negate(),1,g.y.negate())),Tr=refract(V,N.negate(),1.333),dd=W.sub(cameraPosition).length(),day=uNf.mul(.9).oneMinus();
+  const tot=uFog.mul(h0.mul(.25).add(.55)).add(vec3(0,.03,.03).mul(smoothstep(.6,.9,h0)).mul(day));
+  const sk=mix(uHor,uZen,smoothstep(0,.7,Tr.y)),sd=max(dot(Tr,normalize(uSun)),0),sun=pow(sd,300).mul(12).add(pow(sd,12).mul(.4)),edge=pow(clamp(Tr.y,0,1).oneMinus(),6);
+  let win=sk.mul(edge.mul(.5).oneMinus().add(.15)).mul(day).add(vec3(1,.97,.9).mul(sun).mul(day).mul(step(0,uSun.y)));win=mix(win,uFog.mul(1.6),edge.mul(.6));
+  const col=mix(select(dot(Tr,Tr).lessThan(.01),tot,win),uFog,smoothstep(.15,1.3,dd));const m=basic({transparent:true,depthWrite:false});m.colorNode=col;m.opacityNode=float(.97);return m}
+ if(fs.includes('vec3(.7,1.,.92)')){               // rayos de luz bajo el agua
+  const uT=U('uT'),uNf=U('uNf'),x=uv().x,y=uv().y,ed=smoothstep(0,.4,x).mul(smoothstep(1,.6,x)),o=T.modelWorldMatrix.element(3).xyz,W=positionWorld;
+  const st=sin(x.mul(21).add(uT.mul(.5)).add(o.x.mul(40))).mul(.5).add(.5).mul(sin(x.mul(8.3).sub(uT.mul(.33)).add(o.z.mul(31))).mul(.5).add(.5)).mul(.65).add(.35),dd=W.sub(cameraPosition).length();
+  const a=ed.mul(st).mul(pow(y,1.8)).mul(smoothstep(.04,.18,dd)).mul(smoothstep(.5,1.3,dd).oneMinus()).mul(sin(uT.mul(.6).add(o.x.mul(17))).mul(.5).add(.5)).mul(.2).mul(uNf.mul(.95).oneMinus());
+  const m=basic();m.colorNode=vec3(.7,1,.92).mul(a);m.opacityNode=float(1);return m}
+ // nubes de puntos (gl_PointSize): se devuelven como sprites; gpuPoints los monta al crear THREE.Points
+ const pts=GT.ptsKind(fs,vs);if(pts){const m=new THREE.SpriteNodeMaterial({transparent:true,depthWrite:false,blending:p.blending??THREE.NormalBlending,fog:false});m.uniforms=u;m.gpuPts=pts;return m}
+ }catch(e){console.warn('shader TSL',e)}return null}
+window.GPU_TSLMAT=gpuShaderTSL;
+GT.ptsKind=(fs,vs)=>{const T=TSL,{vec2,vec3,vec4,float,max,min,mix,pow,dot,smoothstep,step,sin,cos,abs,clamp,select,length,fract,exp,mod,atan,uv,cameraPosition,cameraViewMatrix,modelViewMatrix}=T;
+ // A(nombre): atributo por instancia; ctx: {u(k), pxW}. Devuelve {pos (local), px (tamaño en píxeles), col, a}
+ const r2=()=>uv().sub(.5).length().mul(2);
+ if(vs.includes('attribute vec3 aP;attribute float aH'))return(A,U)=>{const aP=A('aP','vec3'),aH=A('aH','float'),uT=U('uT'),uSc=U('uSc');   // árbol de luces de colores
+  const h=fract(aH.sub(uT.mul(.12))),hs=clamp(abs(fract(vec3(h).add(vec3(0,.6667,.3333))).mul(6).sub(3)).sub(1),0,1),vC=mix(vec3(1),hs,.85).mul(sin(uT.mul(aP.y).add(aP.x)).mul(.45).add(.55));
+  const a=smoothstep(1,.1,r2());return{pos:A('position','vec3'),px:(d)=>clamp(aP.z.mul(uSc).div(d),1.8,16),col:vC.mul(a).mul(1.7),a}};
+ if(vs.includes('attribute vec3 color;attribute vec3 aP'))return(A,U)=>{const aP=A('aP','vec3'),c=A('color','vec3'),uT=U('uT'),uSc=U('uSc');   // bombillas LED
+  const tw=select(aP.z.greaterThan(0),sin(uT.mul(aP.y).add(aP.x)).mul(.45).add(.55),float(1)),a=smoothstep(1,.15,r2());
+  return{pos:A('position','vec3'),px:(d)=>clamp(abs(aP.z).mul(uSc).div(d),1.8,11),col:(d)=>c.mul(tw).mul(a.mul(1.6)).mul(exp(d.mul(-.045))),a}};
+ if(vs.includes('attribute vec3 color;attribute vec2 aH'))return(A,U)=>{const aH=A('aH','vec2'),c=A('color','vec3'),uT=U('uT'),uSc=U('uSc');   // halos
+  const a=pow(max(r2().oneMinus(),0),2.4);return{pos:A('position','vec3'),px:(d)=>clamp(aH.y.mul(uSc).div(d),2,120),col:c.mul(sin(uT.mul(1.6).add(aH.x)).mul(.2).add(.8)).mul(a).mul(.5),a}};
+ if(vs.includes('uniform vec2 uWd'))return(A,U)=>{const p=A('position','vec3'),aS=A('aS','vec2'),uT=U('uT'),uK=U('uK'),uC=U('uC'),uSc=U('uSc'),uWd=U('uWd'),B=vec3(4.4,2.6,4.4);   // nevadas
+  const sz=aS.x.mul(aS.x).mul(.65).add(.35);let w=p.mul(B);w=vec3(w.x.add(uWd.x.mul(sz.mul(.6).add(.7))).add(sin(uT.mul(aS.y.add(.7)).add(p.z.mul(40))).mul(.06)),w.y.sub(uT.mul(sz.mul(.13).add(.1))),w.z.add(uWd.y.mul(sz.mul(.6).add(.7))).add(cos(uT.mul(aS.y.add(.6)).add(p.x.mul(40))).mul(.06)));
+  const q=mod(w.sub(uC),B).sub(B.mul(.5)).add(uC).add(vec3(0,.5,0)),vis=step(aS.y,uK);
+  const qq=uv().sub(.5),r=qq.length().mul(2),st=pow(abs(cos(atan(qq.y,qq.x).mul(3))),10).mul(smoothstep(1,.2,r)).mul(step(.6,sz)),a0=max(smoothstep(1,.25,r).mul(.85),st.mul(.7));
+  return{world:true,pos:q,px:(d)=>vis.mul(clamp(sz.mul(.02).mul(uSc).div(d),1,window.LITE?10:16)),col:vec3(.95,.97,1),a:(d)=>a0.mul(vis).mul(smoothstep(2.8,1.4,d)).mul(smoothstep(.04,.18,d)).mul(sz.mul(.4).add(.55))}};
+ if(vs.includes('const vec3 B=vec3(3.2,1.5,3.2)'))return(A,U)=>{const p=A('position','vec3'),aS=A('aS','float'),uT=U('uT'),uC=U('uC'),uSc=U('uSc'),B=vec3(3.2,1.5,3.2);   // nieve del reparto
+  const w=vec3(p.x.mul(3.2).add(sin(uT.mul(.6).add(p.z.mul(30))).mul(.05)).add(uT.mul(.03)),p.y.mul(1.5).sub(uT.mul(aS.mul(.07).add(.11))),p.z.mul(3.2).add(cos(uT.mul(.5).add(p.x.mul(30))).mul(.05)));
+  const q=mod(w.sub(uC),B).sub(B.mul(.5)).add(uC).add(vec3(0,.45,0)),a0=smoothstep(.5,.1,uv().sub(.5).length());
+  return{world:true,pos:q,px:(d)=>clamp(aS.mul(.006).mul(uSc).div(d),1,4.5),col:vec3(1),a:(d)=>a0.mul(smoothstep(1.7,1.1,d)).mul(smoothstep(.05,.2,d)).mul(.65)}};
+ if(vs.includes('uniform float uT,uWY,uPS'))return(A,U)=>{const p=A('position','vec3'),aS=A('aS','float'),uT=U('uT'),uWY=U('uWY'),uPS=U('uPS'),uNf=U('uNf'),bx=.7,c=cameraPosition;   // partículas bajo el agua
+  let q=p.mul(bx).add(vec3(sin(uT.mul(.2).add(p.y.mul(20))).mul(.01).add(uT.mul(.006)),uT.mul(-.003),cos(uT.mul(.15).add(p.x.mul(17))).mul(.01)));q=mod(q.sub(c).add(bx*.5),bx).add(c).sub(bx*.5);
+  const vis=step(q.y,uWY.sub(.004)),r=uv().sub(.5).length();
+  return{world:true,pos:q,px:(d)=>vis.mul(max(aS.mul(uPS).div(max(d,.01)),1)),col:vec3(.78,.92,.86).mul(uNf.mul(.8).oneMinus()),a:(d)=>smoothstep(.5,.15,r).mul(smoothstep(.015,.05,d)).mul(smoothstep(.12,.5,d).oneMinus()).mul(.4)}};
+ return null};
+// THREE.Points → sprites por instancia (WebGPU solo dibuja puntos de 1 píxel). Se devuelve un grupo que se comporta como el Points original:
+// .geometry y .material son los de siempre (el juego sigue moviendo posiciones y cambiando la opacidad) y dentro va el sprite.
+function gpuPoints(geo,mat){const T=TSL,{vec2,vec3,vec4,float,uniform,clamp,select,texture,uv,instancedDynamicBufferAttribute,modelViewMatrix,cameraViewMatrix,cameraProjectionMatrix}=T;
+ const g=new THREE.Group();g.geometry=geo;g.material=mat;g.isPoints=true;
+ try{GT.ini();const n=geo.attributes.position.count;const IA={};
+  for(const k of Object.keys(geo.attributes)){const a=geo.attributes[k];const ia=new THREE.InstancedBufferAttribute(a.array,a.itemSize);ia.setUsage(THREE.DynamicDrawUsage);geo.setAttribute(k,ia);IA[k]=ia}
+  const A=(k,t)=>IA[k]?instancedDynamicBufferAttribute(IA[k],t):(t==='vec3'?vec3(0):t==='vec2'?vec2(0):float(0));
+  if(!GT.pxW)GT.pxW=uniform(0).onRenderUpdate(()=>{const c=window.__G&&__G.pcam,h=(R.domElement&&R.domElement.height)||800;return 2*Math.tan(((c&&c.fov)||55)*Math.PI/360)/h});
+  let sm;
+  if(mat.gpuPts){const d0=mat.gpuPts(A,k=>GT.U(mat.uniforms[k]));sm=mat;
+   const vpos=d0.world?cameraViewMatrix.mul(vec4(d0.pos,1)):modelViewMatrix.mul(vec4(d0.pos,1)),d=vpos.z.negate().max(1e-4),ev=x=>typeof x==='function'?x(d):x;
+   const px=ev(d0.px);sm.positionNode=d0.world?d0.pos:d0.pos;if(d0.world){sm.vertexNode=null}
+   sm.scaleNode=vec2(px.mul(d).mul(GT.pxW));sm.colorNode=ev(d0.col);sm.opacityNode=ev(d0.a);sm.sizeAttenuation=true;
+   if(d0.world){g.userData.gpuWorld=true}}
+  else{// PointsMaterial: tamaño en el mundo, textura, colores por punto y opacidad viva
+   sm=new THREE.SpriteNodeMaterial({transparent:mat.transparent,depthWrite:mat.depthWrite,blending:mat.blending,fog:false,toneMapped:mat.toneMapped});
+   const op=uniform(1).onRenderUpdate(()=>mat.opacity),cl=uniform(new THREE.Color()).onRenderUpdate(()=>mat.color);
+   let col=cl,al=op;if(mat.map){const t=texture(mat.map,uv());col=col.mul(t.rgb);al=al.mul(t.a)}if(mat.vertexColors&&IA.color)col=col.mul(A('color','vec3'));
+   sm.positionNode=A('position','vec3');sm.colorNode=col;sm.opacityNode=al;const s=mat.size*.55;sm.scaleNode=vec2(s,s);if(mat.alphaTest)sm.alphaTest=mat.alphaTest}
+  const sp=new THREE.Sprite(sm);sp.count=n;sp.frustumCulled=false;g.add(sp);g.userData.sprite=sp;
+  // si el juego vuelve a poner la geometría o el material, se reconstruye el sprite
+ }catch(e){console.warn('gpuPoints',e)}
+ Object.defineProperty(g,'renderOrder',{get(){return this._ro||0},set(v){this._ro=v;if(this.userData&&this.userData.sprite)this.userData.sprite.renderOrder=v}});
+ return g}
 // ---------- suelos y fachadas (edit_asfalto, edit_charcos, edit_cesped, fachadas del centro, tejados y escaparates) ----------
 // Cada efecto añade su paso a la cadena de color del material (colorNode); el motor nuevo copia los nudos al convertirlo.
 GT.hF=p=>TSL.fract(TSL.sin(TSL.dot(p,TSL.vec3(12.9898,78.233,37.719))).mul(43758.5453));
@@ -126,8 +212,12 @@ function gpuFx(tipo,m,k){try{if(!m||m.userData['g_'+tipo])return;m.userData['g_'
   // reflejo del cielo en lo mojado, ondas de las gotas y luces de noche en los charcos
   const V=normalize(cameraPosition.sub(W)),frs=pow(clamp(V.y,0,1).oneMinus(),5).mul(.96).add(.04),skyc=mix(GT.U(SKYU.uHor),GT.U(SKYU.uZen),clamp(V.y.mul(1.3),0,1));
   const cel=floor(q.mul(60)),ph=fract(uTm.mul(.9).add(h21(cel).mul(7))),rip=smoothstep(0,.07,abs(length(fract(q.mul(60)).sub(.5)).sub(ph.mul(.45)))).oneMinus().mul(ph.oneMinus()).mul(step(.7,h21(cel.add(3)))).mul(pud);
-  const ref=clamp(wW.mul(pud.mul(.62).add(.10)).mul(frs.mul(2.6).add(.18)),0,.6);
-  GT.em(m,skyc.mul(rip.mul(.6).add(1)).mul(ref).add(vec3(1,.72,.38).mul(uLz).mul(wW).mul(pud).mul(.12).mul(smoothstep(.55,.9,vn(q.mul(9))))))}
+  let skyR=skyc,tope=float(.6);
+  {if(!RCUBO.rt)RCUBO.rt=new THREE.CubeRenderTarget(128,{type:THREE.HalfFloatType,generateMipmaps:false});const uEnvOn=GT.U(UENV.uEnvOn),uEnvP=GT.U(UENV.uEnvP);
+   const rd=vec3(V.x.negate(),abs(V.y),V.z.negate()).add(vec3(vn(q.mul(70).add(uTm.mul(2))).sub(.5),0,vn(q.mul(70).sub(uTm.mul(2)).add(9)).sub(.5)).mul(.09).mul(pud)),rp=W.sub(uEnvP).div(1.6);
+   const env=TSL.cubeTexture(RCUBO.rt.texture,normalize(rd.add(rp))).rgb;skyR=select(uEnvOn.greaterThan(.5),mix(skyc,env,.92),skyc);tope=select(uEnvOn.greaterThan(.5),float(.82),float(.6))}
+  const ref=clamp(wW.mul(pud.mul(.62).add(.10)).mul(frs.mul(2.6).add(.18)),0,tope);
+  GT.em(m,skyR.mul(rip.mul(.6).add(1)).mul(ref).add(vec3(1,.72,.38).mul(uLz).mul(wW).mul(pud).mul(.12).mul(smoothstep(.55,.9,vn(q.mul(9))))))}
  else if(tipo==='ces'){const uGWet=GT.U(UMO.uWet),gc=smoothstep(.0025,.012,fw).oneMinus(),gm=smoothstep(.015,.07,fw).oneMinus();
   const gL=vn(q.mul(2.2)).mul(.45).add(vn(q.mul(8)).mul(.35)).add(vn(q.mul(19)).mul(.2)),gD=smoothstep(.64,.88,vn(q.mul(2.3).add(7))).mul(vn(q.mul(11)).mul(.4).add(.6));
   const gK=vn(q.mul(38)).mul(.6).add(vn(q.mul(95)).mul(.4)),gS=smoothstep(.5,.6,vn(q.mul(.6).add(3)));
@@ -147,7 +237,17 @@ function gpuFx(tipo,m,k){try{if(!m||m.userData['g_'+tipo])return;m.userData['g_'
   const hb=GT.hF(vec3(bay,0,0).add(sd)),hp=GT.hF(vec3(bay,fl,1).add(sd));
   const var_=select(fl.lessThan(.5),floor(GT.hF(vec3(bay,9,0).add(sd)).mul(4)),select(hb.lessThan(.28),float(1),select(hp.lessThan(.12),float(3),select(hp.lessThan(.55),float(0),float(2)))));
   const fila=select(fl.lessThan(.5),float(0),float(1)),cu=vec2(fract(uvF.x),fract(pl)),at=vec2(var_.add(cu.x).div(4),fila.add(cu.y).div(2));
-  const dx=vec2(dFdx(uvF.x).div(4),dFdx(pl).div(2)),dy=vec2(dFdy(uvF.x).div(4),dFdy(pl).div(2)),smp=texture(map,at).grad(dx,dy);
+  const dx=vec2(dFdx(uvF.x).div(4),dFdx(pl).div(2)),dy=vec2(dFdy(uvF.x).div(4),dFdy(pl).div(2));let smp=texture(map,at).grad(dx,dy);
+  if(!LT){const Rw=select(var_.greaterThan(.5).and(var_.lessThan(1.5)),TSL.vec4(.234,.156,.766,.885),TSL.vec4(.203,.24,.797,.823));
+   const dentro=fl.greaterThan(.5).and(k==='b'?var_.lessThan(2.5):float(1).greaterThan(0)).and(cu.x.greaterThan(Rw.x)).and(cu.x.lessThan(Rw.z)).and(cu.y.greaterThan(Rw.y)).and(cu.y.lessThan(Rw.w));
+   const dpx=dFdx(W),dpy=dFdy(W),d1=vec2(dFdx(uvF.x),dFdx(pl)),d2=vec2(dFdy(uvF.x),dFdy(pl));let Nn=normalize(TSL.cross(dpx,dpy));const Vw=normalize(W.sub(cameraPosition));Nn=select(dot(Nn,Vw).greaterThan(0),Nn.negate(),Nn);
+   const q2=TSL.cross(dpy,Nn),q1=TSL.cross(Nn,dpx),Tt=normalize(q2.mul(d1.x).add(q1.mul(d2.x)).add(vec3(1e-9))),Bt=normalize(q2.mul(d1.y).add(q1.mul(d2.y)).add(vec3(1e-9))),vz=max(dot(Vw,Nn).negate(),.12);
+   const c2=cu.add(vec2(dot(Vw,Tt),dot(Vw,Bt)).div(vz).mul(vec2(.0055/.05,.0055/.075)));
+   const fondo=texture(map,vec2(var_.add(c2.x).div(4),fila.add(c2.y).div(2))).grad(dx,dy),ed=min(min(c2.x.sub(Rw.x),Rw.z.sub(c2.x)).mul(.05),min(c2.y.sub(Rw.y),Rw.w.sub(c2.y)).mul(.075));
+   const fondoS=TSL.vec4(fondo.rgb.mul(mix(.5,1,smoothstep(0,.0035,ed))).mul(mix(.62,1,smoothstep(0,.006,Rw.w.sub(c2.y).mul(.075)))),fondo.a);
+   const lado=c2.x.lessThan(Rw.x).or(c2.x.greaterThan(Rw.z)),arriba=c2.y.greaterThan(Rw.w),abajo=c2.y.lessThan(Rw.y);
+   const par=select(lado,TSL.vec4(vec3(.58),1),select(arriba,TSL.vec4(vec3(.42),1),select(abajo,TSL.vec4(vec3(.8),1),fondoS)));
+   smp=select(dentro,par,smp)}
   const gla=smoothstep(.82,.9,smp.a).oneMinus(),uCol=uniform(m.color);
   const ry=W.y.mul(115),row=floor(ry),uu=W.x.add(W.z).mul(58).add(fract(row.mul(.5)).mul(.5).mul(2));
   const jh=smoothstep(0,.07,fract(ry)).mul(smoothstep(1,.93,fract(ry))),jv=smoothstep(0,.05,fract(uu)).mul(smoothstep(1,.95,fract(uu)));
