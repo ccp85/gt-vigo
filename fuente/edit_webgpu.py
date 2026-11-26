@@ -6,6 +6,7 @@
 #  - los ShaderMaterial (GLSL) pasan a un material básico invisible;
 #  - fase 2: el cielo y el mar están pasados a TSL (gpu_tsl.js);
 #  - fase 3: reflejo de la ciudad en el mar, olas de Patos, asfalto, marcas, charcos, césped, fachadas, tejados y escaparates;
+#  - árboles que se mecen con el viento y se apartan al pasar (gpu_arboles.js);
 #  - sin posprocesado (bloom, color, suavizado SMAA) ni reflejo de la ciudad en coches y charcos (los charcos reflejan el cielo).
 # Con ?webgl=1 se fuerza el motor nuevo sobre WebGL2 (para comparar en el mismo aparato).
 # Sirve para medir el rendimiento en cada dispositivo antes de ir pasando efectos uno a uno.
@@ -71,8 +72,10 @@ r("m.customProgramCacheKey=()=>'fm_'+kind;return m}","m.customProgramCacheKey=()
 # 8) fase 2: cielo y agua en TSL (gpu_tsl.js)
 TSLJS=open(os.path.join(D,'gpu_tsl.js'),encoding='utf8').read().strip('\n')+'\n'
 r("import * as THREE from 'three';","import * as THREE from 'three';\nconst TSL=THREE.TSL;   // TSL del mismo módulo que el motor (three/tsl trae otra copia de los nudos)",1)
-r("function aguaSamil(m){",TSLJS+open(os.path.join(D,'gpu_hierba.js'),encoding='utf8').read().strip('\n')+'\n'+"function aguaSamil(m){",1)
-r("let dt=Math.min(.25,clock.getDelta());","let dt=Math.min(.25,clock.getDelta());try{hierbaTick(dt)}catch(e){if(!window.__hbE){window.__hbE=1;console.warn('hierba',e)}}",1)
+r("function aguaSamil(m){",TSLJS+open(os.path.join(D,'gpu_hierba.js'),encoding='utf8').read().strip('\n')+'\n'+open(os.path.join(D,'gpu_arboles.js'),encoding='utf8').read().strip('\n')+'\n'+"function aguaSamil(m){",1)
+r("let dt=Math.min(.25,clock.getDelta());","let dt=Math.min(.25,clock.getDelta());try{hierbaTick(dt)}catch(e){if(!window.__hbE){window.__hbE=1;console.warn('hierba',e)}}try{arbolesTick(dt)}catch(e){if(!window.__avE){window.__avE=1;console.warn('árboles',e)}}",1)
+# árboles que se mecen con el viento y se apartan al pasar (gpu_arboles.js): se engancha al material de hojas()
+r("m.customProgramCacheKey=()=>(pk?pk():'')+'|hj';m.needsUpdate=true}","m.customProgramCacheKey=()=>(pk?pk():'')+'|hj';m.needsUpdate=true;gpuArbol(m)}",1)
 r("window.CIELO=CIELO;sky.renderOrder=-10;","window.CIELO=CIELO;try{sky.material=gpuCielo()}catch(e){console.warn('cielo TSL',e)}sky.renderOrder=-10;",1)
 r("aguaSamil(m);WATERS.push(m);water=m;","aguaSamil(m);WATERS.push(m);water=m;try{o.material=gpuAgua(false);WATERS.push(o.material)}catch(e){console.warn('agua TSL',e)}",1)
 r("MARG=new THREE.Mesh(g,m);MARG.name='mar_global';","let mg=m;try{mg=gpuAgua(true);WATERS.push(mg)}catch(e){console.warn('mar TSL',e)}MARG=new THREE.Mesh(g,mg);MARG.name='mar_global';",1)
