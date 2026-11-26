@@ -156,6 +156,9 @@ GT.ptsKind=(fs,vs)=>{const T=TSL,{vec2,vec3,vec4,float,max,min,mix,pow,dot,smoot
   const w=vec3(p.x.mul(3.2).add(sin(uT.mul(.6).add(p.z.mul(30))).mul(.05)).add(uT.mul(.03)),p.y.mul(1.5).sub(uT.mul(aS.mul(.07).add(.11))),p.z.mul(3.2).add(cos(uT.mul(.5).add(p.x.mul(30))).mul(.05)));
   const q=mod(w.sub(uC),B).sub(B.mul(.5)).add(uC).add(vec3(0,.45,0)),a0=smoothstep(.5,.1,uv().sub(.5).length());
   return{world:true,pos:q,px:(d)=>clamp(aS.mul(.006).mul(uSc).div(d),1,4.5),col:vec3(1),a:(d)=>a0.mul(smoothstep(1.7,1.1,d)).mul(smoothstep(.05,.2,d)).mul(.65)}};
+ if(vs.includes('attribute vec4 aPolvo'))return(A,U)=>{const a=A('aPolvo','vec4'),uSc=U('uSc'),uL=U('uL'),r=r2(),g=step(.5,a.z);   // polvo y granos de arena
+  const al=mix(smoothstep(1,.1,r).mul(sin(a.w.mul(40).add(r.mul(5))).mul(.25).add(.75)),smoothstep(1,.6,r),g).mul(a.y).mul(step(r,1));
+  return{pos:A('position','vec3'),px:(d)=>select(a.y.greaterThan(.001),clamp(a.x.mul(uSc).div(d),1.2,90),float(0)),col:mix(vec3(.93,.87,.76),vec3(.5,.42,.3),g).mul(uL),a:al}};
  if(vs.includes('uniform float uT,uWY,uPS'))return(A,U)=>{const p=A('position','vec3'),aS=A('aS','float'),uT=U('uT'),uWY=U('uWY'),uPS=U('uPS'),uNf=U('uNf'),bx=.7,c=cameraPosition;   // partículas bajo el agua
   let q=p.mul(bx).add(vec3(sin(uT.mul(.2).add(p.y.mul(20))).mul(.01).add(uT.mul(.006)),uT.mul(-.003),cos(uT.mul(.15).add(p.x.mul(17))).mul(.01)));q=mod(q.sub(c).add(bx*.5),bx).add(c).sub(bx*.5);
   const vis=step(q.y,uWY.sub(.004)),r=uv().sub(.5).length();
@@ -335,5 +338,38 @@ function gpuFx(tipo,m,k){try{if(!m||m.userData['g_'+tipo])return;m.userData['g_'
   m.colorNode=select(suelo,vec3(.74,.72,.68).mul(GT.h21(floor(q.mul(300))).mul(.1).add(.9)),mix(vec3(.09,.12,.16),vec3(.78,.78,.76),fr));
   m.roughnessNode=mix(.75,.08,vGl);const V=normalize(cameraPosition.sub(W)),frg=pow(abs(V.y).oneMinus(),3).mul(.7).add(.12),skyc=mix(GT.U(SKYU.uHor),GT.U(SKYU.uZen),.4).mul(GT.U(SKYU.uNight).mul(.75).oneMinus());
   m.emissiveNode=vec3(1,.79,.54).mul(vGl).mul(uLuz).mul(.9).mul(step(.35,GT.h21(floor(q.mul(40))))).add(skyc.mul(.55).mul(vGl).mul(frg).mul(.28))}
+ else if(tipo==='arena'){const T=TSL,{exp,cross,transformNormalToView}=T;   // arena de las playas (orilla.js) con huellas y surcos (huellas.js)
+  const uT=GT.U(UW.uT),uWet=GT.U(UMO.uWet),uZen=GT.U(SKYU.uZen),uHor=GT.U(SKYU.uHor),hw=W.y.sub(ORI.WY);
+  const m1=vn(q.mul(1.7)),m2=vn(q.mul(6.3).add(3.1)),m3=vn(q.mul(23).add(9.7));
+  let col=mix(vec3(.70,.57,.38),vec3(.85,.74,.54),smoothstep(.22,.78,m1.mul(.55).add(m2.mul(.45)))).mul(m3.mul(.12).add(.93));
+  const c1=smoothstep(.004,.02,fw).oneMinus(),c2=LT?float(0):smoothstep(.00015,.0008,fw).oneMinus();
+  col=col.mul(vn(q.mul(700)).sub(.5).mul(c2).add(vn(q.mul(190).add(4)).sub(.5).mul(.6).mul(c1)).mul(.24).add(1));
+  col=col.mul(smoothstep(.72,.95,vn(q.mul(420).add(11))).mul(c2).mul(.18).oneMinus());
+  const sec=smoothstep(.009,.02,hw),wd=vec2(.825,.565),ph=dot(q,wd).mul(950).add(vn(q.mul(6)).mul(2).add(vn(q.mul(31)).mul(.7)).mul(6.2832));
+  const ra=smoothstep(.35,.8,vn(q.mul(6).add(2))).mul(smoothstep(.001,.004,fw).oneMinus()).mul(sec);col=col.mul(sin(ph).mul(.045).mul(ra).add(1));
+  let gx=LT?vec2(0,0):wd.mul(cos(ph)).mul(.13).mul(ra);
+  const wr=exp(pow(hw.sub(.021).sub(vn(q.mul(3)).sub(.5).mul(.005)).div(.0022),2).negate()).mul(smoothstep(.45,.8,vn(q.mul(85)))).mul(c1);col=col.mul(wr.mul(.28).oneMinus());
+  const wetH=vn(q.mul(4)).sub(.5).mul(.004).add(.012),aWet=smoothstep(wetH.mul(.55),wetH,hw).oneMinus();
+  const sw=sin(uT.mul(.7).add(vn(q.mul(3)).mul(6.2832))).mul(.5).add(.5).mul(.003).add(.0035).add(vn(q.mul(40).add(uT.mul(.3))).sub(.5).mul(.0008));
+  const aFilm=smoothstep(sw.sub(.0008),sw.add(.0002),hw).oneMinus();
+  let fo=smoothstep(sw.sub(.0017),sw.sub(.0004),hw).mul(smoothstep(sw.sub(.0001),sw.add(.0007),hw).oneMinus());
+  fo=fo.mul(smoothstep(.3,.7,vn(q.mul(260).add(vec2(uT.mul(.05),0))).mul(.6).add(vn(q.mul(60)).mul(.4))).mul(.7).add(.3));
+  fo=fo.add(aFilm.mul(smoothstep(.62,.8,vn(q.mul(180).add(vec2(0,uT.mul(.08)))))).mul(.45).mul(smoothstep(-.003,.002,sw.sub(hw).sub(.002)).oneMinus()));
+  const wc=col.mul(vec3(.52,.48,.42));col=mix(col,wc,aWet);col=mix(col,wc.mul(vec3(.78,.9,.92)),aFilm);col=mix(col,vec3(.9,.93,.92),clamp(fo,0,1).mul(.9));
+  col=mix(col,col.mul(.62),uWet.mul(aWet.oneMinus()));gx=gx.mul(aWet.oneMinus());
+  if(window.__HU){const H=window.__HU,uHC=GT.U(H.U.uHC),dq=q.sub(uHC.xy);   // huellas y surcos
+   const hin=smoothstep(uHC.z.mul(.40),uHC.z.mul(.47),max(abs(dq.x),abs(dq.y))).oneMinus().mul(aFilm.oneMinus()).mul(step(.5,uHC.w));
+   const hu=fract(q.div(uHC.z)),t0=texture(H.tex,hu),dep=t0.r.mul(hin),rim=t0.g.mul(hin);
+   col=col.mul(rim.mul(.08).oneMinus()).mul(dep.mul(.24).oneMinus());col=mix(col,col.mul(vec3(.62,.66,.7)),dep.mul(aWet));
+   if(!LT){const e=1/H.N,tx=texture(H.tex,hu.add(vec2(e,0))),tz=texture(H.tex,hu.add(vec2(0,e))),h0=t0.g.mul(.35).sub(t0.r),h1=tx.g.mul(.35).sub(tx.r),h2=tz.g.mul(.35).sub(tz.r);
+    gx=gx.add(vec2(h0.sub(h1),h0.sub(h2)).mul(.7).mul(hin))}}
+  m.colorNode=col;m.roughnessNode=mix(mix(mix(.93,.32,aWet),.07,aFilm),.4,uWet.mul(aWet.oneMinus()).mul(aFilm.oneMinus()).mul(.6));m.metalnessNode=float(0);
+  const Ng=normalize(cross(dFdx(W),dFdy(W))),Nu=select(Ng.y.lessThan(0),Ng.negate(),Ng);
+  m.normalNode=transformNormalToView(normalize(Nu.add(vec3(gx.x,0,gx.y))));
+  const V=normalize(cameraPosition.sub(W)),frs=pow(clamp(V.y,0,1).oneMinus(),5).mul(.98).add(.02);
+  GT.em(m,mix(uHor,uZen,.35).mul(frs).mul(aWet.mul(.1).add(aFilm.mul(.28))))}
+ else if(tipo==='oriT'){const uR=GT.U(k.uOriR),uq=q.sub(uR.xy).div(uR.zw);   // franja nueva de la orilla: lo viejo no se dibuja
+  const den=uq.x.greaterThan(0).and(uq.y.greaterThan(0)).and(uq.x.lessThan(1)).and(uq.y.lessThan(1));
+  m.maskNode=den.and(texture(k.uOriM.value,clamp(uq,0,1)).r.greaterThan(.5)).not()}
  m.needsUpdate=true}catch(e){console.warn('gpuFx',tipo,e)}}
 // ---------- fin de gpu_tsl.js
