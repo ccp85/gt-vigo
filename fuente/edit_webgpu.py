@@ -89,5 +89,8 @@ for a,b in [("'|asf';m.needsUpdate=true;return m}","'|asf';m.needsUpdate=true;gp
             ("m.customProgramCacheKey=()=>'vit';m.needsUpdate=true}","m.customProgramCacheKey=()=>'vit';m.needsUpdate=true;gpuFx('vit',m)}"),
             ("m.needsUpdate=true}\n// edit_olas.py","m.needsUpdate=true;gpuFx('fv',m)}\n// edit_olas.py")]:
     r(a,b,1)
+# arena de las playas, máscara de la orilla (orilla.js) y huellas (huellas.js) en TSL
+r("+'|arena2'+(LT?'L':'');m.needsUpdate=true;return m}","+'|arena2'+(LT?'L':'');m.needsUpdate=true;gpuFx('arena',m);return m}",1)
+r("+'|oriT';m.needsUpdate=true}","+'|oriT';m.needsUpdate=true;gpuFx('oriT',m,U)}",1)
 s=s.replace('<title>GT Vigo','<title>GT Vigo · WebGPU (prueba)',1)
 open(DST,'w',encoding='utf8').write(s);print('ok webgpu',DST)

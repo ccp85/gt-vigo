@@ -27,22 +27,22 @@ function oriZ(x,z,y){if(ORI.Z.length){const h=ORI.h(x,z);if(h!==null)return Math
 function oriPick(v){if(ORI.Z.length){const h=ORI.h(v.x,v.z);if(h!==null&&h<v.y)v.y=Math.max(h,ORI.WY+.001)}return v}
 // arena realista en el sombreado
 function arenaReal(m){if(!m||m.userData.arena)return m;m.userData.arena=1;const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;const LT=!!window.LITE;
- m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);Object.assign(sh.uniforms,{uAT:UW.uT,uAWet:UMO.uWet,uAZen:SKYU.uZen,uAHor:SKYU.uHor});
+ m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);Object.assign(sh.uniforms,{uAT:UW.uT,uAWet:UMO.uWet,uAZen:SKYU.uZen,uAHor:SKYU.uHor},window.__HU?__HU.U:{uHT:{value:null},uHC:{value:new THREE.Vector4()}});
   sh.vertexShader='varying vec3 vWa;\n'+sh.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\n vWa=(modelMatrix*vec4(transformed,1.)).xyz;');
-  sh.fragmentShader='uniform float uAT,uAWet;uniform vec3 uAZen,uAHor;varying vec3 vWa;\nfloat hA(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat nA(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hA(i),hA(i+vec2(1,0)),f.x),mix(hA(i+vec2(0,1)),hA(i+vec2(1,1)),f.x),f.y);}\nfloat aWet,aFilm;vec2 aGr;\n'+sh.fragmentShader
+  sh.fragmentShader='uniform float uAT,uAWet;uniform vec3 uAZen,uAHor;uniform sampler2D uHT;uniform vec4 uHC;varying vec3 vWa;\nfloat hA(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat nA(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hA(i),hA(i+vec2(1,0)),f.x),mix(hA(i+vec2(0,1)),hA(i+vec2(1,1)),f.x),f.y);}\nfloat aWet,aFilm;vec2 aGr;\n'+sh.fragmentShader
    .replace('#include <color_fragment>',`#include <color_fragment>
     {vec2 q=vWa.xz;float fw=max(length(fwidth(q)),1e-6);float hw=vWa.y-(${ORI.WY.toFixed(3)});
      float m1=nA(q*1.7),m2=nA(q*6.3+3.1),m3=nA(q*23.+9.7);                          // manchas de 60 a 4 m
      vec3 col=mix(vec3(.70,.57,.38),vec3(.85,.74,.54),smoothstep(.22,.78,m1*.55+m2*.45));
      col*=.93+.12*m3;
      float c1=1.-smoothstep(.004,.02,fw);                                              // detalle medio
-     ${LT?'float c2=0.;':'float c2=1.-smoothstep(.0003,.0015,fw);'}                    // detalle de cerca
+     ${LT?'float c2=0.;':'float c2=1.-smoothstep(.00015,.0008,fw);'}                    // detalle de cerca
      float gr=(nA(q*700.)-.5)*c2+(nA(q*190.+4.)-.5)*.6*c1;col*=1.+.24*gr;              // grano
      col*=1.-.18*smoothstep(.72,.95,nA(q*420.+11.))*c2;                                // granitos oscuros
      float sec=smoothstep(.009,.02,hw);                                                // arena seca
-     float wa=.6+(nA(q*2.3)-.5)*.9;vec2 wd=vec2(cos(wa),sin(wa));                      // ondulaciones del viento (~60 cm), a parches
-     float ph=dot(q,wd)*(950.+300.*nA(q*5.))+nA(q*30.)*6.;
-     float ra=smoothstep(.35,.8,nA(q*6.+2.))*(1.-smoothstep(.0015,.006,fw))*sec;col*=1.+.045*sin(ph)*ra;
+     vec2 wd=vec2(.825,.565);                                                          // ondulaciones del viento (~65 cm), a parches
+     float ph=dot(q,wd)*950.+(nA(q*6.)*2.+nA(q*31.)*.7)*6.2832;                        // fase deformada (sin anillos ni muaré)
+     float ra=smoothstep(.35,.8,nA(q*6.+2.))*(1.-smoothstep(.001,.004,fw))*sec;col*=1.+.045*sin(ph)*ra;
      aGr=${LT?'vec2(0.)':'wd*cos(ph)*.13*ra'};
      float wr=exp(-pow((hw-.021-.005*(nA(q*3.)-.5))/.0022,2.))*smoothstep(.45,.8,nA(q*85.))*c1;
      col*=1.-.28*wr;                                                                    // restos secos de la pleamar
@@ -57,13 +57,18 @@ function arenaReal(m){if(!m||m.userData.arena)return m;m.userData.arena=1;const 
      col=mix(col,vec3(.90,.93,.92),clamp(fo,0.,1.)*.9);
      col=mix(col,col*.62,uAWet*(1.-aWet));                                             // lluvia
      aGr*=1.-aWet;
+     if(uHC.w>.5){vec2 dq=q-uHC.xy;float hin=(1.-smoothstep(uHC.z*.40,uHC.z*.47,max(abs(dq.x),abs(dq.y))))*(1.-aFilm);   // huellas y surcos
+      if(hin>0.){vec2 hu=fract(q/uHC.z);vec2 t0=texture2D(uHT,hu).rg;float dep=t0.r*hin,rim=t0.g*hin;
+       col*=1.-.08*rim;col*=1.-.24*dep;col=mix(col,col*vec3(.62,.66,.70),dep*aWet);
+       ${LT?'':`float e=1./${window.__HU?__HU.N:1024}.;vec2 tx=texture2D(uHT,hu+vec2(e,0.)).rg,tz=texture2D(uHT,hu+vec2(0.,e)).rg;
+       float h0=.35*t0.g-t0.r,h1=.35*tx.g-tx.r,h2=.35*tz.g-tz.r;aGr+=vec2(h0-h1,h0-h2)*.7*hin;`}}}
      diffuseColor.rgb=col;}`)
    .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n    roughnessFactor=mix(mix(.93,.32,aWet),.07,aFilm);roughnessFactor=mix(roughnessFactor,.4,uAWet*(1.-aWet)*.6);')
    .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n    normal=normalize(normal+(viewMatrix*vec4(aGr.x,0.,aGr.y,0.)).xyz);')
    .replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
     {vec3 aV=isOrthographic?vec3(0.,.8,0.):normalize(cameraPosition-vWa);float fr=.02+.98*pow(1.-clamp(aV.y,0.,1.),5.);
      totalEmissiveRadiance+=mix(uAHor,uAZen,.35)*fr*(aWet*.1+aFilm*.28);}`)};
- m.customProgramCacheKey=()=>(pk?pk():'')+'|arena'+(LT?'L':'');m.needsUpdate=true;return m}
+ m.customProgramCacheKey=()=>(pk?pk():'')+'|arena2'+(LT?'L':'');m.needsUpdate=true;return m}
 // lo viejo que queda dentro de la franja nueva no se dibuja (máscara de la zona)
 function oriTapa(m,U){if(!m||m.userData.oriT)return;m.userData.oriT=1;const prev=m.onBeforeCompile;const pk=m.customProgramCacheKey?m.customProgramCacheKey.bind(m):null;
  m.onBeforeCompile=(sh,r)=>{if(prev)prev(sh,r);Object.assign(sh.uniforms,U);
