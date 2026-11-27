@@ -4136,6 +4136,10 @@ function nigCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
 //   tejado de teja, tres ábsides rectangulares, fachada al oeste con contrafuertes, portada de arquivoltas y rosetón,
 //   y una torre robusta con almenas que le da el aire de fortaleza.
 // · Paseo marítimo: muro de granito con albardilla sobre el mar, farolas clásicas, bancos y árboles.
+// · Zona 2, Monterreal (la fortaleza del Parador): la muralla de sillería con el paseo de ronda enlosado, almenas en el
+//   borde de fuera y garitas en las esquinas, la Torre do Reloxo (con el reloj en las cuatro caras), la Torre do Príncipe,
+//   la Tenaza (redonda, en la boca del porto), la puerta de entrada con el escudo, el paseo perimetral junto al mar, bolos
+//   de granito en las calas y tres miradores con cartel, bancos y prismáticos, que salen en el GPS como puntos de foto.
 // · Porto: la réplica de la Carabela Pinta atracada en el peirao central (castillos de popa y proa, tres palos, velas
 //   cuadras con la cruz roja, vela latina en la mesana, bauprés, jarcia, banderas y la pasarela al muelle), la lonxa del
 //   muelle pesquero con cajas de pescado, norays en los muelles y gamelas fondeadas en la dársena que se mecen.
@@ -4343,11 +4347,126 @@ function bynCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
    for(let i=0;i<p.count;i++){const u=(p.getX(i)+l/2)/l;p.setY(i,p.getY(i)+yb*(1-u)+ym*u)}g.computeVertexNormals();pon(g,MAD,(bx+px)/2,0,(bz+pz)/2,an);
    for(const s of[-1,1]){const g2=new THREE.BoxGeometry(l,.0012,.0012),p2=g2.attributes.position;for(let i=0;i<p2.count;i++){const u=(p2.getX(i)+l/2)/l;p2.setY(i,p2.getY(i)+yb*(1-u)+ym*u+.008)}g2.translate(0,0,s*.0058);pon(g2,MAD4,(bx+px)/2,0,(bz+pz)/2,an)}}
   BYN.carabelaOk=1}
+ // ================= ZONA 2: MONTERREAL, la fortaleza (Parador) =================
+ if(D.monterreal){const MR=D.monterreal;
+  const SIL=M(0xa49d8f,{roughness:.95}),SIL2=M(0x8c8578,{roughness:.95}),OSC=M(0x2a2825,{roughness:1}),BRON=M(0x7a5a2a,{roughness:.45,metalness:.7});
+  // ---------- 1) la muralla de sillería: los muros y torres que ya había, con textura de sillares y el paseo de ronda enlosado ----------
+  {const TX=LT?256:512,mk=(f)=>{const c=document.createElement('canvas');c.width=c.height=TX;f(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t};
+   const TON=['#a39c8e','#aca596','#968f82','#b4ad9e','#8f897c','#a69d8a','#9b9488','#b0a998'];
+   // sillares a hiladas de alto desigual, con llagas y tendeles hundidos y alguna mancha de liquen
+   const tSil=mk(g=>{g.fillStyle='#57524a';g.fillRect(0,0,TX,TX);let y=0;while(y<TX){const h=TX/10*(.75+rn()*.5);let x=-rn()*TX/5;while(x<TX){const w=TX/5*(.7+rn()*.7);
+     g.fillStyle=TON[(rn()*TON.length)|0];g.fillRect(x+1.5,y+1.5,w-3,h-3);g.fillStyle='rgba(255,255,255,.07)';g.fillRect(x+1.5,y+1.5,w-3,2);g.fillStyle='rgba(0,0,0,.12)';g.fillRect(x+1.5,y+h-4,w-3,2.5);
+     for(let k=0;k<(LT?3:10);k++){g.fillStyle=`rgba(${rn()<.5?'40,38,34':'235,230,218'},${.05+rn()*.08})`;g.fillRect(x+2+rn()*(w-6),y+2+rn()*(h-6),1+rn()*3,1+rn()*3)}
+     if(rn()<.12){g.fillStyle=`rgba(${rn()<.5?'190,180,120':'120,130,90'},.25)`;g.beginPath();g.ellipse(x+rn()*w,y+rn()*h,3+rn()*8,2+rn()*5,0,0,7);g.fill()}
+     x+=w}y+=h}if(y>TX){}});
+   const tLos=mk(g=>{g.fillStyle='#5e5a53';g.fillRect(0,0,TX,TX);const n=6,p=TX/n;for(let j=0;j<n;j++)for(let i=0;i<n;i++){g.fillStyle=TON[(rn()*TON.length)|0];g.fillRect(i*p+1.5,j*p+1.5,p-3,p-3)}});
+   const SX=1/.11,SY=1/.055,SL=1/.05;                                   // un sillar ≈ 1,7 m × 0,4 m; losas de ~0,65 m
+   const pv=[],uv=[],cv=[],ph=[],uh=[],a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),e1=new THREE.Vector3(),e2=new THREE.Vector3(),n=new THREE.Vector3();
+   const vist=new Set(),K=v=>v.x.toFixed(4)+','+v.y.toFixed(4)+','+v.z.toFixed(4);
+   root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||o.parent===G||!/^piezas/.test(o.name))return;const g=o.geometry,p=g.attributes.position;if(!p)return;o.updateMatrixWorld(true);
+    if(!g.boundingBox)g.computeBoundingBox();const bb=g.boundingBox.clone().applyMatrix4(o.matrixWorld);if(bb.max.x<-51||bb.min.x>-44.3||bb.max.z<163.6||bb.min.z>171.3)return;
+    const ix=g.index,cnt=ix?ix.count:p.count,mw=o.matrixWorld;
+    for(let t=0;t<cnt;t+=3){a.fromBufferAttribute(p,ix?ix.getX(t):t).applyMatrix4(mw);b.fromBufferAttribute(p,ix?ix.getX(t+1):t+1).applyMatrix4(mw);c.fromBufferAttribute(p,ix?ix.getX(t+2):t+2).applyMatrix4(mw);
+     const mx=(a.x+b.x+c.x)/3,mz=(a.z+b.z+c.z)/3;if(mx<-50.9||mx>-44.4||mz<163.6||mz>171.25)continue;
+     const k=[K(a),K(b),K(c)].sort().join('|');if(vist.has(k))continue;vist.add(k);                 // las piezas vienen repetidas
+     n.crossVectors(e1.subVectors(b,a),e2.subVectors(c,a));const L=n.length();if(L<1e-10)continue;n.multiplyScalar(1/L);const off=.0007;
+     if(Math.abs(n.y)<.5){const hx=Math.hypot(n.x,n.z)||1,tx=-n.z/hx,tz=n.x/hx;
+      for(const q of[a,b,c]){pv.push(q.x+n.x*off,q.y+n.y*off,q.z+n.z*off);uv.push((q.x*tx+q.z*tz)*SX,q.y*SY);const f=Math.min(1,.78+q.y*.8);cv.push(f*.96,f,f*.92)}}   // más oscura y verdosa abajo (humedad)
+     else if(n.y>.5)for(const q of[a,b,c]){ph.push(q.x,q.y+off,q.z);uh.push(q.x*SL,q.z*SL)}}});
+   if(pv.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pv,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(cv,3));g.computeVertexNormals();
+    const mm=new THREE.Mesh(g,M(0xffffff,{map:tSil,vertexColors:true,roughness:.95,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));mm.name='muralla_monterreal';mm.castShadow=false;mm.receiveShadow=true;G.add(mm)}
+   if(ph.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(ph,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uh,2));g.computeVertexNormals();
+    const nn=g.attributes.normal;for(let i=0;i<nn.count;i++)if(nn.getY(i)<0)nn.setXYZ(i,-nn.getX(i),-nn.getY(i),-nn.getZ(i));
+    const mm=new THREE.Mesh(g,M(0xffffff,{map:tLos,roughness:.9,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));mm.name='ronda_monterreal';mm.receiveShadow=true;G.add(mm)}
+   BYN.muralla=pv.length/9}
+  // ---------- 2) almenas en el borde de fuera del paseo de ronda y garitas en las esquinas ----------
+  for(const[x,z,y,a]of(LT?MR.almenas.filter((q,i)=>i%2===0):MR.almenas))caja(.0068,.0085,.0042,SIL,x,y,z,a);
+  for(const[x,z,y,a]of MR.garitas){const ca=Math.cos(a),sa=Math.sin(a),gx=x+ca*.005,gz=z+sa*.005;
+   {const g=new THREE.ConeGeometry(.0075,.012,12);g.rotateX(Math.PI);pon(g,SIL2,gx,y-.006,gz)}                    // ménsula
+   pon(new THREE.CylinderGeometry(.0068,.0068,.016,12),SIL,gx,y+.008,gz,0,true);pon(new THREE.ConeGeometry(.0085,.011,12),SIL2,gx,y+.0215,gz);pon(new THREE.SphereGeometry(.0018,6,4),SIL2,gx,y+.028,gz);
+   caja(.0012,.007,.0035,OSC,gx+ca*.0066,y+.006,gz+sa*.0066,a)}                                                       // aspillera
+  // ---------- 3) torres: do Reloxo, do Príncipe y la Tenaza ----------
+  const almRect=(L,u0,u1,v0,v1,y,y0,paso=.011)=>{for(let u=u0+.004;u<=u1-.003;u+=paso)for(const v of[v0+.002,v1-.002]){const[x,z]=L(u,v);caja(.0068,.0085,.004,SIL,x,y0+y,z,MR._a)}
+   for(let v=v0+.004;v<=v1-.003;v+=paso)for(const u of[u0+.002,u1-.002]){const[x,z]=L(u,v);caja(.004,.0085,.0068,SIL,x,y0+y,z,MR._a)}};
+  {const T_=MR.torres;
+   // Torre do Reloxo: cuadrada, con la esfera del reloj en las cuatro caras, cornisa, almenas y la espadaña de la campana
+   if(T_.reloxo){const[x0,z0,y,a]=T_.reloxo,L=LOC(x0,z0,a),w=.06,h=y+.1;MR._a=a;
+    caja(w,h,w,SIL,x0,0,z0,a,true);caja(w+.006,.004,w+.006,SIL2,x0,h,z0,a,true);almRect(L,-w/2-.003,w/2+.003,-w/2-.003,w/2+.003,h+.004,0);
+    const cv=document.createElement('canvas');cv.width=cv.height=128;const g=cv.getContext('2d');g.fillStyle='#f1ece0';g.beginPath();g.arc(64,64,60,0,7);g.fill();g.strokeStyle='#2a2a2a';g.lineWidth=5;g.stroke();
+    g.fillStyle='#2a2a2a';for(let k=0;k<12;k++){const t=k/12*6.283;g.fillRect(64+Math.cos(t)*48-3,64+Math.sin(t)*48-3,6,6)}g.lineWidth=6;g.beginPath();g.moveTo(64,64);g.lineTo(64,26);g.stroke();g.lineWidth=5;g.beginPath();g.moveTo(64,64);g.lineTo(92,74);g.stroke();
+    const tc=new THREE.CanvasTexture(cv);tc.colorSpace=THREE.SRGBColorSpace;const RL=new THREE.MeshStandardMaterial({map:tc,roughness:.6});
+    for(let k=0;k<4;k++){const t=k*Math.PI/2,[x,z]=L(Math.cos(t)*(w/2+.0008),Math.sin(t)*(w/2+.0008));const d=new THREE.CircleGeometry(.014,24);d.rotateY(Math.PI/2);pon(d,RL,x,h-.03,z,a+t);
+     const r=new THREE.TorusGeometry(.0145,.0012,6,24);r.rotateY(Math.PI/2);pon(r,SIL2,x,h-.03,z,a+t)}
+    for(const s of[-1,1]){const[x,z]=L(0,s*.012);caja(.006,.026,.005,SIL,x,h+.004,z,a,true)}{const[x,z]=L(0,0);caja(.006,.005,.03,SIL,x,h+.03,z,a);pon(new THREE.ConeGeometry(.006,.01,10),BRON,x,h+.018,z)}
+    for(let k=0;k<3;k++){const[x,z]=L(w/2+.0008,0);caja(.001,.012,.006,OSC,x,y-.02-k*.03,z,a)}}
+   // Torre do Príncipe: la más alta y maciza, con ventanas geminadas, matacanes y almenas
+   if(T_.principe){const[x0,z0,y,a]=T_.principe,L=LOC(x0,z0,a),w=.08,h=y+.14;MR._a=a;
+    caja(w,h,w,SIL,x0,0,z0,a,true);
+    for(let k=0;k<4;k++){const t=k*Math.PI/2;for(const yy of[h-.035,h-.075]){const[x,z]=L(Math.cos(t)*(w/2+.0006),Math.sin(t)*(w/2+.0006));for(const s of[-1,1]){const[xa,za]=[x-Math.sin(a+t)*s*.005,z+Math.cos(a+t)*s*.005];caja(.001,.014,.0065,OSC,xa,yy,za,a+t)}}}
+    caja(w+.012,.008,w+.012,SIL2,x0,h,z0,a,true);for(let k=0;k<4;k++){const t=k*Math.PI/2;for(let v=-w/2;v<=w/2;v+=.01){const[x,z]=L(Math.cos(t)*(w/2+.004)-Math.sin(t)*v,Math.sin(t)*(w/2+.004)+Math.cos(t)*v);caja(.004,.006,.004,SIL2,x,h-.006,z,a+t)}}   // ménsulas de los matacanes
+    almRect(L,-w/2-.006,w/2+.006,-w/2-.006,w/2+.006,h+.008,0,.012)}
+   // la Tenaza: torre redonda y baja que defendía la boca del porto, con troneras y almenas en anillo
+   if(T_.tenaza){const[x0,z0,y,a]=T_.tenaza,r=.045,h=y+.05;
+    pon(new THREE.CylinderGeometry(r,r*1.12,h,28),SIL,x0,h/2,z0,0,true);pon(new THREE.CylinderGeometry(r+.004,r+.004,.006,28),SIL2,x0,h+.003,z0,0,true);
+    for(let k=0;k<20;k++){const t=k/20*6.283;caja(.0065,.0085,.004,SIL,x0+Math.cos(t)*(r+.002),h+.006,z0+Math.sin(t)*(r+.002),t+Math.PI/2)}
+    for(let k=0;k<8;k++){const t=k/8*6.283;caja(.001,.004,.008,OSC,x0+Math.cos(t)*(r+.0006),h-.022,z0+Math.sin(t)*(r+.0006),t)}}}
+  // ---------- 4) puerta de entrada: arco de sillería sobre la carretera con el escudo y almenas ----------
+  if(MR.puerta){const[x0,z0,y0,a,w]=MR.puerta,an=a+Math.PI/2,L=LOC(x0,z0,an),hp=.05,R_=w/2+.006,PR=.016;   // L(u,v): u a lo largo de la carretera, v de lado a lado
+   for(const s of[-1,1]){const[x,z]=L(0,s*(R_+PR/2));caja(.026,hp,PR,SIL,x,y0-.01,z,an,true);caja(.03,.004,PR+.004,SIL2,x,y0+hp-.012,z,an)}
+   {const[x,z]=L(0,0);const ar=new THREE.CylinderGeometry(R_+PR,R_+PR,.026,20,1,false,0,Math.PI);ar.rotateX(Math.PI/2);ar.rotateZ(Math.PI/2);ar.rotateY(Math.PI/2);pon(ar,SIL,x,y0+hp-.01,z,an);
+    caja(.026,.03,2*(R_+PR),SIL,x,y0+hp-.01+R_*.55,z,an);caja(.03,.004,2*(R_+PR)+.006,SIL2,x,y0+hp+R_*.55+.02,z,an);
+    for(let v=-(R_+PR)+.004;v<=R_+PR-.003;v+=.011){const[xa,za]=L(.011,v);caja(.0042,.0085,.0068,SIL,xa,y0+hp+R_*.55+.024,za,an);const[xb,zb]=L(-.011,v);caja(.0042,.0085,.0068,SIL,xb,y0+hp+R_*.55+.024,zb,an)}
+    // el escudo: blasón de piedra con la corona, en las dos caras
+    for(const s of[-1,1]){const[xe,ze]=L(s*.0135,0),ye=y0+hp+R_*.55+.004;const sh=new THREE.Shape();sh.moveTo(-.007,.008);sh.lineTo(.007,.008);sh.lineTo(.007,-.002);sh.quadraticCurveTo(.007,-.008,0,-.01);sh.quadraticCurveTo(-.007,-.008,-.007,-.002);sh.lineTo(-.007,.008);
+     const g=new THREE.ExtrudeGeometry(sh,{depth:.002,bevelEnabled:false});g.translate(0,0,-.001);g.rotateY(Math.PI/2);pon(g,SIL2,xe,ye,ze,an);pon(new THREE.CylinderGeometry(.005,.004,.004,8),SIL2,xe,ye+.011,ze);
+     caja(.0012,.006,.0018,OSC,xe+Math.cos(an)*s*.0011,ye-.002,ze+Math.sin(an)*s*.0011,an);caja(.0012,.0018,.006,OSC,xe+Math.cos(an)*s*.0011,ye,ze+Math.sin(an)*s*.0011,an)}}}
+  // ---------- 5) paseo perimetral: senda de jabre con bordillo de granito y postes con cuerda del lado del mar ----------
+  if(MR.senda){const pos=[],col=[],cs=C3('#b9aa86'),cb=C3('#8f897c'),W_=.012,pst=[];
+   for(const s of MR.senda){const P_=[];for(let k=0;k<s.length;k+=3)P_.push([s[k],s[k+2]+.0025,s[k+1]]);
+    for(let i=0;i<P_.length-1;i++){const[ax,ay,az]=P_[i],[bx,by,bz]=P_[i+1],dx=bx-ax,dz=bz-az,l=Math.hypot(dx,dz)||1,nx=-dz/l,nz=dx/l;
+     const q=[[ax+nx*W_,ay,az+nz*W_],[bx+nx*W_,by,bz+nz*W_],[bx-nx*W_,by,bz-nz*W_],[ax-nx*W_,ay,az-nz*W_]];const f=.94+rn()*.1;
+     for(const v of[q[0],q[1],q[2],q[0],q[2],q[3]]){pos.push(...v);col.push(cs[0]*f,cs[1]*f,cs[2]*f)}
+     for(const s_ of[-1,1]){const e0=[ax+nx*s_*W_,ay+.0012,az+nz*s_*W_],e1=[bx+nx*s_*W_,by+.0012,bz+nz*s_*W_],o0=[ax+nx*s_*(W_+.0016),ay+.0012,az+nz*s_*(W_+.0016)],o1=[bx+nx*s_*(W_+.0016),by+.0012,bz+nz*s_*(W_+.0016)];
+      for(const v of[e0,e1,o1,e0,o1,o0]){pos.push(...v);col.push(...cb)}}
+     if(i%5===0)pst.push([ax+nx*(W_+.003),ay,az+nz*(W_+.003)])}}
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();
+   const nn=g.attributes.normal;for(let i=0;i<nn.count;i++)if(nn.getY(i)<0)nn.setXYZ(i,-nn.getX(i),-nn.getY(i),-nn.getZ(i));
+   const mm=new THREE.Mesh(g,M(0xffffff,{vertexColors:true,roughness:1,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));mm.name='senda_monterreal';mm.receiveShadow=true;G.add(mm);
+   for(const[x,y,z]of(LT?pst.filter((p,i)=>i%2===0):pst))pon(new THREE.CylinderGeometry(.0009,.0011,.011,5),MAD2,x,y+.0045,z);BYN.senda=pos.length/18}
+  // ---------- 6) bolos de granito en las calas y las puntas ----------
+  if(MR.bolos){const geo=new THREE.IcosahedronGeometry(1,LT?0:1),pos=[],col=[];
+   for(const[x,z,y,r,s]of(LT?MR.bolos.filter((b,i)=>i%2===0):MR.bolos)){const g=geo.clone(),p=g.attributes.position,a_=s*12.3;
+    for(let i=0;i<p.count;i++){const px=p.getX(i),py=p.getY(i),pz=p.getZ(i),k=1+.18*Math.sin(px*3.1+a_)*Math.cos(pz*2.7-a_)+.1*Math.sin(py*5+a_*2);p.setXYZ(i,px*k,py*k,pz*k)}
+    g.scale(r*(1+s*.5),r*(.55+s*.35),r*(1.1-s*.3));g.rotateY(s*6.28);g.translate(x,y,z);const q=(g.index?g.toNonIndexed():g).attributes.position.array;pos.push(...q);
+    const t=.4+s*.12,cc=[t*1.02,t,t*.93];for(let i=0;i<q.length/3;i++){const k=q[i*3+1]>y+r*.35?1.08:(q[i*3+1]<-.02?.62:.9);col.push(cc[0]*k,cc[1]*k,cc[2]*k)}}
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();
+   const mm=new THREE.Mesh(g,M(0xffffff,{vertexColors:true,roughness:.95}));mm.name='bolos_monterreal';mm.castShadow=!LT;mm.receiveShadow=true;G.add(mm)}
+  // ---------- 7) miradores: punto de foto con su cartel, prismáticos y bancos; también salen en el GPS ----------
+  if(MR.miradores){for(const[nom,x,z,y,a,mira]of MR.miradores){const ca=Math.cos(a),sa=Math.sin(a),L=LOC(x,z,a);
+    pon(new THREE.CylinderGeometry(.036,.037,.008,28),GRA2,x,y-.002,z,0,true);                                      // plataforma enlosada
+    for(let k=-4;k<=4;k++){const t=a+k*.16,[px,pz]=[x+Math.cos(t)*.033,z+Math.sin(t)*.033];caja(.004,.009,.009,GRA,px,y+.002,pz,t,true)}   // pretil del lado del mar
+    // marco de madera para la foto, con el mar detrás
+    {const[fx,fz]=L(.012,-.022);for(const s of[-1,1])caja(.0018,.03,.0018,MAD,fx-sa*s*.009,y+.002,fz+ca*s*.009,a);caja(.0018,.0018,.02,MAD,fx,y+.03,fz,a);caja(.0018,.0018,.02,MAD,fx,y+.013,fz,a)}
+    // prismáticos de monedas sobre su poste, mirando al mar
+    {const[px,pz]=L(.018,0);pon(new THREE.CylinderGeometry(.0012,.0016,.022,6),NEG,px,y+.011,pz);const bi=new THREE.Group();
+     for(const s of[-1,1]){const t=new THREE.CylinderGeometry(.0022,.0026,.008,10);t.rotateZ(Math.PI/2);t.translate(0,0,s*.0024);pon(t,M(0x2f6f5a,{roughness:.5,metalness:.4}),px,y+.025,pz,a)}}
+    // bancos a los lados
+    for(const s of[-1,1]){const[bx,bz]=L(-.004,s*.02);for(const t of[-1,1])caja(.004,.0055,.0035,GRA2,bx+Math.cos(a)*t*.008,y,bz+Math.sin(a)*t*.008,a+Math.PI/2,true);caja(.024,.0012,.0055,MAD,bx,y+.0055,bz,a+Math.PI/2)}
+    // cartel «📸 nombre · vista a ...»
+    {const cv=document.createElement('canvas');cv.width=256;cv.height=128;const g=cv.getContext('2d');g.fillStyle='#1f3b5c';g.fillRect(0,0,256,128);g.fillStyle='#f4efe2';g.fillRect(6,6,244,116);g.fillStyle='#1f3b5c';
+     g.font='42px system-ui';g.textAlign='center';g.fillText('📸',128,48);g.font='700 22px system-ui';g.fillText(nom,128,84);g.font='15px system-ui';g.fillText('Vista a '+mira,128,108);
+     const tc=new THREE.CanvasTexture(cv);tc.colorSpace=THREE.SRGBColorSpace;const[cx,cz]=L(-.03,0);
+     for(const s of[-1,1])pon(new THREE.CylinderGeometry(.0011,.0011,.04,5),MAD2,cx-sa*s*.017,y+.02,cz+ca*s*.017);
+     const pl=new THREE.PlaneGeometry(.038,.019);pl.rotateY(-Math.PI/2);pon(pl,new THREE.MeshStandardMaterial({map:tc,roughness:.7,side:THREE.DoubleSide}),cx,y+.032,cz,a)}}
+   }
+  BYN.monterreal=1}
  // ---------- juntar por material ----------
  const junta=(P_,nombre,solido)=>{for(const[mat,gs]of P_){if(!gs.length)continue;const mm=new THREE.Mesh(mergeGeometries(gs),mat);mm.name=nombre;mm.castShadow=!LT&&mat!==LUZF&&mat.visible!==false;mm.receiveShadow=true;G.add(mm);if(solido)try{colaBVH(mm)}catch(e){}}};
  junta(PARTS,'piezas_baiona',false);
  root.add(G);junta(SOLID,'piezas_baiona_solidas',true);
  BYN.G=G;BYN.ms=Math.round(performance.now()-t0)}
+// en el GPS, en «📍 Direcciones frecuentes»: los miradores de Monterreal (puntos de foto), la fortaleza, la carabela y la Colexiata
+setTimeout(()=>{try{if(typeof DESTINOS!=='undefined'&&!DESTINOS.some(d=>/Monterreal/.test(d[0])))DESTINOS.push(...[["📸 Mirador do Príncipe (Monterreal)", -50.5588, 166.4062], ["📸 Mirador da Tenaza (Monterreal)", -45.0874, 168.4188], ["📸 Mirador da Punta (Monterreal)", -49.4313, 164.2262], ["🏰 Fortaleza de Monterreal (Parador)", -46.9542, 168.9667], ["⛵ Carabela Pinta (porto de Baiona)", -43.95, 175.05], ["⛪ Colexiata de Santa María (Baiona)", -48.55, 176.6]])}catch(e){}},0);
 // ---------- fin de baiona.js
 // ---------- Colegio Compañía de María (colegio.js)
 // Rúa Ecuador 35 / Colmeiro Laforet: el colegio con su iglesia, modelado en Blender a partir de la vista aérea,
