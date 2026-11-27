@@ -6,6 +6,7 @@
 #  - los ShaderMaterial (GLSL) pasan a un material básico invisible;
 #  - fase 2: el cielo y el mar están pasados a TSL (gpu_tsl.js);
 #  - fase 3: reflejo de la ciudad en el mar, olas de Patos, asfalto, marcas, charcos, césped, fachadas, tejados y escaparates;
+#  - algas del fondo que se mecen con el mar de fondo y se apartan al nadar (gpu_algas.js);
 #  - granos de arena de verdad con compute shaders, que se apilan y se derrumban (gpu_arena.js);
 #  - árboles que se mecen con el viento y se apartan al pasar (gpu_arboles.js);
 #  - sin posprocesado (bloom, color, suavizado SMAA) ni reflejo de la ciudad en coches y charcos (los charcos reflejan el cielo).
@@ -73,8 +74,8 @@ r("m.customProgramCacheKey=()=>'fm_'+kind;return m}","m.customProgramCacheKey=()
 # 8) fase 2: cielo y agua en TSL (gpu_tsl.js)
 TSLJS=open(os.path.join(D,'gpu_tsl.js'),encoding='utf8').read().strip('\n')+'\n'
 r("import * as THREE from 'three';","import * as THREE from 'three';\nconst TSL=THREE.TSL;   // TSL del mismo módulo que el motor (three/tsl trae otra copia de los nudos)",1)
-r("function aguaSamil(m){",TSLJS+open(os.path.join(D,'gpu_hierba.js'),encoding='utf8').read().strip('\n')+'\n'+open(os.path.join(D,'gpu_arboles.js'),encoding='utf8').read().strip('\n')+'\n'+open(os.path.join(D,'gpu_arena.js'),encoding='utf8').read().strip('\n')+'\n'+"function aguaSamil(m){",1)
-r("let dt=Math.min(.25,clock.getDelta());","let dt=Math.min(.25,clock.getDelta());try{hierbaTick(dt)}catch(e){if(!window.__hbE){window.__hbE=1;console.warn('hierba',e)}}try{arbolesTick(dt)}catch(e){if(!window.__avE){window.__avE=1;console.warn('árboles',e)}}try{granoTick(dt)}catch(e){if(!window.__grE){window.__grE=1;console.warn('granos',e)}}",1)
+r("function aguaSamil(m){",TSLJS+open(os.path.join(D,'gpu_hierba.js'),encoding='utf8').read().strip('\n')+'\n'+open(os.path.join(D,'gpu_arboles.js'),encoding='utf8').read().strip('\n')+'\n'+open(os.path.join(D,'gpu_arena.js'),encoding='utf8').read().strip('\n')+'\n'+open(os.path.join(D,'gpu_algas.js'),encoding='utf8').read().strip('\n')+'\n'+"function aguaSamil(m){",1)
+r("let dt=Math.min(.25,clock.getDelta());","let dt=Math.min(.25,clock.getDelta());try{hierbaTick(dt)}catch(e){if(!window.__hbE){window.__hbE=1;console.warn('hierba',e)}}try{arbolesTick(dt)}catch(e){if(!window.__avE){window.__avE=1;console.warn('árboles',e)}}try{granoTick(dt)}catch(e){if(!window.__grE){window.__grE=1;console.warn('granos',e)}}try{algasTick()}catch(e){if(!window.__alE){window.__alE=1;console.warn('algas',e)}}",1)
 # árboles que se mecen con el viento y se apartan al pasar (gpu_arboles.js): se engancha al material de hojas()
 # granos de arena de verdad en la tarjeta gráfica (gpu_arena.js): los granos de huellas.js pasan a la simulación
 r("function huEmite(k,x,y,z,vx,vy,vz,vida,t0,t1,a0,suelo){","function huEmite(k,x,y,z,vx,vy,vz,vida,t0,t1,a0,suelo){if(k===1&&GRA.on&&granoEmite(x,y,z,vx,vy,vz,suelo))return;",1)

@@ -1467,7 +1467,8 @@ function gpuFondo(B,kind,m){try{if(m.userData.gfm)return;m.userData.gfm=1;GT.ini
  const vWB=positionWorld.sub(uO),vNB=normalize(normalWorld),vLY=positionGeometry.y,vLX=positionGeometry.x,fcz=uWY.sub(vWB.y);
  const iph=float(instanceIndex).mul(1.37);   // fase propia de cada instancia (algas y peces)
  // movimiento en el vértice
- if(kind==='alga'){const hh=max(positionGeometry.y,0),s2=hh.mul(hh),ph=uT.mul(1.05).add(iph);
+ if(kind==='alga'&&typeof gpuAlga==='function')gpuAlga(m,uT,uWY,iph);   // mar de fondo en todo el campo de algas (gpu_algas.js)
+ else if(kind==='alga'){const hh=max(positionGeometry.y,0),s2=hh.mul(hh),ph=uT.mul(1.05).add(iph);
   m.positionNode=positionLocal.add(vec3(sin(ph.add(hh.mul(2.2))).mul(.3).add(.22).mul(s2).mul(.35).add(sin(uT.mul(4).add(hh.mul(9)).add(iph.mul(3))).mul(.012).mul(s2)),0,cos(ph.mul(.8).add(hh.mul(3.1))).mul(.22).mul(s2).mul(.35)))}
  if(kind==='pez'){const ph=uT.mul(13).add(iph.mul(2.3));m.positionNode=positionLocal.add(vec3(0,0,sin(ph.add(positionGeometry.x.mul(2.6))).mul(.2).mul(smoothstep(.4,-1.5,positionGeometry.x))))}
  const PU=kind==='pulpo';let pk;
@@ -1847,6 +1848,38 @@ function granoTick(dt){if(!GRA.ini&&driving)granoIni();if(!GRA.on)return;
  if(GRA.cnt){u.uCnt.value=GRA.cnt;u.uHead.value=GRA.head;GRA.sp.value.needsUpdate=true;GRA.sv.value.needsUpdate=true;R.compute(GRA.cSal);GRA.head=(GRA.head+GRA.cnt)%GRA.N;GRA.cnt=0}
  R.compute(GRA.cUpd)}
 // ---------- fin de gpu_arena.js
+// ---------- algas que se mecen con el mar de fondo (gpu_algas.js, solo gpu.html) ----------
+// Laminarias, praderas de zostera y anémonas del fondo marino (fondomar.js). Antes se movían cada una hacia su lado y, en el
+// motor nuevo, con un vaivén calculado ya a la escala del mundo (demasiado grande para las pequeñas). Ahora:
+//  · el mar de fondo las lleva a todas a la vez adelante y atrás (el vaivén de las olas llega al fondo y pasa como una onda),
+//    más fuerte cuanto menos hondo, y la corriente las tumba un poco hacia un lado;
+//  · cada hoja ondea con su propio aleteo y se dobla más cuanto más arriba, sin estirarse;
+//  · al pasar nadando entre ellas se apartan y se quedan agitándose (más si vas rápido).
+// En la ría de Vigo no hay posidonia (es del Mediterráneo): su pariente atlántica es la zostera, que ya estaba en el fondo.
+const ALG={u:null};window.__ALG=ALG;
+GT.instM=()=>TSL.Fn(bd=>{const o=bd.object,T=TSL;if(!o||!o.isInstancedMesh||!o.instanceMatrix)return T.mat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
+ const f=o.instanceMatrix.usage===THREE.DynamicDrawUsage?T.instancedDynamicBufferAttribute:T.instancedBufferAttribute;
+ return T.mat4(...[0,4,8,12].map(k=>f(new THREE.InterleavedBufferAttribute(o.instanceMatrix,4,k))))})();
+function gpuAlga(m,uT,uWY,iph){const T=TSL,{vec2,vec3,float,sin,cos,exp,max,min,smoothstep,length,dot,positionLocal,positionGeometry}=T;
+ if(!ALG.u)ALG.u={uN:T.uniform(new THREE.Vector4(0,-99,0,0)),uV:T.uniform(0)};const uN=ALG.u.uN,uV=ALG.u.uV;
+ const M=GT.instM(),h=length(M.element(1).xyz),base=M.element(3).xyz,p=positionLocal;
+ const hh=max(positionGeometry.y,0),bend=hh.mul(hh),dir=vec2(.82,.57),perp=vec2(-.57,.82);
+ const hondo=max(uWY.sub(base.y),0),olas=exp(hondo.mul(-7)).mul(.75).add(.25);
+ const fase=uT.mul(.85).sub(dot(base.xz,dir).mul(9));                       // el vaivén viaja con la ola
+ const vaiven=sin(fase).mul(.55).add(sin(fase.mul(2.1).add(1.3)).mul(.12)).mul(olas);
+ const corriente=GT.vn(base.xz.mul(4).add(uT.mul(.03))).mul(.25).add(.12);
+ const aleteo=sin(uT.mul(2.6).add(iph.mul(2)).add(hh.mul(5))).mul(.14).add(sin(uT.mul(5.3).add(iph.mul(5)).add(hh.mul(11))).mul(.04));
+ // nadador cerca: las hojas se apartan y se agitan
+ const d3=p.sub(uN.xyz),dl=length(d3.xz),dv=d3.y.abs();
+ const cerca=smoothstep(.06,.012,dl).mul(smoothstep(.05,.01,dv)).mul(uN.w),apart=d3.xz.div(max(dl,1e-5));
+ const agita=sin(uT.mul(9).add(iph.mul(3)).add(hh.mul(7))).mul(uV.mul(.5).add(.15));
+ const lado=vec2(dir.mul(vaiven.add(corriente))).add(perp.mul(aleteo)).mul(.5);
+ const off=lado.add(apart.mul(cerca).mul(agita.add(.9))).mul(bend).mul(h);
+ const y=dot(off,off).div(max(h.mul(1.6),1e-5));                              // se doblan, no se estiran
+ m.positionNode=p.add(vec3(off.x,y.negate(),off.y))}
+function algasTick(){const A=ALG.u;if(!A)return;const on=MODO==='nado'?1:0;
+ A.uN.value.set(P.x,P.z||0,P.y,on);A.uV.value=Math.min(1,Math.abs(P.v||0)/.15)}
+// ---------- fin de gpu_algas.js
 function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Object.assign(m.defines||{},{AGUA_LITE:''});m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,UW,UCO,USURF,URF,{uSun:SKYU.uSun,uZen:SKYU.uZen,uHor:SKYU.uHor});
  sh.vertexShader='varying vec3 vWp;uniform mat4 uRfM;varying vec4 vRfUv;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWp=(modelMatrix*vec4(position,1.0)).xyz;vRfUv=uRfM*vec4(vWp,1.0);');
  sh.fragmentShader='uniform float uT;uniform float uN;uniform sampler2D uCos;uniform vec4 uCoR;uniform vec3 uSun,uZen,uHor;varying vec3 vWp;uniform sampler2D uRf;uniform float uRfOn;varying vec4 vRfUv;vec3 aN;float aF;float aS;\n'+SURF_GLSL+
@@ -11162,6 +11195,6 @@ window.__G={get CIR(){return CIR},repRuta,gpsCalcular,updateCar,gpsTick,repTick,
  addEventListener('keydown',e=>{if(e.code==='KeyP'&&!e.repeat&&!/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||''))cambia()})}
 {const d=document.createElement('div');d.id='gpuInfo';d.style.cssText='position:fixed;left:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:99;background:rgba(10,12,30,.72);color:#9fe;font:600 12px monospace;padding:4px 7px;border-radius:6px;pointer-events:none';document.body.appendChild(d);
  let n=0,t0=performance.now();const tic=()=>{n++;const t=performance.now();if(t-t0>1000){GPU_INFO.fps=Math.round(n*1000/(t-t0));n=0;t0=t;const b=R.backend;GPU_INFO.motor=b&&b.isWebGPUBackend?'WebGPU':'WebGL2 (sin WebGPU en este navegador)';d.textContent='Motor: '+GPU_INFO.motor+' · '+GPU_INFO.fps+' fps'}requestAnimationFrame(tic)};requestAnimationFrame(tic)}
-R.setAnimationLoop(()=>{if(FPSLIM.on){const n_=performance.now();if(n_-FPSLIM.t<29)return;FPSLIM.t=n_}if(window.LITE){const n_=performance.now();if(n_-(window.__LT||0)<28)return;window.__LT=n_}let dt=Math.min(.25,clock.getDelta());try{hierbaTick(dt)}catch(e){if(!window.__hbE){window.__hbE=1;console.warn('hierba',e)}}try{arbolesTick(dt)}catch(e){if(!window.__avE){window.__avE=1;console.warn('árboles',e)}}try{granoTick(dt)}catch(e){if(!window.__grE){window.__grE=1;console.warn('granos',e)}}reflejosCoches();reflejosTick();zepelinTick(dt);fuentesTick(clock.elapsedTime);fachadasTick();gaviotasTick(dt);try{huellasTick(dt)}catch(e){if(!window.__huE){window.__huE=1;console.warn('huellas',e)}}try{nieveTick(dt)}catch(e){if(!window.__nvErr){window.__nvErr=1;console.error(e)}}try{delfinesTick(dt)}catch(e){if(!window.__delErr){window.__delErr=1;console.error(e)}}fondoTick();farosTick();resolucionAdaptativa(dt);if(MAPA&&UCO.uCos.value.image.width===1)texturaCosta();gestionarZonas(dt);const t=clock.elapsedTime;UW.uT.value=t;try{surfTick()}catch(e){if(!window.__surfErr){window.__surfErr=1;console.error(e)}}cielo(dt);nubesTick(dt,t);tiempoTick(dt,t);luzEntorno(dt);riaTick(dt,t);audioTick(t,dt);foco();semaforosTick(dt);paseoTick(t);try{playaSolTick(dt);if(!driving&&PAL.chica&&PAL.chica.visible)palasTick(0)}catch(e){}if(!driving&&F.vida)updateTraffic(Math.min(dt,.05));else if(!driving&&PEA_G){PEA_G.vis(false);for(const c of TRAF)c.g.visible=false}
+R.setAnimationLoop(()=>{if(FPSLIM.on){const n_=performance.now();if(n_-FPSLIM.t<29)return;FPSLIM.t=n_}if(window.LITE){const n_=performance.now();if(n_-(window.__LT||0)<28)return;window.__LT=n_}let dt=Math.min(.25,clock.getDelta());try{hierbaTick(dt)}catch(e){if(!window.__hbE){window.__hbE=1;console.warn('hierba',e)}}try{arbolesTick(dt)}catch(e){if(!window.__avE){window.__avE=1;console.warn('árboles',e)}}try{granoTick(dt)}catch(e){if(!window.__grE){window.__grE=1;console.warn('granos',e)}}try{algasTick()}catch(e){if(!window.__alE){window.__alE=1;console.warn('algas',e)}}reflejosCoches();reflejosTick();zepelinTick(dt);fuentesTick(clock.elapsedTime);fachadasTick();gaviotasTick(dt);try{huellasTick(dt)}catch(e){if(!window.__huE){window.__huE=1;console.warn('huellas',e)}}try{nieveTick(dt)}catch(e){if(!window.__nvErr){window.__nvErr=1;console.error(e)}}try{delfinesTick(dt)}catch(e){if(!window.__delErr){window.__delErr=1;console.error(e)}}fondoTick();farosTick();resolucionAdaptativa(dt);if(MAPA&&UCO.uCos.value.image.width===1)texturaCosta();gestionarZonas(dt);const t=clock.elapsedTime;UW.uT.value=t;try{surfTick()}catch(e){if(!window.__surfErr){window.__surfErr=1;console.error(e)}}cielo(dt);nubesTick(dt,t);tiempoTick(dt,t);luzEntorno(dt);riaTick(dt,t);audioTick(t,dt);foco();semaforosTick(dt);paseoTick(t);try{playaSolTick(dt);if(!driving&&PAL.chica&&PAL.chica.visible)palasTick(0)}catch(e){}if(!driving&&F.vida)updateTraffic(Math.min(dt,.05));else if(!driving&&PEA_G){PEA_G.vis(false);for(const c of TRAF)c.g.visible=false}
  if(driving){pcam.up.set(0,1,0);car.scale.setScalar(.6*(RACE.on?1:VSC));const d0=Math.min(dt,.05);if(RACE.on){carreraTick(d0);if(RACE.nav)navLuz()}else{updateTraffic(d0);const ns=d0>1/45?2:1;for(let i=0;i<ns;i++)updateCar(d0/ns);if(REP.on)repTick(d0)}try{palasTick(d0)}catch(e){console.error(e)}try{mundoNavTick(d0)}catch(e){console.error(e)}}for(const w of WATERS)w.emissive?.setRGB(.02+.02*Math.sin(t*1.3),.03+.02*Math.sin(t*1.3),.08+.03*Math.sin(t*1.1));if(window.__CAM)window.__CAM(dt,window.__G);if(driving){recortar(dt);nombreCalle(dt);gpsTick(dt);try{taxiTick(dt)}catch(e){console.error(e)}try{aeTick(dt)}catch(e){console.error(e)}try{surfgTick(dt)}catch(e){if(!window.__sgErr){window.__sgErr=1;console.error(e)}}try{basketTick(dt)}catch(e){if(!window.__bkErr){window.__bkErr=1;console.error(e)}}try{navmisTick(dt)}catch(e){if(!window.__nvmErr){window.__nvmErr=1;console.error(e)}}pcam.far=BK.on?200:SG.on?230:/*fondoheli*/FONDO.m&&!window.LITE?260:FOG.far+4;UCUT.uCut.value=MODO==='heli'||window.__CAM||BK.on?0:1;{const vh=MODO==='moto'?moto:MODO==='pie'?persona:MODO==='skate'&&(SKC.sk||SKT.sk)?(SKC.sk||SKT.sk):car;UCUT.uCar.value.set(P.x,vh.position.y+.03,P.y)}UCUT.uCamP.value.copy(pcam.position)}else UCUT.uCut.value=0;if(driving)drawMini();if(!driving){URF.uRfOn.value=0;ctl.update();R.render(scene,cam)}else{pcam.aspect=cv.clientWidth/cv.clientHeight;pcam.updateProjectionMatrix();if(window.__CAMO){const o=window.__CAMO;pcam.position.set(o[0],o[1],o[2]);pcam.lookAt(o[3],o[4],o[5]);FONDO.U.uCam.value.copy(pcam.position)}try{aguaReflejo()}catch(e){ARF.mal=true;URF.uRfOn.value=0;console.warn('reflejo agua',e)}sombrasTick();if(COMIC.on)comicRender();else if(POST.on)postRender();else R.render(scene,pcam)}});
 </script>
