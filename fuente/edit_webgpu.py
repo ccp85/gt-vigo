@@ -17,6 +17,7 @@ import sys,os,re
 D=os.path.dirname(os.path.abspath(__file__))
 SRC=sys.argv[1] if len(sys.argv)>1 else 'index.html'
 DST=sys.argv[2] if len(sys.argv)>2 else 'gpu.html'
+PRINCIPAL='--principal' in sys.argv[3:]   # index.html con WebGPU: sin marcador, con salto al móvil y versión clásica (webgl.html) de reserva
 s=open(SRC,encoding='utf8').read()
 def r(a,b,n=None):
     global s
@@ -62,11 +63,11 @@ r("if(window.LITE)POST.on=false;","POST.on=false;",1)
 r("aa:R.getContext().getContextAttributes().antialias","aa:true",1)
 s=s.replace("R.info.render.calls","(R.info.render.drawCalls??R.info.render.calls)")
 # 6) marcador: motor en uso y fps (arriba a la izquierda)
-r("R.setAnimationLoop(()=>{",r"""{const d=document.createElement('div');d.id='gpuInfo';d.style.cssText='position:fixed;left:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:99;background:rgba(10,12,30,.72);color:#9fe;font:600 12px monospace;padding:4px 7px;border-radius:6px;pointer-events:none';document.body.appendChild(d);
+r("R.setAnimationLoop(()=>{",r"""{const d=document.createElement('div');d.id='gpuInfo';if(window.GPU_PRINCIPAL&&!/[?&]fps=1/.test(location.search))d.hidden=true;d.style.cssText='position:fixed;left:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:99;background:rgba(10,12,30,.72);color:#9fe;font:600 12px monospace;padding:4px 7px;border-radius:6px;pointer-events:none';document.body.appendChild(d);
  let n=0,t0=performance.now();const tic=()=>{n++;const t=performance.now();if(t-t0>1000){GPU_INFO.fps=Math.round(n*1000/(t-t0));n=0;t0=t;const b=R.backend;GPU_INFO.motor=b&&b.isWebGPUBackend?'WebGPU':'WebGL2 (sin WebGPU en este navegador)';d.textContent='Motor: '+GPU_INFO.motor+' · '+GPU_INFO.fps+' fps'}requestAnimationFrame(tic)};requestAnimationFrame(tic)}
 R.setAnimationLoop(()=>{""",1)
-# 7) en el móvil no salta a indexm.html: esta página es la prueba también en móvil
-s=s.replace("location.replace('indexm.html'+location.search+location.hash)","void 0")
+# 7) en el móvil no salta a indexm.html: esta página es la prueba también en móvil (en la principal sí salta)
+if not PRINCIPAL: s=s.replace("location.replace('indexm.html'+location.search+location.hash)","void 0")
 # 7b) fase 4: nubes de puntos como sprites (WebGPU solo dibuja puntos de 1 píxel) y foto de 6 caras para reflejos
 s=s.replace('new THREE.Points(','gpuPoints(')
 r("RCUBO.rt=new THREE.CubeRenderTarget(128,","RCUBO.rt=RCUBO.rt||new THREE.CubeRenderTarget(128,",1)
@@ -103,5 +104,33 @@ for a,b in [("'|asf';m.needsUpdate=true;return m}","'|asf';m.needsUpdate=true;gp
 # arena de las playas, máscara de la orilla (orilla.js) y huellas (huellas.js) en TSL
 r("+'|arena2'+(LT?'L':'');m.needsUpdate=true;return m}","+'|arena2'+(LT?'L':'');m.needsUpdate=true;gpuFx('arena',m);return m}",1)
 r("+'|oriT';m.needsUpdate=true}","+'|oriT';m.needsUpdate=true;gpuFx('oriT',m,U)}",1)
-s=s.replace('<title>GT Vigo','<title>GT Vigo · WebGPU (prueba)',1)
+if not PRINCIPAL:
+    s=s.replace('<title>GT Vigo','<title>GT Vigo · WebGPU (prueba)',1)
+else:
+    # principal: si el navegador no tiene WebGPU (o falla al arrancar) va a la versión clásica webgl.html
+    # (en el móvil manda el salto a indexm.html; con ?webgl=1 se queda aquí con el motor nuevo sobre WebGL2)
+    r("powerPreference:'high-performance',forceWebGL:/[?&]webgl=1/.test(location.search)});await R.init();",
+      "powerPreference:'high-performance',forceWebGL:/[?&]webgl=1/.test(location.search)});await R.init().catch(e=>{console.warn('WebGPU',e);window.gpuClasica&&gpuClasica();throw e});",1)
+    SALTO=r"""<script>/* GT Vigo con WebGPU: sin WebGPU en este navegador, a la versión clásica (webgl.html) */
+window.GPU_PRINCIPAL=true;
+window.gpuClasica=()=>location.replace('webgl.html'+location.search+location.hash);
+(()=>{if(/[?&]webgl=1/.test(location.search))return;
+ const movil=!/[?&]pc=1/.test(location.search)&&matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<=820;if(movil)return;
+ if(!navigator.gpu){gpuClasica();return}
+ navigator.gpu.requestAdapter({powerPreference:'high-performance'}).then(a=>{if(!a)gpuClasica()}).catch(gpuClasica)})();
+/* si va muy lento jugando (menos de 18 imágenes por segundo durante 12 s, tras 20 s de juego, con la ventana delante)
+   ofrece la versión clásica, una vez; en el menú de inicio no cuenta */
+(()=>{let malo=0,hecho=false,t0=0;try{hecho=sessionStorage.getItem('gtvGpuAviso')==='1'}catch(e){}
+ setInterval(()=>{if(hecho)return;const m=document.getElementById('selz');
+  if(document.hidden||!document.hasFocus()||(m&&!m.hidden)){malo=0;t0=0;return}
+  if(!t0)t0=performance.now();if(performance.now()-t0<20000)return;
+  const g=window.GPU_INFO;if(!g||!g.fps||!document.querySelector('#gpuInfo'))return;
+  malo=g.fps<18?malo+2:0;if(malo<12)return;hecho=true;try{sessionStorage.setItem('gtvGpuAviso','1')}catch(e){}
+  const d=document.createElement('div');d.id='gpuLento';
+  d.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:200;background:rgba(10,12,30,.9);color:#fff;font:600 14px system-ui,sans-serif;padding:10px 14px;border-radius:12px;display:flex;gap:10px;align-items:center;box-shadow:0 4px 18px rgba(0,0,0,.4)';
+  d.innerHTML='Va lento en este equipo · <a href="webgl.html'+location.search+'" style="color:#ffd27a">Probar la versión clásica</a> <button style="background:none;border:0;color:#aaa;font-size:16px;cursor:pointer" aria-label="Cerrar">✕</button>';
+  d.querySelector('button').onclick=()=>d.remove();document.body.appendChild(d);setTimeout(()=>d.remove(),15000)},2000)})();
+</script>
+"""
+    r('<script type="importmap">',SALTO+'<script type="importmap">',1)
 open(DST,'w',encoding='utf8').write(s);print('ok webgpu',DST)
