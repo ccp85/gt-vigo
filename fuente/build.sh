@@ -10,3 +10,4 @@ cd /home/claude/work/vigo/visor && cp /home/claude/work/carrera/nav/index_base.h
 # python3 /home/claude/work/carrera/nav/edit_webgpu.py webgl.html gpu.html
 # python3 /home/claude/work/carrera/nav/edit_webgpu.py webgl.html index.html --principal
 # y encima, en las dos páginas con WebGPU: python3 /home/claude/work/carrera/nav/edit_cielofis.py index.html gpu.html
+# y después: python3 /home/claude/work/carrera/nav/edit_bretema.py index.html gpu.html
