@@ -72,6 +72,13 @@ function gpuAgua(glob,surfM){GT.ini();const{vec2,vec3,float,normalize,max,min,mi
  let col=mix(vec3(.012,.080,.100),vec3(.008,.042,.072),smoothstep(0,.6,prof).mul(big.mul(.3).add(.7)));
  col=mix(col,vec3(.030,.200,.195),smoothstep(.3,.7,cs));col=mix(col,vec3(.13,.36,.29),smoothstep(.7,.9,cs).mul(aw));
  col=mix(col,vec3(.04,.10,.09),aw.oneMinus().mul(.6));
+ // cáusticas en el agua poco honda: la luz que enfocan las olas baila sobre la arena del fondo (se mueven con el oleaje;
+ // con nubes, lluvia o de noche se apagan; de lejos se funden para no hacer ruido)
+ const cSol=smoothstep(.02,.35,normalize(uSun).y).mul(uN.oneMinus()).mul(GT.U(SKYU.uCov).mul(.85).oneMinus()).mul(GT.U(UMO.uWet).mul(.7).oneMinus());
+ const zc=smoothstep(.6,.8,cs).mul(smoothstep(.985,.94,cs)).mul(aw).mul(smoothstep(.004,.0013,fw)).mul(cSol);
+ const cq=p.add(gr.mul(.006)).div(.028),cT=uT.mul(.7),ca1=GT.caus(cq,cT);
+ const caR=LT?ca1:ca1.mul(.6).add(GT.caus(cq.mul(1.37).add(.41),cT.mul(.83).add(5)).mul(.45)),caB=LT?caR:caR.mul(.85).add(GT.caus(cq.add(.012),cT).mul(.15));   // un poco de arcoíris en los bordes
+ col=col.add(vec3(caR.mul(.5),caR.mul(.68),caB.mul(.56)).mul(zc).mul(.8));
  col=col.add(vec3(0,.018,.016).mul(smoothstep(.6,.95,Ox)).mul(uN.oneMinus()));
  // espuma de orilla (franjas que van y vienen) y borreguillos mar adentro
  const fb=sin(cs.mul(34).sub(uT.mul(1.6)).add(GT.vn(p.mul(4)).mul(4)));
@@ -355,7 +362,10 @@ function gpuFx(tipo,m,k){try{if(!m||m.userData['g_'+tipo])return;m.userData['g_'
   let fo=smoothstep(sw.sub(.0017),sw.sub(.0004),hw).mul(smoothstep(sw.sub(.0001),sw.add(.0007),hw).oneMinus());
   fo=fo.mul(smoothstep(.3,.7,vn(q.mul(260).add(vec2(uT.mul(.05),0))).mul(.6).add(vn(q.mul(60)).mul(.4))).mul(.7).add(.3));
   fo=fo.add(aFilm.mul(smoothstep(.62,.8,vn(q.mul(180).add(vec2(0,uT.mul(.08)))))).mul(.45).mul(smoothstep(-.003,.002,sw.sub(hw).sub(.002)).oneMinus()));
-  const wc=col.mul(vec3(.52,.48,.42));col=mix(col,wc,aWet);col=mix(col,wc.mul(vec3(.78,.9,.92)),aFilm);col=mix(col,vec3(.9,.93,.92),clamp(fo,0,1).mul(.9));
+  const wc=col.mul(vec3(.52,.48,.42));col=mix(col,wc,aWet);col=mix(col,wc.mul(vec3(.78,.9,.92)),aFilm);
+  {const uSn=GT.U(SKYU.uSun),uNn=GT.U(UW.uN),cs_=smoothstep(.02,.35,normalize(uSn).y).mul(uNn.oneMinus()).mul(GT.U(SKYU.uCov).mul(.85).oneMinus()).mul(uWet.mul(.7).oneMinus());   // cáusticas en la lámina de agua que sube y baja por la arena
+   const cq=q.div(.022).add(vec2(sw.mul(9),0)),ca=GT.caus(cq,uT.mul(.8)).mul(LT?1:.65).add(LT?float(0):GT.caus(cq.mul(1.41).add(.3),uT.mul(.71).add(4)).mul(.4));
+   col=col.add(vec3(.95,1,.9).mul(ca).mul(aFilm).mul(smoothstep(.0028,.0009,fw)).mul(cs_).mul(.14))}col=mix(col,vec3(.9,.93,.92),clamp(fo,0,1).mul(.9));
   col=mix(col,col.mul(.62),uWet.mul(aWet.oneMinus()));gx=gx.mul(aWet.oneMinus());
   if(window.__HU){const H=window.__HU,uHC=GT.U(H.U.uHC),dq=q.sub(uHC.xy);   // huellas y surcos
    const hin=smoothstep(uHC.z.mul(.40),uHC.z.mul(.47),max(abs(dq.x),abs(dq.y))).oneMinus().mul(aFilm.oneMinus()).mul(step(.5,uHC.w));
