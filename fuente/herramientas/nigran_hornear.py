@@ -1,4 +1,5 @@
-# Zona 1 de Nigrán (Patos – Prado – Monteferro): hornea nigran_detalle.json y añade el pinar de Monteferro a baiona_inst.json.
+# Nigrán con detalle: zona 1 (Patos – Prado – Monteferro) y zona 2 (Panxón: puerto, Templo Votivo do Mar y barcas).
+# Hornea nigran_detalle.json y añade el pinar de Monteferro a baiona_inst.json.
 # Referencias: Google Earth (satélite), Street View y fotos de la playa de Patos, Prado, el Monumento a la Marina Universal,
 # la batería J-3 y el Mirador de las Estelas (solo como referencia; todo lo que sale en el juego es geometría propia).
 # uso:
@@ -18,30 +19,33 @@ ORDER = ['agua', 'tierra', 'verde', 'verde_paseo', 'roca', 'playa', 'muro_costa'
 CID = {n: i + 1 for i, n in enumerate(ORDER)}
 # ---------- 1) raster: superficie más alta y su tipo ----------
 T = json.load(open(TRIS))
-Y = np.full((H, W), -9.0, np.float32); C = np.zeros((H, W), np.uint8)
-for nm in ORDER:
-    t = np.array(T.get(nm, []), np.float64).reshape(-1, 3, 3)
-    if not len(t): continue
-    xs, zs = t[:, :, 0], t[:, :, 2]
-    t = t[(xs.max(1) > X0) & (xs.min(1) < X1) & (zs.max(1) > Z0) & (zs.min(1) < Z1)]
-    for tri in t:
-        px = (tri[:, 0] - X0) * RES; pz = (tri[:, 2] - Z0) * RES
-        i0, i1 = max(0, int(np.floor(px.min()))), min(W - 1, int(np.ceil(px.max())))
-        j0, j1 = max(0, int(np.floor(pz.min()))), min(H - 1, int(np.ceil(pz.max())))
-        if i1 < i0 or j1 < j0: continue
-        ii, jj = np.meshgrid(np.arange(i0, i1 + 1) + .5, np.arange(j0, j1 + 1) + .5)
-        (x0, x1, x2), (z0, z1, z2) = px, pz
-        den = (z1 - z2) * (x0 - x2) + (x2 - x1) * (z0 - z2)
-        if abs(den) < 1e-9: continue
-        a = ((z1 - z2) * (ii - x2) + (x2 - x1) * (jj - z2)) / den; b = ((z2 - z0) * (ii - x2) + (x0 - x2) * (jj - z2)) / den; c = 1 - a - b
-        ins = (a >= -1e-6) & (b >= -1e-6) & (c >= -1e-6)
-        if not ins.any(): continue
-        y = a * tri[0, 1] + b * tri[1, 1] + c * tri[2, 1]
-        sub = Y[j0:j1 + 1, i0:i1 + 1]; sc = C[j0:j1 + 1, i0:i1 + 1]
-        u = ins & (y >= sub - .002); sub[u] = y[u]; sc[u] = CID[nm]
-# suelo sin edificios (para apoyar cosas junto a casas): solo tierra/verde/playa/roca/aceras/calzada
-xs = X0 + (np.arange(W) + .5) / RES; zs = Z0 + (np.arange(H) + .5) / RES
-XX, ZZ = np.meshgrid(xs, zs)
+def rasteriza(x0_, x1_, z0_, z1_):
+    global X0, X1, Z0, Z1, W, H, Y, C, XX, ZZ
+    X0, X1, Z0, Z1 = x0_, x1_, z0_, z1_; W, H = int((X1 - X0) * RES), int((Z1 - Z0) * RES)
+    Y = np.full((H, W), -9.0, np.float32); C = np.zeros((H, W), np.uint8)
+    for nm in ORDER:
+        t = np.array(T.get(nm, []), np.float64).reshape(-1, 3, 3)
+        if not len(t): continue
+        xs, zs = t[:, :, 0], t[:, :, 2]
+        t = t[(xs.max(1) > X0) & (xs.min(1) < X1) & (zs.max(1) > Z0) & (zs.min(1) < Z1)]
+        for tri in t:
+            px = (tri[:, 0] - X0) * RES; pz = (tri[:, 2] - Z0) * RES
+            i0, i1 = max(0, int(np.floor(px.min()))), min(W - 1, int(np.ceil(px.max())))
+            j0, j1 = max(0, int(np.floor(pz.min()))), min(H - 1, int(np.ceil(pz.max())))
+            if i1 < i0 or j1 < j0: continue
+            ii, jj = np.meshgrid(np.arange(i0, i1 + 1) + .5, np.arange(j0, j1 + 1) + .5)
+            (x0, x1, x2), (z0, z1, z2) = px, pz
+            den = (z1 - z2) * (x0 - x2) + (x2 - x1) * (z0 - z2)
+            if abs(den) < 1e-9: continue
+            a = ((z1 - z2) * (ii - x2) + (x2 - x1) * (jj - z2)) / den; b = ((z2 - z0) * (ii - x2) + (x0 - x2) * (jj - z2)) / den; c = 1 - a - b
+            ins = (a >= -1e-6) & (b >= -1e-6) & (c >= -1e-6)
+            if not ins.any(): continue
+            y = a * tri[0, 1] + b * tri[1, 1] + c * tri[2, 1]
+            sub = Y[j0:j1 + 1, i0:i1 + 1]; sc = C[j0:j1 + 1, i0:i1 + 1]
+            u = ins & (y >= sub - .002); sub[u] = y[u]; sc[u] = CID[nm]
+    xs = X0 + (np.arange(W) + .5) / RES; zs = Z0 + (np.arange(H) + .5) / RES
+    XX, ZZ = np.meshgrid(xs, zs)
+rasteriza(X0, X1, Z0, Z1)
 def pix(x, z): return int((z - Z0) * RES), int((x - X0) * RES)
 def cl(x, z):
     j, i = pix(x, z)
@@ -251,6 +255,72 @@ for _ in range(60000):
         NUEVOS.append([R4(x), R4(z), R4(y), R4((.045 if redondo else .05) + rn() * .025), R4((.15 + rn() * .1) * (.7 + .3 * exp)), PINO[int(rn() * len(PINO))], redondo, 1])
 I['arboles'] += NUEVOS
 json.dump(I, open(fi, 'w'), separators=(',', ':'))
+# ---------- 7) Panxón: Templo Votivo do Mar, dique del puerto, rampa y barcas fondeadas ----------
+# otro raster, más al sur, y su propio azar (así la zona 1 sale igual que antes)
+rasteriza(-40.0, -14.0, 130.0, 156.0)
+MAR = (C == 0) | (C == CID['agua'])
+rs = [777]
+PX = {}
+# el templo: el edificio grande de la ladera sobre la playa (se quita del catastro y se pone el templo de verdad)
+E = C == CID['edificios']; lab, nlab = ndimage.label(E)
+k = lab[pix(-23.18, 141.84)]
+assert k, 'no encuentro el edificio del templo'
+m = lab == k; js, is_ = np.nonzero(m); px_ = XX[js, is_]; pz_ = ZZ[js, is_]
+cx, cz = float(px_.mean()), float(pz_.mean())
+cov = np.cov(np.vstack([px_ - cx, pz_ - cz])); ev, evec = np.linalg.eigh(cov); ax = evec[:, 1]
+u = (px_ - cx) * ax[0] + (pz_ - cz) * ax[1]; v = (px_ - cx) * -ax[1] + (pz_ - cz) * ax[0]
+largo, ancho = float(u.max() - u.min()), float(v.max() - v.min())
+# la fachada mira a la playa (al extremo oeste de la playa de Panxón)
+pl = np.array([-24.2, 144.6]); d1 = np.array([cx + ax[0] * largo / 2, cz + ax[1] * largo / 2]); d2 = np.array([cx - ax[0] * largo / 2, cz - ax[1] * largo / 2])
+if np.linalg.norm(d2 - pl) < np.linalg.norm(d1 - pl): ax = -ax
+ang = math.atan2(ax[1], ax[0])
+anillo = ndimage.binary_dilation(m, iterations=6) & ~ndimage.binary_dilation(m, iterations=2) & ~E & (C != CID['calzada'])
+suelo_t = float(np.median(Y[anillo])) if anillo.any() else float(np.median(Y[m]))
+# contorno a quitar (casco convexo del edificio, un poco más ancho)
+from scipy.spatial import ConvexHull
+pts = np.column_stack([px_, pz_]); hull = pts[ConvexHull(pts).vertices]
+cen = hull.mean(0); hull = cen + (hull - cen) * 1.06
+PX['templo'] = {'x': R4(cx), 'z': R4(cz), 'y': R4(suelo_t), 'a': R4(ang), 'largo': R4(largo), 'ancho': R4(ancho), 'quita': [R4(c) for p in hull for c in p]}
+# dique: la lengua estrecha de tierra con su calzada que sale de la punta hacia el SE
+caja_d = (XX > -25.45) & (XX < -24.0) & (ZZ > 146.0) & (ZZ < 148.0) & ~MAR
+js, is_ = np.nonzero(caja_d); dx_, dz_ = XX[js, is_], ZZ[js, is_]
+cxd, czd = dx_.mean(), dz_.mean(); cov = np.cov(np.vstack([dx_ - cxd, dz_ - czd])); ev, evec = np.linalg.eigh(cov); axd = evec[:, 1]
+if axd[1] < 0: axd = -axd                                     # de la raíz (N) a la punta (S)
+ud = (dx_ - cxd) * axd[0] + (dz_ - czd) * axd[1]
+raiz = (cxd + axd[0] * ud.min(), czd + axd[1] * ud.min()); punta = (cxd + axd[0] * ud.max(), czd + axd[1] * ud.max())
+nd = np.array([-axd[1], axd[0]])                                # normal: hacia el E (dársena) si nd[0] > 0
+if nd[0] < 0: nd = -nd
+# ancho y cota de la losa a lo largo del dique
+EJE = []
+for t in np.linspace(0, 1, 24):
+    x, z = raiz[0] + (punta[0] - raiz[0]) * t, raiz[1] + (punta[1] - raiz[1]) * t
+    wl = wr = 0
+    while wl < .3 and not MAR[pix(x - nd[0] * wl, z - nd[1] * wl)]: wl += .005
+    while wr < .3 and not MAR[pix(x + nd[0] * wr, z + nd[1] * wr)]: wr += .005
+    EJE.append([R4(x), R4(z), R4(hy(x, z)), R4(wl), R4(wr)])
+PX['dique'] = {'eje': EJE, 'n': [R4(nd[0]), R4(nd[1])]}
+# rampa: en la raíz del dique, por el lado de la dársena
+rx, rz = raiz[0] + (punta[0] - raiz[0]) * .18, raiz[1] + (punta[1] - raiz[1]) * .18
+q = 0
+while q < .4 and not MAR[pix(rx + nd[0] * q, rz + nd[1] * q)]: q += .005
+PX['rampa'] = [R4(rx + nd[0] * q), R4(rz + nd[1] * q), R4(hy(rx + nd[0] * (q - .02), rz + nd[1] * (q - .02))), R4(math.atan2(nd[1], nd[0]))]
+# barcas fondeadas en la dársena, entre el dique y la playa
+dagua = ndimage.distance_transform_edt(MAR) / RES               # distancia a tierra desde el agua
+BAR = []; ocup = []
+zona = MAR & (dagua > .07) & (XX > -25.2) & (XX < -21.6) & (ZZ > 145.4) & (ZZ < 149.2)
+ii = np.argwhere(zona)
+for _ in range(20000):
+    if len(BAR) >= 46: break
+    j, i = ii[int(rn() * len(ii))]; x, z = XX[j, i], ZZ[j, i]
+    if math.hypot(x - punta[0], z - punta[1]) > 2.6 or dagua[j, i] > 1.3: continue
+    if any((x - a) ** 2 + (z - b) ** 2 < .1 ** 2 for a, b in ocup): continue
+    ocup.append((x, z)); r = rn()
+    tipo = 0 if r < .45 else (1 if r < .85 else 2)                 # 0 gamela, 1 planeadora, 2 velero pequeño
+    BAR.append([R4(x), R4(z), tipo, int(rn() * 8), R4(-2.35 + (rn() - .5) * .5), round(rn(), 3)])
+PX['barcas'] = BAR
+OUT['panxon'] = PX
+print('templo', PX['templo']['x'], PX['templo']['z'], PX['templo']['y'], 'largo', largo, 'ancho', ancho, 'dique', raiz, punta, 'barcas', len(BAR), 'rampa', PX['rampa'])
+
 OUT['pinar'] = len(NUEVOS)
 json.dump(OUT, open(os.path.join(RAIZ, 'nigran_detalle.json'), 'w'), separators=(',', ':'))
 print('monumento', OUT['monumento'], 'bateria', OUT['bateria'], 'mirador', OUT['mirador'], 'rosa', OUT['rosa'])

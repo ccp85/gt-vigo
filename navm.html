@@ -3746,6 +3746,9 @@ function gamelasTick(dt,t){if(!GAM.ok){gamelasInit();return}
    if(b.boya){b.a+=Math.sin(t*.05+b.ph)*.02*dt;b.boya.position.set(b.x+Math.cos(b.a)*.09,-.03+Math.sin(t*1.7+b.ph)*.0015,b.y+Math.sin(b.a)*.09)}}}}
 // ---------- fin de barcas.js
 // ---------- Nigrán: Patos, Prado y Monteferro (nigran.js) ----------
+// Zona 2, Panxón: el Templo Votivo do Mar en la ladera sobre la playa (en lugar del bloque del catastro), el dique del
+// puerto con pretil, norays, farolas y la baliza verde de la punta, la rampa de varada y unas 45 barcas fondeadas
+// (gamelas, planeadoras y veleros pequeños con su boya) que se mecen en la dársena.
 // Zona 1 de Nigrán pulida con Google Earth, Street View y fotos como referencia (toda la geometría es propia).
 // Datos en nigran_detalle.json (fuente/herramientas/nigran_hornear.py); el pinar de Monteferro va en baiona_inst.json.
 // · Monteferro: suelo de monte (pinocha, musgo, helecho y tojo) en vez de césped, costa de granito con bolos,
@@ -3900,6 +3903,95 @@ function nigCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
   const g=new THREE.ExtrudeGeometry(s,{depth:.014,bevelEnabled:true,bevelThickness:.0015,bevelSize:.0015,bevelSegments:2,curveSegments:10});g.translate(0,0,-.007);g.scale(1.3,1.3,1.1);
   // el largo de la ola va paralelo a la orilla; mira al mar con su cresta
   pon(g,BLA,x,y-.001,z,a+Math.PI/2,true);caja(.14,.004,.035,GRA2,x,y-.003,z,a+Math.PI/2,true)}
+ // ================= ZONA 2: PANXÓN — Templo Votivo do Mar, puerto y barcas =================
+ if(D.panxon){const PX=D.panxon,m=MT;
+  // ---------- Templo Votivo do Mar (Antonio Palacios, 1932-1937): fuera el bloque del catastro y el templo de granito ----------
+  {const T_=PX.templo,Q=[];for(let i=0;i<T_.quita.length;i+=2)Q.push([T_.quita[i],T_.quita[i+1]]);
+   const dentro=(x,z)=>{let c=false;for(let i=0,j=Q.length-1;i<Q.length;j=i++){const[xi,zi]=Q[i],[xj,zj]=Q[j];if((zi>z)!==(zj>z)&&x<(xj-xi)*(z-zi)/(zj-zi)+xi)c=!c}return c};
+   const a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();let k=0;root.updateMatrixWorld(true);
+   root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||o.parent===G||!/^(edificios|piezas|tejados|cubiertas)/.test(o.name))return;const g=o.geometry,ix=g.index,pos=g.attributes.position;if(!pos)return;if(!g.boundingBox)g.computeBoundingBox();
+    const bb=g.boundingBox.clone().applyMatrix4(o.matrixWorld);if(bb.max.x<T_.x-.5||bb.min.x>T_.x+.5||bb.max.z<T_.z-.5||bb.min.z>T_.z+.5)return;const mw=o.matrixWorld;let ch=0;const I=j=>ix?ix.getX(j):j,cnt=ix?ix.count:pos.count;
+    for(let i=0;i+2<cnt;i+=3){a.fromBufferAttribute(pos,I(i)).applyMatrix4(mw);b.fromBufferAttribute(pos,I(i+1)).applyMatrix4(mw);c.fromBufferAttribute(pos,I(i+2)).applyMatrix4(mw);
+     const mx=(a.x+b.x+c.x)/3,mz=(a.z+b.z+c.z)/3;if(dentro(mx,mz)&&Math.max(a.y,b.y,c.y)>T_.y+.01){if(ix){const i0=ix.getX(i);ix.setX(i+1,i0);ix.setX(i+2,i0)}else for(const j of[i+1,i+2])pos.setXYZ(j,pos.getX(i),pos.getY(i),pos.getZ(i));ch++}}
+    if(ch){if(ix)ix.needsUpdate=true;else pos.needsUpdate=true;k+=ch;if(g.boundsTree)try{g.computeBoundsTree()}catch(e){}}});NIG.temploQuitados=k;
+   const ang=T_.a,ca=Math.cos(ang),sa=Math.sin(ang),y0=T_.y-.002;
+   const TG=M(0xb3ab9c,{roughness:.95}),TG2=M(0x9c9486,{roughness:.95}),TOS=M(0x2b2926,{roughness:1}),TCU=M(0x6d6a64,{roughness:.9}),TCR=M(0x4a4740,{roughness:.6,metalness:.4});
+   // L(u,v): u hacia la fachada, v a la derecha; medidas en metros
+   const L=(u,v)=>[T_.x+(u*ca-v*sa)*m,T_.z+(u*sa+v*ca)*m];
+   const B=(w,h,l,mat,u,v,y,sol=true)=>{const[x,z]=L(u,v);caja(w*m,h*m,l*m,mat,x,y0+y*m,z,ang,sol)};
+   const almenas=(u0,u1,v0,v1,y,paso=2.2)=>{   // merlones en el borde de un rectángulo (u0..u1, v0..v1) a la altura y
+    for(let u=u0+.6;u<=u1-.5;u+=paso){B(1,1.1,.8,TG2,u,v0+.4,y,false);B(1,1.1,.8,TG2,u,v1-.4,y,false)}
+    for(let v=v0+.6;v<=v1-.5;v+=paso){B(.8,1.1,1,TG2,u0+.4,v,y,false);B(.8,1.1,1,TG2,u1-.4,v,y,false)}};
+   // terraza y escalinata hacia la playa
+   B(36,1.2,26,TG2,0,0,-.6);for(let s=0;s<4;s++)B(1.4,.45,10,TG2,18.7+s*1.4,0,.15-s*.45);
+   for(const v of[-12.7,12.7])B(34,1.1,.5,TG,0,v,.6,false);   // pretil de la terraza
+   // nave con almenas, naves bajas a los lados y cubierta oscura
+   B(26,13,14,TG,1,0,.6);almenas(-12,14,-7,7,13.6);B(25,.8,13,TCU,1,0,12.8,false);
+   for(const s of[-1,1]){B(20,8,5,TG2,0,s*9.5,.6);almenas(-10,10,s>0?7:-12,s>0?12:-7,8.6);
+    for(let u=-7;u<=7;u+=3.5)B(1.2,3.2,.3,TOS,u,s*12.05,3.2,false)}   // ventanas de las capillas
+   for(const s of[-1,1])for(let u=-8;u<=10;u+=4.5)B(1,4,.3,TOS,u,s*7.05,9,false);   // ventanales altos de la nave
+   // ábside semicircular detrás, con el arco visigótico
+   {const[x,z]=L(-12,0);const g=new THREE.CylinderGeometry(7*m,7*m,10*m,20,1,false,Math.PI,Math.PI);pon(g,TG,x,y0+5.6*m,z,ang,true);
+    const[xa,za]=L(-19.05,0);const ar=new THREE.CylinderGeometry(1.1*m,1.1*m,.3*m,14);ar.rotateZ(Math.PI/2);pon(ar,TOS,xa,y0+4.2*m,za,ang,false);B(.3,2.4,2.2,TOS,-19.05,0,1.8,false)}
+   // fachada: muro alto con almenas, gran arco de entrada y rosetón
+   B(1.6,17,16,TG,14.6,0,.6);almenas(13.8,15.4,-8,8,17.6,2);
+   B(.4,7,5,TOS,15.45,0,.6,false);{const[x,z]=L(15.45,0);const g=new THREE.CylinderGeometry(2.5*m,2.5*m,.4*m,18);g.rotateZ(Math.PI/2);pon(g,TOS,x,y0+7.6*m,z,ang,false)}
+   {const[x,z]=L(15.5,0);const g=new THREE.TorusGeometry(3.1*m,.35*m,6,24,Math.PI);g.rotateY(Math.PI/2);pon(g,TG2,x,y0+7.6*m,z,ang,false)}
+   {const[x,z]=L(15.45,0);const g=new THREE.CylinderGeometry(2.1*m,2.1*m,.4*m,20);g.rotateZ(Math.PI/2);pon(g,TOS,x,y0+12.6*m,z,ang,false);const r=new THREE.TorusGeometry(2.2*m,.3*m,6,24);r.rotateY(Math.PI/2);pon(r,TG2,x+ca*.1*m,y0+12.6*m,z+sa*.1*m,ang,false)}
+   {const[x,z]=L(15,0);pon(new THREE.BoxGeometry(.4*m,2.4*m,.4*m),TCR,x,y0+19.6*m,z);pon(new THREE.BoxGeometry(.4*m,.4*m,1.6*m),TCR,x,y0+20.2*m,z,ang)}
+   // torre cuadrada con campanario y almenas, a la derecha de la fachada
+   B(7.5,28,7.5,TG,10.5,10.5,.6);almenas(6.75,14.25,6.75,14.25,28.6,1.9);
+   for(const[du,dv,w,l]of[[3.8,0,.3,2],[-3.8,0,.3,2],[0,3.8,2,.3],[0,-3.8,2,.3]])B(w,4.5,l,TOS,10.5+du,10.5+dv,21,false);   // huecos de las campanas
+   for(const[du,dv]of[[-3.4,-3.4],[3.4,-3.4],[-3.4,3.4],[3.4,3.4]])B(1.3,2.2,1.3,TG2,10.5+du,10.5+dv,28.6,false);       // garitas de las esquinas
+   // torrecilla redonda y esbelta con la aguja y la cruz
+   {const[x,z]=L(9.5,5.4);pon(new THREE.CylinderGeometry(1.5*m,1.7*m,33*m,14),TG,x,y0+17.1*m,z,0,true);pon(new THREE.CylinderGeometry(2*m,1.6*m,1*m,14),TG2,x,y0+33.8*m,z);
+    pon(new THREE.ConeGeometry(1.1*m,6*m,10),TG2,x,y0+37.3*m,z);pon(new THREE.CylinderGeometry(.08*m,.08*m,3*m,5),TCR,x,y0+41.5*m,z);pon(new THREE.BoxGeometry(.15*m,.15*m,1.4*m),TCR,x,y0+42.3*m,z,ang);
+    for(let k=0;k<4;k++)B(.3,1.4,.6,TOS,9.5+Math.cos(k*1.57)*1.6,5.4+Math.sin(k*1.57)*1.6,26,false)}}
+  // ---------- dique del puerto: pretil por fuera, norays por dentro, farolas y la baliza verde de la punta ----------
+  {const E=PX.dique.eje,[nx,nz]=PX.dique.n;
+   for(let i=1;i<E.length;i++){const[a1,b1,c1,wl1]=E[i-1],[a2,b2,c2,wl2]=E[i];
+    const ox1=-nx*Math.max(.01,wl1-.008),oz1=-nz*Math.max(.01,wl1-.008),ox2=-nx*Math.max(.01,wl2-.008),oz2=-nz*Math.max(.01,wl2-.008);
+    const x1=a1+ox1,z1=b1+oz1,x2=a2+ox2,z2=b2+oz2,l=Math.hypot(x2-x1,z2-z1);if(l<1e-4)continue;
+    caja(l+.002,.014,.008,i%2?GRA:GRA2,(x1+x2)/2,(Math.max(c1,c2))-.003,(z1+z2)/2,Math.atan2(z2-z1,x2-x1),true)}
+   for(let i=1;i<E.length-1;i+=2){const[x,z,y,wl,wr]=E[i];pon(new THREE.CylinderGeometry(.0025,.003,.007,8),NEG,x+nx*Math.max(.008,wr-.008),y+.0035,z+nz*Math.max(.008,wr-.008))}
+   for(let i=3;i<E.length-1;i+=6){const[x,z,y,wl]=E[i],fx=x-nx*Math.max(.012,wl-.02),fz=z-nz*Math.max(.012,wl-.02);
+    pon(new THREE.CylinderGeometry(.0011,.0015,.042,6),NEG,fx,y+.021,fz);pon(new THREE.CylinderGeometry(.0034,.0024,.0075,4,1),LUZF,fx,y+.046,fz,Math.PI/4);pon(new THREE.ConeGeometry(.0052,.004,4),NEG,fx,y+.052,fz,Math.PI/4)}
+   const[x,z,y]=E[E.length-1];const VERD=M(0x2f8f4a,{roughness:.6});
+   pon(new THREE.CylinderGeometry(.012,.014,.012,14),BLA,x,y+.006,z,0,true);pon(new THREE.CylinderGeometry(.006,.008,.045,12),VERD,x,y+.0345,z,0,true);
+   pon(new THREE.CylinderGeometry(.0085,.0085,.0025,12),NEG,x,y+.058,z);pon(new THREE.CylinderGeometry(.004,.004,.008,10),M(0xb7f5c4,{emissive:0x33ff66,emissiveIntensity:.8,roughness:.2}),x,y+.0632,z);pon(new THREE.ConeGeometry(.005,.005,10),VERD,x,y+.0697,z)}
+  // ---------- rampa de varada ----------
+  {const[x,z,y,a]=PX.rampa,ca=Math.cos(a),sa=Math.sin(a),l=.11,c=-.05,g=new THREE.BoxGeometry(l,.004,.05);
+   const p=g.attributes.position;for(let i=0;i<p.count;i++){const u=(p.getX(i)+l/2)/l;p.setY(i,p.getY(i)+(y-.002)+(c-y)*u)}g.computeVertexNormals();pon(g,HOR,x+ca*(l/2-.01),0,z+sa*(l/2-.01),a)}
+  // ---------- barcas fondeadas: gamelas, planeadoras y veleros pequeños, con su boya; se mecen ----------
+  if(typeof BARC!=='undefined'&&BARC.casco){const PAL=[[0x2f6fb0,0xf2efe6],[0x2e8b57,0xf2efe6],[0xc8352b,0xf2efe6],[0xf2efe6,0x2f6fb0],[0xe9c234,0x2f6fb0],[0x1f4f8f,0xc8352b],[0xf2efe6,0x2e8b57],[0x7a3e9d,0xf2efe6]];
+   const tmp=new THREE.Color();
+   // aplana un grupo a triángulos con color por vértice (color propio × color del material)
+   const aplana=(g,out)=>{g.updateMatrixWorld(true);g.traverse(o=>{if(!o.isMesh||(o.material&&(o.material.transparent||o.material.isMeshBasicMaterial)))return;let geo=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();geo.applyMatrix4(o.matrixWorld);
+    const p=geo.attributes.position,cc=geo.attributes.color,mc=o.material.color||tmp.set(0xffffff);for(let i=0;i<p.count;i++){out.p.push(p.getX(i),p.getY(i),p.getZ(i));if(cc)out.c.push(cc.getX(i)*mc.r,cc.getY(i)*mc.g,cc.getZ(i)*mc.b);else out.c.push(mc.r,mc.g,mc.b)}})};
+   const barca=(tipo,ci)=>{const g=new THREE.Group(),[c1,c2]=PAL[ci%PAL.length],MM=BARC.mat;
+    if(tipo===0){const cg=BARC.casco({L:.07,B:.026,H:.011,D:.005,NS:14,NU:5,fondo:'plano',popa:.58,arrufo:.008,arrufoPopa:.002,col:c1,banda:c2,obra:0x2f3b2e,flot:-.002,anchoBanda:.0028,franja:0xf2efe6});
+     g.add(new THREE.Mesh(cg,MM(0xffffff,{vertexColors:true})));g.add(BARC.cubierta(cg,.03,.93,.0085,MM(0x9b7653)));for(const r of BARC.regala(cg,.0009,MM(0x6b4a2e),.985))g.add(r);
+     const sec=cg.userData.sec;for(const t of[.3,.62]){const S=sec(t),b=new THREE.Mesh(new THREE.BoxGeometry(.007,.0014,S.w*1.85),MM(0x9b7653));b.position.set(-.035+t*.07,S.top-.004,0);g.add(b)}}
+    else if(tipo===1){const cg=BARC.casco({L:.075,B:.028,H:.012,D:.007,NS:14,NU:5,fondo:'v',popa:.82,arrufo:.006,col:0xf2f2ee,banda:c1,obra:0x3a2b2b,flot:-.003,anchoBanda:.004});
+     g.add(new THREE.Mesh(cg,MM(0xffffff,{vertexColors:true})));g.add(BARC.cubierta(cg,.04,.97,.007,MM(0xd9d6cf)));
+     const co=new THREE.Mesh(new THREE.BoxGeometry(.014,.01,.014),MM(0xf4f3ee));co.position.set(.008,.014,0);g.add(co);const mo=new THREE.Mesh(new THREE.BoxGeometry(.008,.011,.007),MM(0x1d1f24));mo.position.set(-.04,.012,0);g.add(mo);
+     const lo=new THREE.Mesh(new THREE.BoxGeometry(.016,.0012,.022),MM(c2===0xf2efe6?0x2b3a55:c2));lo.position.set(.024,.0125,0);g.add(lo)}
+    else{const cg=BARC.casco({L:.09,B:.03,H:.011,D:.012,NS:16,NU:5,fondo:'redondo',popa:.75,arrufo:.004,col:0xf4f4f0,banda:c1,obra:0x223355,flot:-.002,anchoBanda:.003});
+     g.add(new THREE.Mesh(cg,MM(0xffffff,{vertexColors:true})));g.add(BARC.cubierta(cg,.02,.97,.0015,MM(0xb08a5c)));
+     const ca_=new THREE.Mesh(new THREE.BoxGeometry(.03,.007,.018),MM(0xf2f2ee));ca_.position.set(-.004,.014,0);g.add(ca_);
+     const ma=new THREE.Mesh(new THREE.CylinderGeometry(.0008,.001,.13,5),MM(0xd8dadc,{metalness:.5}));ma.position.set(.012,.075,0);g.add(ma);
+     const bo=new THREE.Mesh(new THREE.CylinderGeometry(.0006,.0006,.04,5),MM(0xd8dadc,{metalness:.5}));bo.rotation.z=Math.PI/2;bo.position.set(-.008,.022,0);g.add(bo)}
+    return g};
+   const MAR_Y=-.03,lista=LT?PX.barcas.filter((b,i)=>i%2===0):PX.barcas,TRES=[{p:[],c:[]},{p:[],c:[]},{p:[],c:[]}],BOY=[];
+   for(const[x,z,tipo,ci,a,s]of lista){const g=barca(tipo,ci);g.rotation.y=-a;g.position.set(x,0,z);const k=Math.floor(s*3)%3;aplana(g,TRES[k]);BOY.push([x+Math.cos(a)*.055,z+Math.sin(a)*.055,ci])}
+   const mB=M(0xffffff,{vertexColors:true,roughness:.55,side:THREE.DoubleSide}),mallas=[];
+   TRES.forEach((T,k)=>{if(!T.p.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(T.p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(T.c,3));g.computeVertexNormals();
+    const mm=new THREE.Mesh(g,mB);mm.name='barcas_panxon';mm.position.y=MAR_Y;mm.castShadow=!LT;mm.receiveShadow=true;mm.userData.fase=k*2.1;G.add(mm);mallas.push(mm)});
+   for(const[x,z,ci]of BOY)pon(new THREE.SphereGeometry(.0045,10,8),ci%2?ROJ:M(0xff8a1e,{roughness:.6}),x,MAR_Y+.001,z);
+   // vaivén suave: cada tercio de la flota con su fase
+   const t0=performance.now();const meces=()=>{if(!mallas.length||!mallas[0].parent)return;const t=(performance.now()-t0)/1000;
+    for(const mm of mallas){const f=mm.userData.fase;mm.position.y=MAR_Y+Math.sin(t*1.3+f)*.0012;mm.rotation.z=Math.sin(t*.9+f)*.006;mm.rotation.x=Math.sin(t*1.1+f*1.7)*.005}
+    requestAnimationFrame(meces)};requestAnimationFrame(meces);NIG.barcas=lista.length}}
  // ---------- juntar por material ----------
  const junta=(P_,nombre,solido)=>{for(const[mat,gs]of P_){if(!gs.length)continue;const mm=new THREE.Mesh(mergeGeometries(gs),mat);mm.name=nombre;mm.castShadow=!LT&&mat!==LUZF;mm.receiveShadow=true;G.add(mm);if(solido)try{colaBVH(mm)}catch(e){}}};
  junta(PARTS,'piezas_nigran',false);
