@@ -1370,7 +1370,8 @@ function gpuAgua(glob,surfM){GT.ini();const{vec2,vec3,float,normalize,max,min,mi
  const R0=reflect(V.negate(),N),Rf=vec3(R0.x,abs(R0.y),R0.z);
  const sky=mix(uHor,uZen,smoothstep(0,.5,Rf.y).mul(.65).add(.35)).mul(.82);
  // reflejo de la ciudad, los barcos y los montes: foto desde la cámara reflejada bajo el agua (aguaReflejo)
- const uRfOn=GT.U(URF.uRfOn),uRfM=GT.U(URF.uRfM),rcp=uRfM.mul(TSL.vec4(positionWorld,1)),ru=clamp(rcp.xy.div(rcp.w).add(N.xz.mul(.06)),.001,.999),rc=texture(ARF.rt.texture,ru);
+ const uRfOn=GT.U(URF.uRfOn),uRfM=GT.U(URF.uRfM),rcp=uRfM.mul(TSL.vec4(positionWorld,1)),ru0=rcp.xy.div(rcp.w).add(N.xz.mul(.06)),ru=clamp(vec2(ru0.x,ru0.y.oneMinus()),.001,.999),   // TSL: las texturas de render tienen el origen arriba (WebGPU), hay que darle la vuelta a la v
+ rc=texture(ARF.rt.texture,ru);
  const rfl=select(uRfOn.greaterThan(.5),mix(sky,rc.rgb.mul(.92),clamp(rc.a,0,1)),sky);
  const F=min(pow(nv.oneMinus(),5).mul(.98).add(.02).mul(1.2).add(.07).add(calma.mul(.06)),mix(.58,.74,uRfOn)).mul(aFS.oneMinus());
  const Ls=normalize(uSun),sd=max(dot(Rf,Ls),0),up=smoothstep(-.02,.12,Ls.y).mul(uN.oneMinus());
