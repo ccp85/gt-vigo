@@ -4931,10 +4931,15 @@ function choqueTrafico(){const ca0=Math.cos(P.a),sa0=-Math.sin(P.a);let vx=ca0*P
   if(imp>.06){golpe();padVibra(Math.min(1,.3+imp),Math.min(1,imp*1.5),200);c.ko=Math.max(c.ko||0,.9+imp*2.4);c.kvx=(c.kvx||0)-nx*imp*.45*m;c.kvy=(c.kvy||0)-ny*imp*.45*m;c.kw=(Math.random()<.5?-1:1)*imp*7*m;c.esq=0;c.adel=0;c.latT=c.lat||0;REP.on||(window.CHOQUES=(window.CHOQUES||0)+1)}
   else if(!c.pitado){c.pitado=true;c.tb2=2;claxon(c.x,c.y,c.tipo,1)}}}
 // peatones: esquivan si vas hacia ellos, se caen si los rozas, y luego protestan
+// dónde puede pisar un peatón: acera, zona peatonal o paso de cebra (edit_peatones)
+const peaPisa=(x,y)=>{const c=cell(x,y);return c.t===1||c.t===5||(c.t===2&&c.c)};
+// suelo del peatón: con puentes encima elige la superficie más cercana a la del mapa, no el tablero
+const RCpea=new THREE.Raycaster();
+function sueloPea(x,y){if(!GROUND.length)return groundY(x,y);_o.set(x,9,y);RCpea.set(_o,_dn);RCpea.far=12;const h=RCpea.intersectObjects(GROUND,false);if(h.length<2)return groundY(x,y);const m=groundMap(x,y);let b=null,bd=1e9;for(const k of h){const z=oriSuelo(k,x,y),d=Math.abs(z-m);if(d<bd){bd=d;b=z}}return b}
 function peaEsquiva(q,ex,ey,hx,hy,v){if(q.esq>0||q.caido>0)return;let px=ex-hx*(ex*hx+ey*hy),py=ey-hy*(ex*hx+ey*hy);let l=Math.hypot(px,py);if(l<.006){px=-hy*(Math.random()<.5?1:-1);py=hx*(px===-hy?1:-1);l=1}
  q.evx=px/l*v*(1.8+Math.random()*.5);q.evy=py/l*v*(1.8+Math.random()*.5);q.esq=.55+Math.random()*.25}
 function peaReacciona(q,dt){let face=null;
- if(q.caido>0){q.caido-=dt;const dm=Math.exp(-dt*4);q.ex+=q.kvx*dt;q.ey+=q.kvy*dt;q.kvx*=dm;q.kvy*=dm;q.tilt=q.caido>.9?Math.min(1.45,(q.tilt||0)+dt*7):Math.max(0,q.tilt-dt*2);
+ if(q.caido>0){q.caido-=dt;const dm=Math.exp(-dt*4);{const nx=q.ex+q.kvx*dt,ny=q.ey+q.kvy*dt;if(peaPisa(q.x+nx,q.y+ny)){q.ex=nx;q.ey=ny}else{q.kvx=q.kvy=0}}q.kvx*=dm;q.kvy*=dm;q.tilt=q.caido>.9?Math.min(1.45,(q.tilt||0)+dt*7):Math.max(0,q.tilt-dt*2);
   if(q.caido<=0){q.tilt=0;q.enfT=1.4;if(Math.hypot(q.x-P.x,q.y-P.y)<1.2)burbuja(q,azar(TXT.enfadado),'enf')}return Math.atan2(-q.kvy0,q.kvx0)+Math.PI}
  if(q.enfT>0){q.enfT-=dt;face=Math.atan2(-(P.y-q.y),P.x-q.x)}
  if(q.esq>0){q.esq-=dt;const nx=q.ex+q.evx*dt,ny=q.ey+q.evy*dt,cn=cell(q.x+nx,q.y+ny),t=cn.t;if(t===1||t===5||(t===2&&cn.c)){q.ex=nx;q.ey=ny}face=Math.atan2(-q.evy,q.evx)}
@@ -5072,7 +5077,7 @@ const _M=new THREE.Matrix4(),_Q=new THREE.Quaternion(),_V=new THREE.Vector3(),_S
 function updatePeatones(dt){if(!PEA_G)return;const vis=F.vida&&!(driving&&MODO==='heli'&&P.z-groundY(P.x,P.y)>.5);PEA_G.vis(vis);if(!vis)return;
  const ANCH={T:.21,P:.16,S:.14,E:.11,m:.065,s:.035},ACW={T:.03,P:.09,S:.08,E:.06,m:.04,s:.025};
  for(let i=0;i<PEA.length;i++){const q=PEA[i];
-  if(!q.r||Math.hypot(q.x-F.x,q.y-F.y)>F.Rp){if(!recolocar(q,CERCA_P,driving?.8:0,F.Rp*.9)){q.x=1e5;PEA_G.hide(i);continue}const[x0,y0]=posRuta(q.r,q.s);q.x=x0;q.y=y0;q.hu=0;q.z=null;q.ox=undefined;q.oxs=undefined;q.ex=q.ey=0;q.caido=0;q.esq=0;q.tilt=0}
+  if(!q.r||Math.hypot(q.x-F.x,q.y-F.y)>F.Rp){if(!recolocar(q,CERCA_P,driving?.8:0,F.Rp*.9)){q.x=1e5;PEA_G.hide(i);continue}const[x0,y0]=posRuta(q.r,q.s);q.x=x0;q.y=y0;q.hu=0;q.z=null;q.ox=undefined;q.oxs=undefined;q.ex=q.ey=0;q.caido=0;q.esq=0;q.tilt=0;q.nuevo=true}
   if(i>=PEA.length*QF*DENS.p){if(q.x<1e4){q.x=1e5;q.r=null;PEA_G.hide(i)}continue}
   const dp=Math.hypot(q.x-P.x,q.y-P.y),huye=driving&&MODO!=='pie'&&MODO!=='heli'&&dp<.16&&Math.abs(P.v)>.08;
   if(huye)q.hu=Math.min(.08,q.hu+dt*.5);else q.hu=Math.max(0,q.hu-dt*.05);
@@ -5084,13 +5089,14 @@ function updatePeatones(dt){if(!PEA_G)return;const vis=F.vida&&!(driving&&MODO==
   if(ok){q.cruza=false;q.mal=0}
   else{const cz=cell(x+sd*off,y+cd*off);
    if(cz.c||cz.t===1||cz.t===5){q.cruza=true}                       // cruza por el paso de cebra
-   else{q.cruza=false;q.dir=-q.dir;q.s+=q.dir*.02;q.mal=(q.mal||0)+.25;if(q.mal<=1.5)continue}}   // calzada sin paso: se da la vuelta
+   else{q.cruza=false;q.dir=-q.dir;q.s+=q.dir*.02;q.mal=(q.mal||0)+.25;if(q.mal<=1.5){if(q.nuevo)PEA_G.hide(i);continue}}}   // calzada sin paso: se da la vuelta
   if(q.mal>1.5){q.r=null;q.mal=0;q.x=1e5;PEA_G.hide(i);continue}
   q.oxs=(q.oxs??ox)+(ox-(q.oxs??ox))*Math.min(1,dt*4);q.ox=ox;if(!q.cruza){const tc=cell(x+sd*(off+q.oxs),y+cd*(off+q.oxs)).t;if(tc!==1&&tc!==5)q.oxs=ox}
   q.x=x+sd*(off+q.oxs);q.y=y+cd*(off+q.oxs);q.a=ang;
   {const vr=peaReacciona(q,dt);q.x+=q.ex||0;q.y+=q.ey||0;if(vr!=null)ang=vr}
-  if(!q.cruza&&!(q.caido>0)){const cf=cell(q.x,q.y);if(cf.t===2&&!cf.c){if(q.ex||q.ey){q.x-=q.ex||0;q.y-=q.ey||0;q.ex=q.ey=0;q.esq=0}const cb=cell(q.x,q.y);if(cb.t===2&&!cb.c){q.r=null;q.x=1e5;PEA_G.hide(i);continue}}}   // nunca por la calzada fuera del paso de cebra
-  if(q.z===null||(i+frameN)%4===0)q.z=groundY(q.x,q.y);
+  if(!peaPisa(q.x,q.y)){if(q.ex||q.ey){q.x-=q.ex||0;q.y-=q.ey||0;q.ex=q.ey=0;q.esq=0}if(!peaPisa(q.x,q.y)&&!(q.cruza&&cell(q.x,q.y).t===2)){q.r=null;q.x=1e5;PEA_G.hide(i);continue}}   // nunca por agua ni calzada (solo cruzando por el paso de cebra) (edit_peatones)
+  q.nuevo=false;   // nunca por la calzada fuera del paso de cebra
+  if(q.z===null||(i+frameN)%4===0)q.z=sueloPea(q.x,q.y);
   const bob=Math.abs(Math.sin(performance.now()/160+q.ph))*.0025;
   {const corre=q.esq>0||q.enfT>0;PEA_G.set(i,q.x,q.z+(q.caido>0?0:bob*.6),q.y,ang,q.caido>0?0:Math.sin(performance.now()/(corre?75:160)+q.ph)*.55*(q.cruza||corre?1.4:1)*(huye&&!corre?.2:1),q.esc||(q.esc=.92+((i*37)%17)/100),q.tilt||0)}}
  PEA_G.done()}
@@ -5317,6 +5323,15 @@ function tunel(dt){if(MODO!=='coche'&&MODO!=='pie')return false;if(!MAPA)return 
  const want=new THREE.Vector3(x-fx*dist,Math.max(z,tunZ(r,T.s-T.dir*dist))+hg,y-fy*dist);if(!camInit){pcam.position.copy(want);camInit=true}else pcam.position.lerp(want,Math.min(1,dt*(bajo?14:8)));
  look.set(x+fx*.3,z+(bajo?.03:0),y+fy*.3);pcam.lookAt(look);pcam.fov=60+10*Math.min(1,Math.abs(P.v));pcam.updateProjectionMatrix();
  document.getElementById('vel').firstChild.nodeValue=Math.round(Math.abs(P.v)*125);hudAccion(dt);return true}
+// celdas de edificio sin nada encima (muros y vallas del mapa que no se ven) no bloquean (edit_barreras)
+const EDR=new Map(),RCe=new THREE.Raycaster(),_oE=new THREE.Vector3(),_dE=new THREE.Vector3(0,-1,0);RCe.firstHitOnly=true;
+function edifReal(x,y){const OB=window.OBST;if(!MAPA||!OB||!OB.length)return true;const i=Math.round((x-MAPA.ox)*MAPA.res),j=Math.round((y-MAPA.oy)*MAPA.res),k=j*MAPA.w+i;
+ const e=EDR.get(k);if(e&&(e.s||e.n===OB.length))return e.s;
+ if(BVHQ.some(o=>!o.userData.suelo))return true;   // colisiones de la zona aún preparándose: como antes
+ const cx=MAPA.ox+i/MAPA.res,cy=MAPA.oy+j/MAPA.res,g=groundY(cx,cy);let sol=false;
+ for(const[a,b]of[[0,0],[.018,0],[-.018,0],[0,.018],[0,-.018]]){_oE.set(cx+a,9,cy+b);RCe.set(_oE,_dE);RCe.far=12;const h=RCe.intersectObjects(OB,false)[0];if(h&&h.point.y>g+.008){sol=true;break}}
+ if(EDR.size>300000)EDR.clear();EDR.set(k,{s:sol,n:OB.length});return sol}
+window.edifReal=edifReal;
 function updateCar(dt){if(BK.on){bkUpdate(dt);return}if(SG.on){surfUpdate(dt);return}if(MODO==='heli'){updateHeli(dt);return}if(MODO==='nado'){updateNado(dt);return}if(MODO==='casa'){updateCasa(dt);return}if(MODO==='skate'){if(SKC.on)skCalleUpdate(dt);else updateSkate(dt);return}
  if(!P.tun){FOG.far=20*(.6+.4*QF);FOG.near=5*(.6+.4*QF)}
  if(tunel(dt))return;
@@ -5343,7 +5358,7 @@ function updateCar(dt){if(BK.on){bkUpdate(dt);return}if(SG.on){surfUpdate(dt);re
   if(!man&&REP.manT<=0){let tx=null,ty=null;const dz=REP.dest;if(dz&&Math.hypot(dz[1]-P.x,dz[2]-P.y)<.45){tx=dz[1];ty=dz[2]}else if(GPS.on&&GPS.pts&&GPS.acc){const A=GPS.acc,s0=A[GPS.idx]||0;let j=GPS.idx;while(j<A.length-1&&A[j]<s0+.12+.12*P.v)j++;tx=GPS.pts[j][0];ty=GPS.pts[j][1]}
    else{let best=null,bs=-1e9;for(const o of[0,.35,-.35,.7,-.7]){const an=P.a+o;let ok=0;for(let q=1;q<=6;q++)if(repLibre(P.x+Math.cos(an)*q*.05,P.y-Math.sin(an)*q*.05))ok++;else break;const sc=ok-Math.abs(o)*2;if(sc>bs){bs=sc;best=an}}tx=P.x+Math.cos(best)*.3;ty=P.y-Math.sin(best)*.3}
    const des=Math.atan2(-(ty-P.y),tx-P.x),df=Math.atan2(Math.sin(des-P.a),Math.cos(des-P.a)),mx=3.4*(REP.giro||1)*dt;P.a+=Math.max(-mx,Math.min(mx,df*Math.min(1,dt*8)));if(Math.abs(df)>1.2&&P.v>.85)P.v-=1.5*dt}}
- const RR=REP.on&&REP.red&&MODO==='coche';const blocked=MOTO?((x,y)=>{const t=cell(x,y).t;return t!==0&&t!==4}):((x,y)=>{const t=cell(x,y).t;return t===0||t===3||t===-1||t===6||(RR&&REP.cerrado&&!repLibre(x,y))});
+ const RR=REP.on&&REP.red&&MODO==='coche';const blocked=MOTO?((x,y)=>{const t=cell(x,y).t;return t!==0&&t!==4}):((x,y)=>{const t=cell(x,y).t;return t===0||(t===3&&edifReal(x,y))||t===-1||t===6||(RR&&REP.cerrado&&!repLibre(x,y))});
  if(!PIE&&!MOTO&&!P.turn&&P.v>.08){const la=.05+.07*Math.min(1,P.v),fx=Math.cos(P.a),fy=-Math.sin(P.a),lx=Math.cos(P.a+1.5708),ly=-Math.sin(P.a+1.5708);let bl=0,br=0;
   for(const w of[.03,.045]){if(blocked(P.x+fx*la+lx*w,P.y+fy*la+ly*w))bl++;if(blocked(P.x+fx*la-lx*w,P.y+fy*la-ly*w))br++}
   if(bl!==br)P.a+=(br>bl?1:-1)*1.3*dt*Math.min(1,P.v*2)}
