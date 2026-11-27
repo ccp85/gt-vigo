@@ -5,6 +5,9 @@
 // Zona 3, Playa América – A Ramallosa: paseo con muro, farolas, palmeras, pasarelas y socorristas, el letrero azul
 // «PRAIA AMÉRICA», la lagoa con marismas de junco y lodo y unas garzas, y el puente medieval de A Ramallosa (arcos de
 // granito con musgo, tajamares, pretiles, cruceiro y hornacina), que se puede cruzar a pie hacia Sabarís.
+// Zona 4, interior: la Casa do Concello, las iglesias parroquiales de San Fiz, Camos, Parada, Priegue y Chandebrito
+// (fachada con espadaña y campanas, atrio con cruceiro y nichos), unos 170 hórreos del Val Miñor junto a las casas del
+// rural, cruceiros en los cruces de camino y viñas en emparrado.
 // Zona 1 de Nigrán pulida con Google Earth, Street View y fotos como referencia (toda la geometría es propia).
 // Datos en nigran_detalle.json (fuente/herramientas/nigran_hornear.py); el pinar de Monteferro va en baiona_inst.json.
 // · Monteferro: suelo de monte (pinocha, musgo, helecho y tojo) en vez de césped, costa de granito con bolos,
@@ -313,6 +316,63 @@ function nigCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
     const cue=new THREE.CylinderGeometry(.0007,.0009,.008,5);cue.rotateZ(-.5+s*.4);pon(cue,GBL,x+ca*.004,y+.016,z+sa*.004,a);
     pon(new THREE.SphereGeometry(.0013,6,5),GBL,x+ca*.0062,y+.0198,z+sa*.0062);{const pi=new THREE.ConeGeometry(.0006,.005,4);pi.rotateZ(-Math.PI/2);pon(pi,PIC,x+ca*.0092,y+.0195,z+sa*.0092,a)}}}
   NIG.america=1}
+ // ================= ZONA 4: INTERIOR DE NIGRÁN =================
+ if(D.interior){const IN=D.interior,m=MT;
+  const TEJ=M(0xb5532f,{roughness:.85}),TEJ2=M(0x9e4628,{roughness:.85}),GRI=M(0xa59f93,{roughness:.95}),GRI2=M(0x8f897e,{roughness:.95}),
+   PUE=M(0x6b4226,{roughness:.8}),VERP=M(0x2f5a3a,{roughness:.6}),CES=M(0x5f8f45,{roughness:1}),VID=M(0x5b7a34,{roughness:.9,side:THREE.DoubleSide}),VID2=M(0x6d8a3c,{roughness:.9,side:THREE.DoubleSide}),BRON=M(0x8a6a2a,{roughness:.45,metalness:.7});
+  // tejado a dos aguas: prisma triangular (ancho w, largo l, alto h) con la cumbrera a lo largo de x local
+  const tejado=(w,l,h)=>{const s=new THREE.Shape();s.moveTo(-w/2,0);s.lineTo(w/2,0);s.lineTo(0,h);s.lineTo(-w/2,0);const g=new THREE.ExtrudeGeometry(s,{depth:l,bevelEnabled:false});g.translate(0,0,-l/2);g.rotateY(Math.PI/2);return g};
+  const LOC=(x0,z0,a)=>{const ca=Math.cos(a),sa=Math.sin(a);return(u,v)=>[x0+u*ca-v*sa,z0+u*sa+v*ca]};
+  // ---------- Casa do Concello: granito, soportal de arcos con puertas verdes, galería con balaustrada, tejado de teja y las tres banderas ----------
+  if(IN.concello){const[x0,z0,y0,a]=IN.concello,L=LOC(x0,z0,a),B=(w,h,l,mat,u,v,y,sol=true)=>{const[x,z]=L(u*m,v*m);caja(w*m,h*m,l*m,mat,x,y0+y*m,z,a,sol)};
+   B(30,.3,22,GRA2,2,0,-.2,false);B(14,.15,22,CES,13,0,0,false);           // zócalo y el césped delante
+   B(13,10,26,GRI,0,0,0);B(13.6,.5,26.6,GRI2,0,0,4.2,false);B(13.8,.6,26.8,GRI2,0,0,9.4,false);
+   for(let k=0;k<5;k++){const v=-9.6+k*4.8;B(.4,3.4,2.6,VERP,6.52,v,0,false);const[x,z]=L(6.55*m,v*m);const g=new THREE.CylinderGeometry(1.3*m,1.3*m,.42*m,14);g.rotateZ(Math.PI/2);pon(g,VERP,x,y0+3.4*m,z,a)}
+   B(.3,1,24,BLA,6.6,0,7.9,false);                                         // el letrero «Concello de Nigrán»
+   B(3,.4,14,GRI2,8,0,4.6,false);for(let v=-6.5;v<=6.5;v+=.9)B(.35,1,.35,GRI2,9.3,v,5,false);B(.4,.25,14,GRI2,9.3,0,6,false);   // galería con balaustrada
+   for(const v of[-4.8,0,4.8])B(.3,2.4,1.6,M(0x2b3442,{roughness:.3,metalness:.3}),6.55,v,5,false);
+   for(const v of[-10.5,10.5])for(const y of[1,5.2])B(.3,2,1.4,M(0x2b3442,{roughness:.3,metalness:.3}),6.55,v,y,false);
+   {const[x,z]=L(0,0);const g=new THREE.ConeGeometry(1,1,4);g.rotateY(Math.PI/4);g.scale(15.5*m/1.41,4*m,28*m/1.41);pon(g,TEJ,x,y0+12*m,z,a,true)}
+   const BAND=[[0xc60b1e,0xffc400],[0xffffff,0x3f7fc6],[0x123c96,0xffcc00]];BAND.forEach(([c1,c2],k)=>{const v=-3+k*3,[x,z]=L(11*m,v*m);pon(new THREE.CylinderGeometry(.06*m,.08*m,8*m,5),M(0xd8dadc,{metalness:.6}),x,y0+4*m,z);
+    const[xf,zf]=L(11*m,(v+.9)*m);caja(.05*m,1.2*m,1.7*m,M(c1,{roughness:.7}),xf,y0+6.8*m,zf,a);caja(.05*m,(k===0?.6:.4)*m,1.7*m,M(c2,{roughness:.7}),xf,y0+(k===0?7.1:7.3)*m,zf,a)})}
+  // ---------- iglesias parroquiales: fachada de granito con espadaña y campanas, nave y capilla mayor con teja, atrio con cruceiro y nichos ----------
+  const cruceiro=(x,z,y,a,esc=1)=>{const s=esc;caja(.02*s,.004*s,.02*s,GRI2,x,y,z,a,true);caja(.014*s,.004*s,.014*s,GRI,x,y+.004*s,z,a,true);caja(.009*s,.005*s,.009*s,GRI2,x,y+.008*s,z,a,true);
+   pon(new THREE.CylinderGeometry(.0018*s,.0022*s,.034*s,8),GRI,x,y+.03*s,z);caja(.0026*s,.012*s,.0026*s,GRI,x,y+.051*s,z,a);caja(.0026*s,.0026*s,.009*s,GRI,x,y+.0525*s,z,a)};
+  for(const[nom,x0,z0,y0,a]of IN.iglesias){const L=LOC(x0,z0,a),B=(w,h,l,mat,u,v,y,sol=true)=>{const[x,z]=L(u*m,v*m);caja(w*m,h*m,l*m,mat,x,y0+y*m,z,a,sol)};
+   const var_=nom.length%3;                                                // un poco distintas entre sí
+   B(34,.4,22,GRI2,-2,0,-.3,false);                                         // atrio
+   for(const v of[-11,11])B(32,1.1,.5,GRI2,-2,v,0,false);B(.5,1.1,22,GRI2,-18,0,0,false);
+   // nave, capilla mayor y tejados
+   B(18,7,9,GRI,-1,0,0);{const[x,z]=L(-1*m,0);pon(tejado(10*m,18.6*m,3.2*m),TEJ,x,y0+7*m,z,a,true)}
+   B(6,5.5,7,GRI2,-12.8,0,0);{const[x,z]=L(-12.8*m,0);pon(tejado(7.8*m,6.4*m,2.4*m),TEJ2,x,y0+5.5*m,z,a,true)}
+   // fachada: muro con piñón, puerta, hornacina, cornisas y pináculos
+   {const s=new THREE.Shape();s.moveTo(-5,0);s.lineTo(5,0);s.lineTo(5,7.6);s.lineTo(0,11);s.lineTo(-5,7.6);s.lineTo(-5,0);const g=new THREE.ExtrudeGeometry(s,{depth:1.2,bevelEnabled:false});g.scale(m,m,m);g.translate(0,0,-.6*m);g.rotateY(Math.PI/2);const[x,z]=L(8.6*m,0);pon(g,GRI,x,y0,z,a,true)}
+   B(.3,3.4,2,PUE,9.25,0,0,false);{const[x,z]=L(9.26*m,0);const g=new THREE.CylinderGeometry(1*m,1*m,.3*m,12);g.rotateZ(Math.PI/2);pon(g,PUE,x,y0+3.4*m,z,a)}
+   B(.3,1.4,.8,GRAO,9.25,0,5.4,false);B(.5,.9,.4,STA,9.35,0,5.5,false);
+   for(const v of[-4.6,4.6]){B(.9,7.8,.9,GRI2,8.9,v,0,false);B(.7,1.2,.7,GRI2,8.9,v,7.8);pon(new THREE.SphereGeometry(.35*m,8,6),GRI2,...(()=>{const[x,z]=L(8.9*m,v*m);return[x,y0+9.4*m,z]})())}
+   // espadaña con dos (o una) campanas
+   {const nc=var_===0?1:2,w=nc===2?4.4:2.8;B(1,4.6,w,GRI,8.6,0,10.2);B(1.3,.4,w+.6,GRI2,8.6,0,14.8);B(.8,1.2,.8,GRI2,8.6,0,15.2);
+    {const[x,z]=L(8.6*m,0);caja(.25*m,1.2*m,.25*m,GRI2,x,y0+16.4*m,z,a);caja(.25*m,.25*m,.9*m,GRI2,x,y0+17*m,z,a)}
+    for(let k=0;k<nc;k++){const v=nc===2?(k?1.1:-1.1):0;B(1.1,1.8,1.3,GRAO,8.6,v,11.6,false);const[x,z]=L(8.6*m,v*m);pon(new THREE.ConeGeometry(.5*m,.9*m,10),BRON,x,y0+12.1*m,z)}}
+   // cruceiro del atrio y el muro de nichos al lado
+   {const[x,z]=L(13*m,7*m);cruceiro(x,z,y0,a)}
+   B(10,3.2,1.6,HOR,-4,-12.2,0);for(let r=0;r<3;r++)for(let c=0;c<6;c++)B(1.2,.7,.1,GRAO,-8+c*1.6,-11.35,.3+r*.95,false)}
+  // ---------- hórreos del Val Miñor: granito sobre pés y tornarratos, cámara con rejillas, tejado de teja, cruz y pináculo ----------
+  for(const[x,z,y,a,s]of(LT?IN.horreos.filter((h,i)=>i%2===0):IN.horreos)){const ca=Math.cos(a),sa=Math.sin(a),lar=.058+s*.03,np_=lar>.075?3:2;
+   for(let k=0;k<np_;k++){const u=(k/(np_-1)-.5)*(lar-.01);for(const o of[-1,1]){const px=x+ca*u-sa*o*.004,pz=z+sa*u+ca*o*.004;caja(.004,.012,.004,GRI2,px,y-.003,pz,a,true)}
+    caja(.008,.0012,.014,GRI,x+ca*u,y+.009,z+sa*u,a)}
+   caja(lar,.0016,.016,GRI,x,y+.0102,z,a,true);caja(lar,.016,.012,GRI,x,y+.0118,z,a,true);
+   for(let k=1;k<lar/.006;k++){const u=-lar/2+k*.006;for(const o of[-1,1])caja(.0012,.011,.0006,GRAO,x+ca*u-sa*o*.0061,y+.0145,z+sa*u+ca*o*.0061,a)}
+   {const g=tejado(.019,lar+.006,.007);pon(g,s>.5?TEJ:TEJ2,x,y+.0278,z,a,true)}
+   {const ux=x+ca*(lar/2+.001),uz=z+sa*(lar/2+.001);caja(.0012,.009,.0012,GRI,ux,y+.033,uz,a);caja(.0012,.0012,.005,GRI,ux,y+.039,uz,a)}
+   {const ux=x-ca*(lar/2+.001),uz=z-sa*(lar/2+.001);pon(new THREE.ConeGeometry(.0018,.009,6),GRI,ux,y+.0375,uz)}}
+  // ---------- cruceiros en los cruces de camino ----------
+  for(const[x,z,y,a]of IN.cruceiros)cruceiro(x,z,y,a,1.1);
+  // ---------- viñas en emparrado (parras) sobre postes de granito ----------
+  for(const[x,z,y,a,w,l]of(LT?IN.vinas.filter((v,i)=>i%2===0):IN.vinas)){const ca=Math.cos(a),sa=Math.sin(a),nu=Math.max(3,Math.round(w/.016)),nv=Math.max(3,Math.round(l/.016));
+   for(let i=0;i<nu;i++)for(let j=0;j<nv;j++){const u=(i/(nu-1)-.5)*w,v=(j/(nv-1)-.5)*l;caja(.0016,.022,.0016,GRI2,x+ca*u-sa*v,y-.002,z+sa*u+ca*v,a)}
+   for(let j=0;j<nv;j++){const v=(j/(nv-1)-.5)*l;caja(w+.004,.003,.011,j%2?VID:VID2,x-sa*v,y+.021,z+ca*v,a)}}
+  NIG.interior=1}
  // ---------- juntar por material ----------
  const junta=(P_,nombre,solido)=>{for(const[mat,gs]of P_){if(!gs.length)continue;const mm=new THREE.Mesh(mergeGeometries(gs),mat);mm.name=nombre;mm.castShadow=!LT&&mat!==LUZF;mm.receiveShadow=true;G.add(mm);if(solido)try{colaBVH(mm)}catch(e){}}};
  junta(PARTS,'piezas_nigran',false);
