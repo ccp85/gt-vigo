@@ -5465,8 +5465,14 @@ function sunFollow(){const s=5;const c=sun.shadow.camera;if(c.right!==s){Object.
   sun.target.position.set(P.x,0,P.y);sun.position.copy(sun.target.position).add(SUNOFF);if(sunF.parent){const S=40,c2=sunF.shadow.camera;if(c2.right!==S){Object.assign(c2,{left:-S,right:S,top:S,bottom:-S,near:30,far:150});c2.updateProjectionMatrix()}const v=pcam.getWorldDirection(sunF.__v||(sunF.__v=new THREE.Vector3()));const l=Math.hypot(v.x,v.z)||1,tx=P.x+v.x/l*S*.55,tz=P.y+v.z/l*S*.55,now=performance.now();const d=sunF.__x===undefined?1e9:Math.hypot(tx-sunF.__x,tz-sunF.__z);if(d>3||now-(sunF.__t||0)>400){const q=2*S/2048;sunF.__x=Math.round(tx/q)*q;sunF.__z=Math.round(tz/q)*q;sunF.__t=now;sunF.target.position.set(sunF.__x,0,sunF.__z);sunF.position.copy(sunF.target.position).add(SUNOFF);sunF.target.updateMatrixWorld();sunF.updateMatrixWorld();sunF.shadow.needsUpdate=true}}}
 // ---------- coche ----------
 let MAPA=null,MI=null;window.dbg=()=>({MAPA,MI});
-(async()=>{try{const j=await (await fetch(ZONA+'_mapa.json')).json();const im=new Image();im.src=ZONA+'_mapa.png';await im.decode();
- const T=Math.ceil(j.h/2),out=new Uint8ClampedArray(j.w*j.h*4);for(let y0=0;y0<j.h;y0+=T){const hh=Math.min(T,j.h-y0),c=document.createElement('canvas');c.width=j.w;c.height=hh;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,-y0);out.set(g.getImageData(0,0,j.w,hh).data,y0*j.w*4);c.width=c.height=1}MI=out;MAPA=j}catch(e){console.warn(e)}})();
+(async()=>{try{const j=await (await fetch(ZONA+'_mapa.json')).json();const N=j.w*j.h*4;let out=null,crudo=false;
+ // mapa en crudo comprimido: se descomprime por trozos en el array final (sin imagen ni lienzos: mucha menos memoria al cargar)
+ try{if(typeof DecompressionStream==='function'&&!/[?&]mapapng=1/.test(location.search)){const r=await fetch(ZONA+'_mapa.rgba.gz');if(r.ok&&r.body){const o=new Uint8ClampedArray(N);let k=0;
+   const rd=r.body.pipeThrough(new DecompressionStream('gzip')).getReader();for(;;){const {done,value}=await rd.read();if(done)break;if(k+value.length>N)throw new Error('mapa crudo: tamaño');o.set(value,k);k+=value.length}
+   if(k===N){out=o;crudo=true}else console.warn('mapa crudo: tamaño',k,N)}}}catch(e){console.warn('mapa crudo',e)}
+ if(!out){const im=new Image();im.src=ZONA+'_mapa.png';await im.decode();
+  const T=Math.ceil(j.h/8);out=new Uint8ClampedArray(N);for(let y0=0;y0<j.h;y0+=T){const hh=Math.min(T,j.h-y0),c=document.createElement('canvas');c.width=j.w;c.height=hh;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,-y0);out.set(g.getImageData(0,0,j.w,hh).data,y0*j.w*4);c.width=c.height=1}im.src=''}
+ window.__MAPA_CRUDO=crudo;MI=out;MAPA=j}catch(e){console.warn(e)}})();
 const cell=(x,y)=>{if(!MAPA)return{t:1,z:0};const i=Math.round((x-MAPA.ox)*MAPA.res),j=Math.round((y-MAPA.oy)*MAPA.res);if(i<0||j<0||i>=MAPA.w||j>=MAPA.h)return{t:-1,z:0};const o=(j*MAPA.w+i)*4;return{t:Math.round(MI[o]/40),z:MI[o+1]/255*MAPA.zmax,c:MI[o+2]>127}};   // c: paso de cebra
 const GROUND=[];const RCGd=new THREE.Raycaster();RCGd.firstHitOnly=true;const _o=new THREE.Vector3(),_dn=new THREE.Vector3(0,-1,0);
 const groundMap=(x,y)=>{const c=cell(x,y);return c.t===4?Math.max(.1,c.z):c.t===5?Math.max(.02,c.z+.01):c.z+(c.t===2?.025:0)};

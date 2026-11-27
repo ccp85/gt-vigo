@@ -15,3 +15,4 @@ cd /home/claude/work/vigo/visor && cp /home/claude/work/carrera/nav/index_base.h
 # y después: python3 /home/claude/work/carrera/nav/edit_noche.py index.html gpu.html
 # y al final de todo, en las siete páginas: python3 /home/claude/work/carrera/nav/edit_fpsmovil.py
 # y después, en las páginas WebGL: python3 /home/claude/work/carrera/nav/edit_cielomovil.py
+# y después, en las siete páginas: python3 /home/claude/work/carrera/nav/edit_mapacrudo.py (y si cambia vigo_mapa.png: python3 herramientas/mapa_rgba.py)
