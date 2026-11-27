@@ -246,12 +246,14 @@ function nigCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
    const MAR_Y=-.03,lista=LT?PX.barcas.filter((b,i)=>i%2===0):PX.barcas,TRES=[{p:[],c:[]},{p:[],c:[]},{p:[],c:[]}],BOY=[];
    for(const[x,z,tipo,ci,a,s]of lista){const g=barca(tipo,ci);g.rotation.y=-a;g.position.set(x,0,z);const k=Math.floor(s*3)%3;aplana(g,TRES[k]);BOY.push([x+Math.cos(a)*.055,z+Math.sin(a)*.055,ci])}
    const mB=M(0xffffff,{vertexColors:true,roughness:.55,side:THREE.DoubleSide}),mallas=[];
-   TRES.forEach((T,k)=>{if(!T.p.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(T.p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(T.c,3));g.computeVertexNormals();
-    const mm=new THREE.Mesh(g,mB);mm.name='barcas_panxon';mm.position.y=MAR_Y;mm.castShadow=!LT;mm.receiveShadow=true;mm.userData.fase=k*2.1;G.add(mm);mallas.push(mm)});
+   TRES.forEach((T,k)=>{if(!T.p.length)return;// centradas en su tanda: el vaivén gira alrededor de la propia flota y no del origen del mapa (lejísimos)
+   let cx=0,cz=0;for(let i=0;i<T.p.length;i+=3){cx+=T.p[i];cz+=T.p[i+2]}cx/=T.p.length/3;cz/=T.p.length/3;for(let i=0;i<T.p.length;i+=3){T.p[i]-=cx;T.p[i+2]-=cz}
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(T.p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(T.c,3));g.computeVertexNormals();
+    const mm=new THREE.Mesh(g,mB);mm.name='barcas_panxon';mm.position.set(cx,MAR_Y,cz);mm.castShadow=!LT;mm.receiveShadow=true;mm.userData.fase=k*2.1;G.add(mm);mallas.push(mm)});
    for(const[x,z,ci]of BOY)pon(new THREE.SphereGeometry(.0045,10,8),ci%2?ROJ:M(0xff8a1e,{roughness:.6}),x,MAR_Y+.001,z);
    // vaivén suave: cada tercio de la flota con su fase
    const t0=performance.now();const meces=()=>{if(!mallas.length||!mallas[0].parent)return;const t=(performance.now()-t0)/1000;
-    for(const mm of mallas){const f=mm.userData.fase;mm.position.y=MAR_Y+Math.sin(t*1.3+f)*.0012;mm.rotation.z=Math.sin(t*.9+f)*.006;mm.rotation.x=Math.sin(t*1.1+f*1.7)*.005}
+    for(const mm of mallas){const f=mm.userData.fase;mm.position.y=MAR_Y+Math.sin(t*1.3+f)*.0012;mm.rotation.z=Math.sin(t*.9+f)*.003;mm.rotation.x=Math.sin(t*1.1+f*1.7)*.0025}
     requestAnimationFrame(meces)};requestAnimationFrame(meces);NIG.barcas=lista.length}}
  // ================= ZONA 3: PLAYA AMÉRICA – A RAMALLOSA =================
  if(D.america){const AM=D.america,m=MT;
