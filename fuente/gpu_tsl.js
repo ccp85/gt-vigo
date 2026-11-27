@@ -210,7 +210,8 @@ function gpuFondo(B,kind,m){try{if(m.userData.gfm)return;m.userData.gfm=1;GT.ini
  const vWB=positionWorld.sub(uO),vNB=normalize(normalWorld),vLY=positionGeometry.y,vLX=positionGeometry.x,fcz=uWY.sub(vWB.y);
  const iph=float(instanceIndex).mul(1.37);   // fase propia de cada instancia (algas y peces)
  // movimiento en el vértice
- if(kind==='alga'){const hh=max(positionGeometry.y,0),s2=hh.mul(hh),ph=uT.mul(1.05).add(iph);
+ if(kind==='alga'&&typeof gpuAlga==='function')gpuAlga(m,uT,uWY,iph);   // mar de fondo en todo el campo de algas (gpu_algas.js)
+ else if(kind==='alga'){const hh=max(positionGeometry.y,0),s2=hh.mul(hh),ph=uT.mul(1.05).add(iph);
   m.positionNode=positionLocal.add(vec3(sin(ph.add(hh.mul(2.2))).mul(.3).add(.22).mul(s2).mul(.35).add(sin(uT.mul(4).add(hh.mul(9)).add(iph.mul(3))).mul(.012).mul(s2)),0,cos(ph.mul(.8).add(hh.mul(3.1))).mul(.22).mul(s2).mul(.35)))}
  if(kind==='pez'){const ph=uT.mul(13).add(iph.mul(2.3));m.positionNode=positionLocal.add(vec3(0,0,sin(ph.add(positionGeometry.x.mul(2.6))).mul(.2).mul(smoothstep(.4,-1.5,positionGeometry.x))))}
  const PU=kind==='pulpo';let pk;
