@@ -1058,7 +1058,7 @@ const cam=new THREE.OrthographicCamera(-1,1,1,-1,-500,500);
 const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.08;ctl.minZoom=.6;ctl.maxZoom=40;
 ctl.maxPolarAngle=Math.PI*.47;window.ctl=ctl;window.cam=cam;ctl.screenSpacePanning=true;
 const hemi=new THREE.HemisphereLight(0xeef0ff,0x6b6a8a,1.6);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xfff3e0,2.6);sun.castShadow=!window.LITE;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0004;sun.shadow.normalBias=.035;scene.add(sun);scene.add(sun.target);const sunF=new THREE.DirectionalLight(0xffffff,0);sunF.name='sol_cascada_lejana';sunF.shadow.mapSize.set(2048,2048);sunF.shadow.bias=-.00005;sunF.shadow.normalBias=.02;sunF.shadow.autoUpdate=false;if(!window.LITE){sunF.castShadow=sun.castShadow;scene.add(sunF);scene.add(sunF.target);let cs_=sun.castShadow;Object.defineProperty(sun,'castShadow',{get(){return cs_},set(v){cs_=v;sunF.castShadow=v;if(v)sunF.shadow.needsUpdate=true},configurable:true})}window.__SUNF=sunF;
+const sun=new THREE.DirectionalLight(0xfff3e0,2.6);sun.castShadow=!window.LITE;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0004;sun.shadow.normalBias=.035;scene.add(sun);scene.add(sun.target);const sunF=new THREE.DirectionalLight(0xffffff,0);sunF.name='sol_cascada_lejana';sunF.shadow.mapSize.set(2048,2048);sunF.shadow.bias=-.00005;sunF.shadow.normalBias=.02;sunF.shadow.autoUpdate=false;if(!window.LITE){sunF.castShadow=sun.castShadow;scene.add(sunF);scene.add(sunF.target);let cs_=sun.castShadow;Object.defineProperty(sun,'castShadow',{get(){return cs_},set(v){cs_=v;sunF.castShadow=v;if(v)sunF.shadow.needsUpdate=true},configurable:true})}window.__SUNF=sunF;if(sunF.parent){scene.remove(sunF);scene.remove(sunF.target)}
 let center=new THREE.Vector3(),size=40,water=null;
 function frame(){const w=cv.clientWidth,h=cv.clientHeight,a=w/h,s=size*.5;cam.left=-s*a;cam.right=s*a;cam.top=s;cam.bottom=-s;cam.updateProjectionMatrix();R.setSize(w,h,false)}
 function iso(az=Math.PI/4){const d=120,el=Math.atan(1/Math.SQRT2);cam.position.set(center.x+d*Math.cos(el)*Math.sin(az),center.y+d*Math.sin(el),center.z+d*Math.cos(el)*Math.cos(az));ctl.target.copy(center);cam.zoom=1;cam.updateProjectionMatrix();ctl.update()}
@@ -1500,6 +1500,413 @@ function bretemaTick(dt){if(window.__BRETEMA_OFF){if(BRT.ini){scene.fogNode=null
   (sun.color.b*sc+hemi.color.b*hc*.85+hemi.groundColor.b*hc*.15)/Math.PI*.9,THREE.LinearSRGBColorSpace);
  {const l=.2126*c.r+.7152*c.g+.0722*c.b,k=1+.35*(1-CIELO.nf);c.setRGB((c.r+(l-c.r)*.35)*k,(c.g+(l-c.g)*.35)*k,(c.b+(l-c.b)*.35)*k,THREE.LinearSRGBColorSpace)}}   // más blanca: gotitas que esparcen toda la luz
 // ---------- fin de gpu_bretema.js
+// ---------- sombras en cascada de three.js 0.187 (examples/jsm/csm: CSMFrustum + CSMShadowNode, licencia MIT, © three.js authors)
+// copiadas aquí con las importaciones cambiadas al THREE y TSL del juego (three/tsl es otra copia de los nudos y no se puede mezclar)
+const GT_CSM=(()=>{const{Box3,MathUtils,Matrix4,Object3D,ShadowBaseNode,Vector2,Vector3,WebGLCoordinateSystem}=THREE;const{Fn,If,float,min,positionView,reference,renderGroup,shadow,uniform,vec2,vec4,viewZToOrthographicDepth}=TSL;
+
+const inverseProjectionMatrix = new Matrix4();
+class CSMFrustum {
+	constructor( data ) {
+		data = data || {};
+		this.zNear = data.webGL === true ? - 1 : 0;
+		this.zFar = 1;
+		this.vertices = {
+			near: [
+				new Vector3(),
+				new Vector3(),
+				new Vector3(),
+				new Vector3()
+			],
+			far: [
+				new Vector3(),
+				new Vector3(),
+				new Vector3(),
+				new Vector3()
+			]
+		};
+		if ( data.projectionMatrix !== undefined ) {
+			this.setFromProjectionMatrix( data.projectionMatrix, data.maxFar || 10000 );
+		}
+		if ( data.reversedDepth === true ) {
+			this.zNear = 1;
+			this.zFar = 0;
+		}
+	}
+	setFromProjectionMatrix( projectionMatrix, maxFar ) {
+		const zNear = this.zNear;
+		const zFar = this.zFar;
+		const isOrthographic = projectionMatrix.elements[ 2 * 4 + 3 ] === 0;
+		inverseProjectionMatrix.copy( projectionMatrix ).invert();
+		this.vertices.near[ 0 ].set( 1, 1, zNear );
+		this.vertices.near[ 1 ].set( 1, - 1, zNear );
+		this.vertices.near[ 2 ].set( - 1, - 1, zNear );
+		this.vertices.near[ 3 ].set( - 1, 1, zNear );
+		this.vertices.near.forEach( function ( v ) {
+			v.applyMatrix4( inverseProjectionMatrix );
+		} );
+		this.vertices.far[ 0 ].set( 1, 1, zFar );
+		this.vertices.far[ 1 ].set( 1, - 1, zFar );
+		this.vertices.far[ 2 ].set( - 1, - 1, zFar );
+		this.vertices.far[ 3 ].set( - 1, 1, zFar );
+		this.vertices.far.forEach( function ( v ) {
+			v.applyMatrix4( inverseProjectionMatrix );
+			const absZ = Math.abs( v.z );
+			if ( isOrthographic ) {
+				v.z *= Math.min( maxFar / absZ, 1.0 );
+			} else {
+				v.multiplyScalar( Math.min( maxFar / absZ, 1.0 ) );
+			}
+		} );
+		return this.vertices;
+	}
+	split( breaks, target ) {
+		while ( breaks.length > target.length ) {
+			target.push( new CSMFrustum() );
+		}
+		target.length = breaks.length;
+		const near = this.vertices.near[ 0 ].z;
+		const far = this.vertices.far[ 0 ].z;
+		for ( let i = 0; i < breaks.length; i ++ ) {
+			const cascade = target[ i ];
+			if ( i === 0 ) {
+				for ( let j = 0; j < 4; j ++ ) {
+					cascade.vertices.near[ j ].copy( this.vertices.near[ j ] );
+				}
+			} else {
+				const alpha = ( breaks[ i - 1 ] * far - near ) / ( far - near );
+				for ( let j = 0; j < 4; j ++ ) {
+					cascade.vertices.near[ j ].lerpVectors( this.vertices.near[ j ], this.vertices.far[ j ], alpha );
+				}
+			}
+			if ( i === breaks.length - 1 ) {
+				for ( let j = 0; j < 4; j ++ ) {
+					cascade.vertices.far[ j ].copy( this.vertices.far[ j ] );
+				}
+			} else {
+				const alpha = ( breaks[ i ] * far - near ) / ( far - near );
+				for ( let j = 0; j < 4; j ++ ) {
+					cascade.vertices.far[ j ].lerpVectors( this.vertices.near[ j ], this.vertices.far[ j ], alpha );
+				}
+			}
+		}
+	}
+	toSpace( cameraMatrix, target ) {
+		for ( let i = 0; i < 4; i ++ ) {
+			target.vertices.near[ i ]
+				.copy( this.vertices.near[ i ] )
+				.applyMatrix4( cameraMatrix );
+			target.vertices.far[ i ]
+				.copy( this.vertices.far[ i ] )
+				.applyMatrix4( cameraMatrix );
+		}
+	}
+}
+const _cameraToLightMatrix = new Matrix4();
+const _lightSpaceFrustum = new CSMFrustum();
+const _center = new Vector3();
+const _bbox = new Box3();
+const _uniformArray = [];
+const _logArray = [];
+const _lightDirection = new Vector3();
+const _lightOrientationMatrix = new Matrix4();
+const _lightOrientationMatrixInverse = new Matrix4();
+const _up = new Vector3( 0, 1, 0 );
+class LwLight extends Object3D {
+	constructor() {
+		super();
+		this.target = new Object3D();
+	}
+}
+class CSMShadowNode extends ShadowBaseNode {
+	constructor( light, data = {} ) {
+		super( light );
+		this.camera = null;
+		this.cascades = data.cascades || 3;
+		this.maxFar = data.maxFar || 100000;
+		this.mode = data.mode || 'practical';
+		this.lightMargin = data.lightMargin || 200;
+		this.customSplitsCallback = data.customSplitsCallback;
+		this.fade = false;
+		this.breaks = [];
+		this._cascades = [];
+		this.mainFrustum = null;
+		this.frustums = [];
+		this.lights = [];
+		this._shadowNodes = [];
+	}
+	_init( { camera, renderer } ) {
+		this.camera = camera;
+		const data = {
+			webGL: renderer.coordinateSystem === WebGLCoordinateSystem,
+			reversedDepth: renderer.reversedDepthBuffer
+		};
+		this.mainFrustum = new CSMFrustum( data );
+		const light = this.light;
+		for ( let i = 0; i < this.cascades; i ++ ) {
+			const lwLight = new LwLight();
+			lwLight.castShadow = true;
+			const lShadow = light.shadow.clone();
+			lShadow.bias = lShadow.bias * ( i + 1 );
+			this.lights.push( lwLight );
+			lwLight.shadow = lShadow;
+			this._shadowNodes.push( shadow( lwLight, lShadow ) );
+			this._cascades.push( new Vector2() );
+		}
+		this.updateFrustums();
+	}
+	_initCascades() {
+		const camera = this.camera;
+		camera.updateProjectionMatrix();
+		this.mainFrustum.setFromProjectionMatrix( camera.projectionMatrix, this.maxFar );
+		this.mainFrustum.split( this.breaks, this.frustums );
+	}
+	_getBreaks() {
+		const camera = this.camera;
+		const far = Math.min( camera.far, this.maxFar );
+		this.breaks.length = 0;
+		switch ( this.mode ) {
+			case 'uniform':
+				uniformSplit( this.cascades, camera.near, far, this.breaks );
+				break;
+			case 'logarithmic':
+				logarithmicSplit( this.cascades, camera.near, far, this.breaks );
+				break;
+			case 'practical':
+				practicalSplit( this.cascades, camera.near, far, 0.5, this.breaks );
+				break;
+			case 'custom':
+				if ( this.customSplitsCallback === undefined ) console.error( 'CSM: Custom split scheme callback not defined.' );
+				this.customSplitsCallback( this.cascades, camera.near, far, this.breaks );
+				break;
+		}
+		function uniformSplit( amount, near, far, target ) {
+			for ( let i = 1; i < amount; i ++ ) {
+				target.push( ( near + ( far - near ) * i / amount ) / far );
+			}
+			target.push( 1 );
+		}
+		function logarithmicSplit( amount, near, far, target ) {
+			for ( let i = 1; i < amount; i ++ ) {
+				target.push( ( near * ( far / near ) ** ( i / amount ) ) / far );
+			}
+			target.push( 1 );
+		}
+		function practicalSplit( amount, near, far, lambda, target ) {
+			_uniformArray.length = 0;
+			_logArray.length = 0;
+			logarithmicSplit( amount, near, far, _logArray );
+			uniformSplit( amount, near, far, _uniformArray );
+			for ( let i = 1; i < amount; i ++ ) {
+				target.push( MathUtils.lerp( _uniformArray[ i - 1 ], _logArray[ i - 1 ], lambda ) );
+			}
+			target.push( 1 );
+		}
+	}
+	_setLightBreaks() {
+		for ( let i = 0, l = this.cascades; i < l; i ++ ) {
+			const amount = this.breaks[ i ];
+			const prev = this.breaks[ i - 1 ] || 0;
+			this._cascades[ i ].set( prev, amount );
+		}
+	}
+	_updateShadowBounds() {
+		const frustums = this.frustums;
+		for ( let i = 0; i < frustums.length; i ++ ) {
+			const shadowCam = this.lights[ i ].shadow.camera;
+			const frustum = this.frustums[ i ];
+			const nearVerts = frustum.vertices.near;
+			const farVerts = frustum.vertices.far;
+			const point1 = farVerts[ 0 ];
+			let point2;
+			if ( point1.distanceTo( farVerts[ 2 ] ) > point1.distanceTo( nearVerts[ 2 ] ) ) {
+				point2 = farVerts[ 2 ];
+			} else {
+				point2 = nearVerts[ 2 ];
+			}
+			let squaredBBWidth = point1.distanceTo( point2 );
+			if ( this.fade ) {
+				const camera = this.camera;
+				const far = Math.max( camera.far, this.maxFar );
+				const linearDepth = frustum.vertices.far[ 0 ].z / ( far - camera.near );
+				const margin = 0.25 * Math.pow( linearDepth, 2.0 ) * ( far - camera.near );
+				squaredBBWidth += margin;
+			}
+			shadowCam.left = - squaredBBWidth / 2;
+			shadowCam.right = squaredBBWidth / 2;
+			shadowCam.top = squaredBBWidth / 2;
+			shadowCam.bottom = - squaredBBWidth / 2;
+			shadowCam.updateProjectionMatrix();
+		}
+	}
+	updateFrustums() {
+		this._getBreaks();
+		this._initCascades();
+		this._updateShadowBounds();
+		this._setLightBreaks();
+	}
+	_setupFade() {
+		const cameraNear = reference( 'camera.near', 'float', this ).setGroup( renderGroup );
+		const cascades = reference( '_cascades', 'vec2', this ).setGroup( renderGroup ).setName( 'cascades' );
+		const shadowFar = uniform( 'float' ).setGroup( renderGroup ).setName( 'shadowFar' )
+			.onRenderUpdate( () => Math.min( this.maxFar, this.camera.far ) );
+		const linearDepth = viewZToOrthographicDepth( positionView.z, cameraNear, shadowFar ).toVar( 'linearDepth' );
+		const lastCascade = this.cascades - 1;
+		return Fn( ( builder ) => {
+			this.setupShadowPosition( builder );
+			const ret = vec4( 1, 1, 1, 1 ).toVar( 'shadowValue' );
+			const cascade = vec2().toVar( 'cascade' );
+			const cascadeCenter = float().toVar( 'cascadeCenter' );
+			const margin = float().toVar( 'margin' );
+			const csmX = float().toVar( 'csmX' );
+			const csmY = float().toVar( 'csmY' );
+			for ( let i = 0; i < this.cascades; i ++ ) {
+				const isLastCascade = i === lastCascade;
+				cascade.assign( cascades.element( i ) );
+				cascadeCenter.assign( cascade.x.add( cascade.y ).div( 2.0 ) );
+				const closestEdge = linearDepth.lessThan( cascadeCenter ).select( cascade.x, cascade.y );
+				margin.assign( float( 0.25 ).mul( closestEdge.pow( 2.0 ) ) );
+				csmX.assign( cascade.x.sub( margin.div( 2.0 ) ) );
+				if ( isLastCascade ) {
+					csmY.assign( cascade.y );
+				} else {
+					csmY.assign( cascade.y.add( margin.div( 2.0 ) ) );
+				}
+				const inRange = linearDepth.greaterThanEqual( csmX ).and( linearDepth.lessThanEqual( csmY ) );
+				If( inRange, () => {
+					const dist = min( linearDepth.sub( csmX ), csmY.sub( linearDepth ) ).toVar();
+					let ratio = dist.div( margin ).clamp( 0.0, 1.0 );
+					if ( i === 0 ) {
+						ratio = linearDepth.greaterThan( cascadeCenter ).select( ratio, 1 );
+					}
+					ret.subAssign( this._shadowNodes[ i ].oneMinus().mul( ratio ) );
+				} );
+			}
+			return ret;
+		} )();
+	}
+	_setupStandard() {
+		const cameraNear = reference( 'camera.near', 'float', this ).setGroup( renderGroup );
+		const cascades = reference( '_cascades', 'vec2', this ).setGroup( renderGroup ).setName( 'cascades' );
+		const shadowFar = uniform( 'float' ).setGroup( renderGroup ).setName( 'shadowFar' )
+			.onRenderUpdate( () => Math.min( this.maxFar, this.camera.far ) );
+		const linearDepth = viewZToOrthographicDepth( positionView.z, cameraNear, shadowFar ).toVar( 'linearDepth' );
+		return Fn( ( builder ) => {
+			this.setupShadowPosition( builder );
+			const ret = vec4( 1, 1, 1, 1 ).toVar( 'shadowValue' );
+			const cascade = vec2().toVar( 'cascade' );
+			for ( let i = 0; i < this.cascades; i ++ ) {
+				cascade.assign( cascades.element( i ) );
+				If( linearDepth.greaterThanEqual( cascade.x ).and( linearDepth.lessThanEqual( cascade.y ) ), () => {
+					ret.assign( this._shadowNodes[ i ] );
+				} );
+			}
+			return ret;
+		} )();
+	}
+	build( builder ) {
+		builder.addSequentialNode( this );
+		return super.build( builder );
+	}
+	setup( builder ) {
+		if ( this.camera === null ) this._init( builder );
+		return this.fade === true ? this._setupFade() : this._setupStandard();
+	}
+	updateBefore( /*builder*/ ) {
+		const light = this.light;
+		const parent = light.parent;
+		const camera = this.camera;
+		const frustums = this.frustums;
+		for ( let i = 0; i < this.lights.length; i ++ ) {
+			const lwLight = this.lights[ i ];
+			if ( lwLight.parent === null ) {
+				parent.add( lwLight.target );
+				parent.add( lwLight );
+			}
+		}
+		_lightDirection.subVectors( light.target.position, light.position ).normalize();
+		_lightOrientationMatrix.lookAt( light.position, light.target.position, _up );
+		_lightOrientationMatrixInverse.copy( _lightOrientationMatrix ).invert();
+		for ( let i = 0; i < frustums.length; i ++ ) {
+			const lwLight = this.lights[ i ];
+			const shadow = lwLight.shadow;
+			const shadowCam = shadow.camera;
+			const texelWidth = ( shadowCam.right - shadowCam.left ) / shadow.mapSize.width;
+			const texelHeight = ( shadowCam.top - shadowCam.bottom ) / shadow.mapSize.height;
+			_cameraToLightMatrix.multiplyMatrices( _lightOrientationMatrixInverse, camera.matrixWorld );
+			frustums[ i ].toSpace( _cameraToLightMatrix, _lightSpaceFrustum );
+			const nearVerts = _lightSpaceFrustum.vertices.near;
+			const farVerts = _lightSpaceFrustum.vertices.far;
+			_bbox.makeEmpty();
+			for ( let j = 0; j < 4; j ++ ) {
+				_bbox.expandByPoint( nearVerts[ j ] );
+				_bbox.expandByPoint( farVerts[ j ] );
+			}
+			_bbox.getCenter( _center );
+			_center.z = _bbox.max.z + this.lightMargin;
+			_center.x = Math.floor( _center.x / texelWidth ) * texelWidth;
+			_center.y = Math.floor( _center.y / texelHeight ) * texelHeight;
+			_center.applyMatrix4( _lightOrientationMatrix );
+			lwLight.position.copy( _center );
+			lwLight.target.position.copy( _center );
+			lwLight.target.position.add( _lightDirection );
+			lwLight.updateMatrixWorld();
+			lwLight.target.updateMatrixWorld();
+		}
+	}
+	dispose() {
+		for ( let i = 0; i < this.lights.length; i ++ ) {
+			const light = this.lights[ i ];
+			const parent = light.parent;
+			if ( parent !== null ) {
+				parent.remove( light.target );
+				parent.remove( light );
+			}
+		}
+		super.dispose();
+	}
+}
+
+return{CSMShadowNode,CSMFrustum}})();
+// ---------- fin de las cascadas de three.js
+// ---------- sombras en cascada con WebGPU (gpu_csm.js) ----------
+// Al conducir (calidad alta y de día, y en las carreras con sombras): el sol usa sombras en cascada de three.js
+// (CSMShadowNode) atadas a la cámara del coche. Tres mapas: hasta ~1,2 u (unos 50 m) uno muy nítido de 2048 px que se
+// rehace en cada imagen; hasta ~6 u otro de 2048 px cada dos imágenes; y hasta la niebla uno barato de 1024 px cada tres
+// imágenes (la ría, los montes lejanos). Fundido entre cascadas para que no se vea el corte. Sustituye a la cascada lejana
+// del motor viejo (sol_cascada_lejana), que con WebGPU no hacía nada y se dibujaba igual.
+// En la maqueta: un solo mapa, pero ajustado a lo que se ve en pantalla (antes cubría siempre toda la maqueta): al
+// acercarte las sombras se afinan; al alejarte quedan como antes. Encajado en su rejilla para que no tiemblen.
+// Cambiar de un modo a otro obliga a rehacer los materiales (lo mismo que ya pasaba al subir o bajar del coche).
+// Con window.__CSM_OFF=true se vuelve a las sombras de antes (al siguiente cambio de modo).
+const CSMG={csm:null,act:'normal',offPrev:false,forz:false,f:0,cerca:1.2,medio:6,lejos:30};window.CSMG=CSMG;
+function csmNuevo(){const C=new GT_CSM.CSMShadowNode(sun,{cascades:3,maxFar:CSMG.lejos,mode:'custom',lightMargin:15,
+  customSplitsCallback:(n,near,far,br)=>{br.push(Math.min(.9,CSMG.cerca/far),Math.min(.95,CSMG.medio/far),1)}});
+ C.fade=true;C._init({camera:pcam,renderer:R});
+ C.lights.forEach((l,i)=>{const s=l.shadow;if(i===2)s.mapSize.set(1024,1024);s.camera.near=.05;s.camera.far=110;s.camera.updateProjectionMatrix();s.autoUpdate=i===0});
+ C.updateFrustums();return C}
+// maqueta: el mapa de sombras del sol cubre solo lo que se ve (cámara ortográfica), con margen para lo que hace sombra desde fuera
+const _mqP=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()],
+ _mqM=new THREE.Matrix4(),_mqO=new THREE.Vector3(),_mqD=new THREE.Vector3(),_mqU=new THREE.Vector3(0,1,0);
+function sombraMaqueta(){const c=sun.shadow.camera;cam.updateMatrixWorld();cam.getWorldDirection(_mqD);if(Math.abs(_mqD.y)<.05)return;
+ let k=0;for(const[x,y]of[[-1,-1],[1,-1],[1,1],[-1,1]])for(const h of[0,3]){_mqO.set(x,y,-1).unproject(cam);const t=(h-_mqO.y)/_mqD.y;_mqP[k++].copy(_mqO).addScaledVector(_mqD,t)}
+ sun.updateMatrixWorld();sun.target.updateMatrixWorld();_mqM.lookAt(sun.position,sun.target.position,_mqU).setPosition(sun.position).invert();
+ let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;for(const p of _mqP){p.applyMatrix4(_mqM);x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}
+ const mz=Math.max(x1-x0,y1-y0)*1.08+2,E=Math.pow(2,Math.ceil(Math.log2(mz)*4)/4),q=E/sun.shadow.mapSize.x;   // tamaño a saltos (no tiembla al hacer zoom)
+ const cx=Math.round((x0+x1)/2/q)*q,cy=Math.round((y0+y1)/2/q)*q;
+ if(c.left!==cx-E/2||c.bottom!==cy-E/2||c.right!==cx+E/2){Object.assign(c,{left:cx-E/2,right:cx+E/2,bottom:cy-E/2,top:cy+E/2,near:1,far:400});c.updateProjectionMatrix()}}
+// pone el modo: con la sombra ya soltada (la imagen anterior se dibujó sin sombra del sol)
+function csmAplicar(m){if(CSMG.csm){try{CSMG.csm.dispose()}catch(e){}CSMG.csm=null}
+ if(m==='csm'){CSMG.csm=csmNuevo();sun.shadow.shadowNode=CSMG.csm}else delete sun.shadow.shadowNode;CSMG.act=m}
+// cada imagen, justo antes de dibujar
+function csmTick(){if(window.LITE)return;
+ const obj=!window.__CSM_OFF&&driving?'csm':'normal';   // cascadas en el coche; en la maqueta, el mapa ajustado a la vista
+ if(CSMG.forz){CSMG.forz=false;csmAplicar(obj);if(!sun.castShadow)sun.castShadow=true}
+ else if(obj!==CSMG.act){if(!sun.castShadow){if(CSMG.offPrev)csmAplicar(obj)}else{sun.castShadow=false;CSMG.forz=true}}   // una imagen sin sombra para soltar la de antes
+ CSMG.offPrev=!sun.castShadow;
+ if(CSMG.act==='csm'&&CSMG.csm){const C=CSMG.csm;C.maxFar=Math.max(CSMG.medio+2,Math.min(CSMG.lejos,FOG.far+2));C.updateFrustums();
+  CSMG.f=(CSMG.f+1)%6;const L=C.lights;if(L[1]&&CSMG.f%2===0)L[1].shadow.needsUpdate=true;if(L[2]&&CSMG.f%3===0)L[2].shadow.needsUpdate=true}
+ else if(!window.__CSM_OFF&&!driving&&sun.castShadow&&!CSMG.forz)sombraMaqueta()}
+// ---------- fin de gpu_csm.js
 function gpuAgua(glob,surfM){GT.ini();const{vec2,vec3,float,normalize,max,min,mix,pow,dot,smoothstep,sin,cos,exp,abs,clamp,select,length,fwidth,texture,reflect,positionWorld,cameraPosition,transformNormalToView}=TSL;
  const LT=!!window.LITE,uT=GT.U(UW.uT),uN=GT.U(UW.uN),uSun=GT.U(SKYU.uSun),uZen=GT.U(SKYU.uZen),uHor=GT.U(SKYU.uHor),uCoR=GT.U(UCO.uCoR);
  const p=positionWorld.xz,uq=p.sub(uCoR.xy).div(uCoR.zw);
@@ -8591,7 +8998,7 @@ function aoPass(){const fq=new THREE.Mesh(new THREE.PlaneGeometry(2,2));fq.frust
 // ---------- sombras del sol al conducir por el mundo abierto (solo en calidad alta y de día)
 // el mapa del mundo es diminuto (1 u ≈ 40 m): la cámara de sombra se ciñe en profundidad y el sesgo se reduce para que farolas,
 // coches y árboles den sombra; y el suelo, fachadas y tejados, que antes no recibían sombra, pasan a recibirla mientras dure.
-let SOMB_ON=false,SOMB_F=0,SOMB_T=0,SOMB_OLD=null;const SOMB_RS=new Set();function sombrasRecv(){window.__SUNF.parent.traverse(o=>{if(!o.isMesh||o.receiveShadow||!o.visible)return;const m=o.material;if(!m||Array.isArray(m)||m.transparent||!(m.isMeshStandardMaterial||m.isMeshLambertMaterial||m.isMeshPhongMaterial))return;o.receiveShadow=true;SOMB_RS.add(o)})}function sombrasSet(on){const c=sun.shadow.camera;if(on){SOMB_OLD={b:sun.shadow.bias,nb:sun.shadow.normalBias,n:c.near,f:c.far};sun.shadow.bias=-.00004;sun.shadow.normalBias=.004;sunFollow();Object.assign(c,{near:60,far:120});c.updateProjectionMatrix();sombrasRecv();SOMB_T=performance.now()}else{for(const o of SOMB_RS)o.receiveShadow=false;SOMB_RS.clear();if(SOMB_OLD){sun.shadow.bias=SOMB_OLD.b;sun.shadow.normalBias=SOMB_OLD.nb;Object.assign(c,{near:SOMB_OLD.n,far:SOMB_OLD.f});c.updateProjectionMatrix();SOMB_OLD=null}}}function sombrasTick(){if(window.LITE||!driving||RACE.on){if(SOMB_ON){SOMB_ON=false;sombrasSet(false);if(!RACE.on)R.shadowMap.autoUpdate=true}return}const want=POST.on&&!COMIC.on&&CIELO.nf<.6;if(want!==SOMB_ON){SOMB_ON=want;sun.castShadow=want;R.shadowMap.autoUpdate=!want;sombrasSet(want)}if(want){sunFollow();SOMB_F=(SOMB_F+1)%2;if(SOMB_F===0)R.shadowMap.needsUpdate=true;const t=performance.now();if(t-SOMB_T>2000){SOMB_T=t;sombrasRecv()}}}
+let SOMB_ON=false,SOMB_F=0,SOMB_T=0,SOMB_OLD=null;const SOMB_RS=new Set();function sombrasRecv(){scene.traverse(o=>{if(!o.isMesh||o.receiveShadow||!o.visible)return;const m=o.material;if(!m||Array.isArray(m)||m.transparent||!(m.isMeshStandardMaterial||m.isMeshLambertMaterial||m.isMeshPhongMaterial))return;o.receiveShadow=true;SOMB_RS.add(o)})}function sombrasSet(on){const c=sun.shadow.camera;if(on){SOMB_OLD={b:sun.shadow.bias,nb:sun.shadow.normalBias,n:c.near,f:c.far};sun.shadow.bias=-.00004;sun.shadow.normalBias=.004;sunFollow();Object.assign(c,{near:60,far:120});c.updateProjectionMatrix();sombrasRecv();SOMB_T=performance.now()}else{for(const o of SOMB_RS)o.receiveShadow=false;SOMB_RS.clear();if(SOMB_OLD){sun.shadow.bias=SOMB_OLD.b;sun.shadow.normalBias=SOMB_OLD.nb;Object.assign(c,{near:SOMB_OLD.n,far:SOMB_OLD.f});c.updateProjectionMatrix();SOMB_OLD=null}}}function sombrasTick(){if(window.LITE||!driving||RACE.on){if(SOMB_ON){SOMB_ON=false;sombrasSet(false);if(!RACE.on)R.shadowMap.autoUpdate=true}return}const want=POST.on&&!COMIC.on&&CIELO.nf<.6;if(want!==SOMB_ON){SOMB_ON=want;sun.castShadow=want;R.shadowMap.autoUpdate=!want;sombrasSet(want)}if(want){sunFollow();SOMB_F=(SOMB_F+1)%2;if(SOMB_F===0)R.shadowMap.needsUpdate=true;const t=performance.now();if(t-SOMB_T>2000){SOMB_T=t;sombrasRecv()}}}
 // calidad alta en WebGPU: cadena de posprocesado en TSL (escena con MSAA → bloom → tono y sRGB → gradación de color → SMAA)
 // three/webgpu y three/tsl se cargan sin minificar para que el bloom de addons use los mismos nudos que el motor
 function postFallo(e){console.error('posprocesado WebGPU',e);POST.fallo=true;POST.on=false;POST.cargando=false;POST.comp=null;
@@ -12573,5 +12980,5 @@ window.__G={get CIR(){return CIR},repRuta,gpsCalcular,updateCar,gpsTick,repTick,
 {const d=document.createElement('div');d.id='gpuInfo';if(window.GPU_PRINCIPAL&&!/[?&]fps=1/.test(location.search))d.hidden=true;d.style.cssText='position:fixed;left:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:99;background:rgba(10,12,30,.72);color:#9fe;font:600 12px monospace;padding:4px 7px;border-radius:6px;pointer-events:none';document.body.appendChild(d);
  let n=0,t0=performance.now();const tic=()=>{n++;const t=performance.now();if(t-t0>1000){GPU_INFO.fps=Math.round(n*1000/(t-t0));n=0;t0=t;const b=R.backend;GPU_INFO.motor=b&&b.isWebGPUBackend?'WebGPU':'WebGL2 (sin WebGPU en este navegador)';d.textContent='Motor: '+GPU_INFO.motor+' · '+GPU_INFO.fps+' fps'}requestAnimationFrame(tic)};requestAnimationFrame(tic)}
 R.setAnimationLoop(()=>{if(FPSLIM.on){const n_=performance.now();if(n_-FPSLIM.t<29)return;FPSLIM.t=n_}if(window.LITE){const n_=performance.now();if(n_-(window.__LT||0)<28)return;window.__LT=n_}let dt=Math.min(.25,clock.getDelta());try{hierbaTick(dt)}catch(e){if(!window.__hbE){window.__hbE=1;console.warn('hierba',e)}}try{arbolesTick(dt)}catch(e){if(!window.__avE){window.__avE=1;console.warn('árboles',e)}}try{granoTick(dt)}catch(e){if(!window.__grE){window.__grE=1;console.warn('granos',e)}}try{algasTick()}catch(e){if(!window.__alE){window.__alE=1;console.warn('algas',e)}}reflejosCoches();reflejosTick();zepelinTick(dt);fuentesTick(clock.elapsedTime);fachadasTick();gaviotasTick(dt);try{huellasTick(dt)}catch(e){if(!window.__huE){window.__huE=1;console.warn('huellas',e)}}try{nieveTick(dt)}catch(e){if(!window.__nvErr){window.__nvErr=1;console.error(e)}}try{delfinesTick(dt)}catch(e){if(!window.__delErr){window.__delErr=1;console.error(e)}}fondoTick();farosTick();resolucionAdaptativa(dt);if(MAPA&&UCO.uCos.value.image.width===1)texturaCosta();gestionarZonas(dt);const t=clock.elapsedTime;UW.uT.value=t;try{surfTick()}catch(e){if(!window.__surfErr){window.__surfErr=1;console.error(e)}}cielo(dt);nubesTick(dt,t);tiempoTick(dt,t);luzEntorno(dt);riaTick(dt,t);audioTick(t,dt);foco();semaforosTick(dt);paseoTick(t);try{playaSolTick(dt);if(!driving&&PAL.chica&&PAL.chica.visible)palasTick(0)}catch(e){}if(!driving&&F.vida)updateTraffic(Math.min(dt,.05));else if(!driving&&PEA_G){PEA_G.vis(false);for(const c of TRAF)c.g.visible=false}
- if(driving){pcam.up.set(0,1,0);car.scale.setScalar(.6*(RACE.on?1:VSC));const d0=Math.min(dt,.05);if(RACE.on){carreraTick(d0);if(RACE.nav)navLuz()}else{updateTraffic(d0);const ns=d0>1/45?2:1;for(let i=0;i<ns;i++)updateCar(d0/ns);if(REP.on)repTick(d0)}try{palasTick(d0)}catch(e){console.error(e)}try{mundoNavTick(d0)}catch(e){console.error(e)}}for(const w of WATERS)w.emissive?.setRGB(.02+.02*Math.sin(t*1.3),.03+.02*Math.sin(t*1.3),.08+.03*Math.sin(t*1.1));if(window.__CAM)window.__CAM(dt,window.__G);if(driving){recortar(dt);nombreCalle(dt);gpsTick(dt);try{taxiTick(dt)}catch(e){console.error(e)}try{aeTick(dt)}catch(e){console.error(e)}try{surfgTick(dt)}catch(e){if(!window.__sgErr){window.__sgErr=1;console.error(e)}}try{basketTick(dt)}catch(e){if(!window.__bkErr){window.__bkErr=1;console.error(e)}}try{navmisTick(dt)}catch(e){if(!window.__nvmErr){window.__nvmErr=1;console.error(e)}}pcam.far=BK.on?200:SG.on?230:/*fondoheli*/FONDO.m&&!window.LITE?260:FOG.far+4;UCUT.uCut.value=MODO==='heli'||window.__CAM||BK.on?0:1;{const vh=MODO==='moto'?moto:MODO==='pie'?persona:MODO==='skate'&&(SKC.sk||SKT.sk)?(SKC.sk||SKT.sk):car;UCUT.uCar.value.set(P.x,vh.position.y+.03,P.y)}UCUT.uCamP.value.copy(pcam.position)}else UCUT.uCut.value=0;if(driving)drawMini();if(!driving){URF.uRfOn.value=0;ctl.update();R.render(scene,cam)}else{pcam.aspect=cv.clientWidth/cv.clientHeight;pcam.updateProjectionMatrix();if(window.__CAMO){const o=window.__CAMO;pcam.position.set(o[0],o[1],o[2]);pcam.lookAt(o[3],o[4],o[5]);FONDO.U.uCam.value.copy(pcam.position)}try{aguaReflejo()}catch(e){ARF.mal=true;URF.uRfOn.value=0;console.warn('reflejo agua',e)}sombrasTick();if(COMIC.on)comicRender();else if(POST.on)postRender();else R.render(scene,pcam)}});
+ if(driving){pcam.up.set(0,1,0);car.scale.setScalar(.6*(RACE.on?1:VSC));const d0=Math.min(dt,.05);if(RACE.on){carreraTick(d0);if(RACE.nav)navLuz()}else{updateTraffic(d0);const ns=d0>1/45?2:1;for(let i=0;i<ns;i++)updateCar(d0/ns);if(REP.on)repTick(d0)}try{palasTick(d0)}catch(e){console.error(e)}try{mundoNavTick(d0)}catch(e){console.error(e)}}for(const w of WATERS)w.emissive?.setRGB(.02+.02*Math.sin(t*1.3),.03+.02*Math.sin(t*1.3),.08+.03*Math.sin(t*1.1));if(window.__CAM)window.__CAM(dt,window.__G);if(driving){recortar(dt);nombreCalle(dt);gpsTick(dt);try{taxiTick(dt)}catch(e){console.error(e)}try{aeTick(dt)}catch(e){console.error(e)}try{surfgTick(dt)}catch(e){if(!window.__sgErr){window.__sgErr=1;console.error(e)}}try{basketTick(dt)}catch(e){if(!window.__bkErr){window.__bkErr=1;console.error(e)}}try{navmisTick(dt)}catch(e){if(!window.__nvmErr){window.__nvmErr=1;console.error(e)}}pcam.far=BK.on?200:SG.on?230:/*fondoheli*/FONDO.m&&!window.LITE?260:FOG.far+4;UCUT.uCut.value=MODO==='heli'||window.__CAM||BK.on?0:1;{const vh=MODO==='moto'?moto:MODO==='pie'?persona:MODO==='skate'&&(SKC.sk||SKT.sk)?(SKC.sk||SKT.sk):car;UCUT.uCar.value.set(P.x,vh.position.y+.03,P.y)}UCUT.uCamP.value.copy(pcam.position)}else UCUT.uCut.value=0;if(driving)drawMini();if(!driving){URF.uRfOn.value=0;ctl.update();R.render(scene,cam)}else{pcam.aspect=cv.clientWidth/cv.clientHeight;pcam.updateProjectionMatrix();if(window.__CAMO){const o=window.__CAMO;pcam.position.set(o[0],o[1],o[2]);pcam.lookAt(o[3],o[4],o[5]);FONDO.U.uCam.value.copy(pcam.position)}try{aguaReflejo()}catch(e){ARF.mal=true;URF.uRfOn.value=0;console.warn('reflejo agua',e)}sombrasTick();try{csmTick()}catch(e){if(!window.__csmE){window.__csmE=1;console.warn('sombras en cascada',e)}}if(COMIC.on)comicRender();else if(POST.on)postRender();else R.render(scene,pcam)}});
 </script>
