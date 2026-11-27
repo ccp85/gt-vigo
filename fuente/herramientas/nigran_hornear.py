@@ -430,6 +430,95 @@ for _ in range(4000):
 AM['garzas'] = G_
 OUT['america'] = AM
 print('america: muro', len(MURO), 'farolas', len(FAR), 'palmeras', len(PAL), 'pasarelas', len(PAS), 'letrero', AM['letrero'], 'puente', AM['puente'], 'largo', l, 'marisma', mk.count('2'), mk.count('1'), 'garzas', len(G_))
+# ---------- 9) Interior de Nigrán: concello, iglesias parroquiales, hórreos, cruceiros y viñas ----------
+# El mapa del juego no está exactamente georreferenciado en el interior: cada sitio se lleva al hueco libre (ni calle
+# ni casa, poco inclinado y con una calle cerca) más próximo al punto calculado desde sus coordenadas reales.
+RES_ = RES; RES = 10
+rasteriza(-18.0, 40.0, 116.0, 180.0)
+MAR = (C == 0) | (C == CID['agua'])
+rs = [9191]
+IN = {}
+# ajuste lat/lon -> mapa con puntos conocidos de las zonas 1-3
+GEO = [((42.15342, -8.84612), (OUT['monumento'][0], OUT['monumento'][1])), ((42.14582, -8.82370), (OUT['panxon']['templo']['x'], OUT['panxon']['templo']['z'])),
+       ((42.11540, -8.81264), ((OUT['america']['puente'][0] + OUT['america']['puente'][3]) / 2, (OUT['america']['puente'][1] + OUT['america']['puente'][4]) / 2)),
+       ((42.15904, -8.81959), (OUT['ola'][0], OUT['ola'][1]))]
+Ag = np.array([[lo, la, 1] for (la, lo), _ in GEO]); gx_ = np.linalg.lstsq(Ag, [p[0] for _, p in GEO], rcond=None)[0]; gz_ = np.linalg.lstsq(Ag, [p[1] for _, p in GEO], rcond=None)[0]
+def geo(la, lo): return float(gx_ @ [lo, la, 1]), float(gz_ @ [lo, la, 1])
+OCU = (C == CID['calzada']) | (C == CID['edificios']) | (C == CID['aceras']) | MAR
+docu = ndimage.distance_transform_edt(~OCU) / RES
+CAL = C == CID['calzada']; dcal = ndimage.distance_transform_edt(~CAL) / RES
+DED = ndimage.distance_transform_edt(~(C == CID['edificios'])) / RES
+gz2, gx2 = np.gradient(Y, 1 / RES); PEND = np.hypot(gx2, gz2)
+usados = []
+def hueco(x0, z0, r, rmax=3.0):
+    best = None
+    j0, i0 = pix(x0, z0); k = int(rmax * RES)
+    for j in range(max(0, j0 - k), min(H, j0 + k + 1)):
+        for i in range(max(0, i0 - k), min(W, i0 + k + 1)):
+            if docu[j, i] < r or dcal[j, i] > r + .5 or PEND[j, i] > .6: continue
+            x, z = XX[j, i], ZZ[j, i]
+            if any(math.hypot(x - a, z - b) < r + rr + .1 for a, b, rr in usados): continue
+            d = math.hypot(x - x0, z - z0) + PEND[j, i] * .5
+            if best is None or d < best[0]: best = (d, x, z)
+    if best is None: return None
+    _, x, z = best; usados.append((x, z, r))
+    # mira a la calle más cercana
+    j, i = pix(x, z); jj, ii = np.unravel_index(np.argmin(np.where(CAL[max(0, j - 15):j + 16, max(0, i - 15):i + 16], np.hypot(*np.mgrid[-min(15, j):min(16, H - j), -min(15, i):min(16, W - i)]), 1e9)), (min(16, H - j) + min(15, j), min(16, W - i) + min(15, i)))
+    cxk, czk = XX[max(0, j - 15) + jj, max(0, i - 15) + ii], ZZ[max(0, j - 15) + jj, max(0, i - 15) + ii]
+    m_ = (np.hypot(XX - x, ZZ - z) < r * 1.2) & ~OCU
+    yb = float(np.median(Y[m_])) if m_.any() else float(Y[j, i])
+    return [R4(x), R4(z), R4(yb), R4(math.atan2(czk - z, cxk - x))]
+SIT = {'concello': (42.14164, -8.80656, .3), 'sanfiz': (42.14219, -8.79223, .24), 'camos': (42.14689, -8.76512, .24), 'parada': (42.13012, -8.77801, .24),
+       'priegue': (42.16150, -8.79802, .24), 'chandebrito': (42.16202, -8.75368, .24)}
+for k, (la, lo, r) in SIT.items():
+    x0, z0 = geo(la, lo); IN[k] = hueco(x0, z0, r)
+    print('sitio', k, R4(x0), R4(z0), '->', IN[k])
+IN['iglesias'] = [[k] + IN.pop(k) for k in ('sanfiz', 'camos', 'parada', 'priegue', 'chandebrito') if IN.get(k)]
+# hórreos: junto a casas del rural (casas sueltas, con terreno libre al lado)
+RUR = ~OCU & (DED > .05) & (DED < .3) & (dcal > .06) & (PEND < .5) & (XX > -16.5)
+dens = ndimage.uniform_filter((C == CID['edificios']).astype(float), 25)
+RUR &= dens < .12                                               # nada de centros densos
+ii = np.argwhere(RUR); HOR_ = []; ocup = []
+print('candidatos horreos', len(ii), 'edif', int((C == CID['edificios']).sum()), 'libre', int((~OCU).sum()))
+for _ in range(60000):
+    if len(HOR_) >= 170: break
+    if not len(ii): break
+    j, i = ii[int(rn() * len(ii))]; x, z = XX[j, i], ZZ[j, i]
+    if any((x - a) ** 2 + (z - b) ** 2 < .9 ** 2 for a, b in ocup): continue
+    if any(math.hypot(x - a, z - b) < rr + .2 for a, b, rr in usados): continue
+    ocup.append((x, z))
+    # paralelo a la casa más cercana (aprox.: perpendicular al gradiente de distancia)
+    gj = DED[min(H - 1, j + 1), i] - DED[max(0, j - 1), i]; gi = DED[j, min(W - 1, i + 1)] - DED[j, max(0, i - 1)]
+    HOR_.append([R4(x), R4(z), R4(Y[j, i]), R4(math.atan2(gj, gi) + math.pi / 2), round(rn(), 2)])
+IN['horreos'] = HOR_
+# cruceiros en cruces de caminos del rural
+dens_c = ndimage.uniform_filter(CAL.astype(float), 7)
+CR = ~OCU & (dcal > .05) & (dcal < .16) & (dens_c > .22) & (dens < .12) & (XX > -16.5)
+ii = np.argwhere(CR); CRU = []; oc2 = []
+print('candidatos cruceiros', len(ii))
+for _ in range(40000):
+    if len(CRU) >= 28: break
+    if not len(ii): break
+    j, i = ii[int(rn() * len(ii))]; x, z = XX[j, i], ZZ[j, i]
+    if any((x - a) ** 2 + (z - b) ** 2 < 2.2 ** 2 for a, b in oc2): continue
+    if any(math.hypot(x - a, z - b) < .15 for a, b, *_ in HOR_): continue
+    oc2.append((x, z)); CRU.append([R4(x), R4(z), R4(Y[j, i]), R4(rn() * 6.28)])
+IN['cruceiros'] = CRU
+# viñas en emparrado: parcelas libres y llanas del rural
+VI = ~OCU & (docu > .14) & (PEND < .25) & (dens < .1) & (dens > .005) & (XX > -16.5)
+ii = np.argwhere(VI); VIN = []; oc3 = []
+print('candidatos vinas', len(ii))
+for _ in range(40000):
+    if len(VIN) >= 36: break
+    if not len(ii): break
+    j, i = ii[int(rn() * len(ii))]; x, z = XX[j, i], ZZ[j, i]
+    if any((x - a) ** 2 + (z - b) ** 2 < 1.4 ** 2 for a, b in oc3): continue
+    if any(math.hypot(x - a, z - b) < rr + .3 for a, b, rr in usados): continue
+    oc3.append((x, z)); VIN.append([R4(x), R4(z), R4(Y[j, i]), R4(rn() * 3.14), round(.09 + rn() * .05, 3), round(.06 + rn() * .04, 3)])
+IN['vinas'] = VIN
+RES = RES_
+OUT['interior'] = IN
+print('interior: iglesias', len(IN['iglesias']), 'horreos', len(HOR_), 'cruceiros', len(CRU), 'vinas', len(VIN))
 OUT['pinar'] = len(NUEVOS)
 json.dump(OUT, open(os.path.join(RAIZ, 'nigran_detalle.json'), 'w'), separators=(',', ':'))
 print('monumento', OUT['monumento'], 'bateria', OUT['bateria'], 'mirador', OUT['mirador'], 'rosa', OUT['rosa'])
