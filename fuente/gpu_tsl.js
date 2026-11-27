@@ -121,11 +121,11 @@ function gpuShaderTSL(p){try{GT.ini();const T=TSL,{vec2,vec3,vec4,float,normaliz
   const a=pow(clamp(abs(positionLocal.x).div(3).oneMinus(),0,1),1.6).mul(U('uO'));const m=basic();m.colorNode=vec3(1,.93,.72).mul(a);m.opacityNode=a;return m}
  if(fs.includes('neblina(')){                      // montes del fondo y mar lejano (vigo_fondo.json)
   const uCam=U('uCam'),uNear=U('uNear'),uCorte=U('uCorte'),uHor=U('uHor'),uZen=U('uZen'),uNight=U('uNight'),uSun=U('uSun'),W=positionWorld,d=W.xz.sub(uCam.xz).length();
-  const neb=c=>{const h=smoothstep(uNear,uNear.add(160),d),aire=mix(uHor,uZen,.35).mul(vec3(.82,.88,1)).mul(uNight.mul(.7).oneMinus());return mix(c,aire,clamp(h.mul(.5).add(.12),0,.65))};
+  const uFog=U('uFog'),neb=c=>{const h=smoothstep(uNear,uNear.add(160),d);return mix(c,uFog,clamp(h.mul(.55).add(.2),0,.75))};
   let c;if(fs.includes('vec3(.30,.40,.26)')){const y=W.y,n=normalize(normalWorld);c=mix(vec3(.30,.40,.26),vec3(.40,.44,.34),smoothstep(1.2,3.5,y));c=mix(c,vec3(.52,.5,.47),smoothstep(3.6,5,y).mul(smoothstep(.6,.3,n.y)));
    c=c.mul(max(dot(n,normalize(uSun.add(vec3(0,.2,0)))),0).mul(.5).add(.55)).mul(uNight.mul(.75).oneMinus())}
   else c=mix(vec3(.16,.33,.45),vec3(.25,.45,.55),.5).mul(uNight.mul(.8).oneMinus());
-  const m=basic();m.colorNode=neb(c);m.alphaTest=.5;m.opacityNode=select(d.lessThan(uNear).or(W.y.lessThan(uCorte)),float(0),float(1));return m}
+  const m=basic();m.colorNode=neb(c);if(vs.includes('*.96'))m.positionNode=uCam.add(positionLocal.sub(uCam).mul(.96));m.alphaTest=.5;m.opacityNode=select(d.lessThan(uNear).or(W.y.lessThan(uCorte)),float(0),float(1));return m}
  if(fs.includes('refract(V,-N,1.333)')){           // la superficie vista desde abajo (ventana de Snell)
   const uT=U('uT'),uNf=U('uNf'),uZen=U('uZen'),uHor=U('uHor'),uSun=U('uSun'),uFog=U('uFog'),W=positionWorld,V=normalize(W.sub(cameraPosition)),q=W.xz;
   const wv=pp=>{const p2=mod(pp,10);return GT.vn(p2.mul(40).add(vec2(uT.mul(.7),uT.mul(.3)))).mul(.6).add(GT.vn(p2.mul(95).sub(vec2(uT.mul(.9),uT.mul(-.5)))).mul(.4))};
