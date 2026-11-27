@@ -321,6 +321,115 @@ PX['barcas'] = BAR
 OUT['panxon'] = PX
 print('templo', PX['templo']['x'], PX['templo']['z'], PX['templo']['y'], 'largo', largo, 'ancho', ancho, 'dique', raiz, punta, 'barcas', len(BAR), 'rampa', PX['rampa'])
 
+# ---------- 8) Playa América – A Ramallosa: paseo, letrero, la lagoa con sus marismas y el puente medieval ----------
+rasteriza(-28.0, -4.0, 146.0, 190.0)
+MAR = (C == 0) | (C == CID['agua'])
+rs = [4242]
+AM = {}
+dcal = ndimage.distance_transform_edt(~((C == CID['calzada']) | (C == CID['edificios']))) / RES
+# paseo de Playa América: la playa va de N (Panxón) a S (Monte Lourido); tierra al este
+P = (C == CID['playa']) & (XX > -23.5) & (XX < -18.0) & (ZZ > 147.6) & (ZZ < 166.8)
+borde = P & ndimage.binary_dilation(~(P | MAR), iterations=1) & ~ndimage.binary_dilation(MAR, iterations=2)
+pts = np.argwhere(borde); bx_ = XX[pts[:, 0], pts[:, 1]]; bz_ = ZZ[pts[:, 0], pts[:, 1]]
+A0, A1 = np.array([-20.3, 147.8]), np.array([-21.9, 166.6]); DV = (A1 - A0) / np.linalg.norm(A1 - A0); NV = np.array([-DV[1], DV[0]])
+if NV[0] < 0: NV = -NV                                     # hacia tierra (este)
+ss = (bx_ - A0[0]) * DV[0] + (bz_ - A0[1]) * DV[1]; nn = (bx_ - A0[0]) * NV[0] + (bz_ - A0[1]) * NV[1]
+L = []
+for sa in np.arange(0, np.linalg.norm(A1 - A0) + .06, .06):
+    m = (ss >= sa) & (ss < sa + .06)
+    if m.sum(): k = np.argmax(np.where(m, nn, -1e9)); L.append((float(bx_[k]), float(bz_[k])))
+Ls = np.array(L)
+for _ in range(4): Ls[1:-1] = (Ls[:-2] + Ls[1:-1] * 2 + Ls[2:]) / 4
+seg = np.hypot(np.diff(Ls[:, 0]), np.diff(Ls[:, 1])); U = np.concatenate([[0], np.cumsum(seg)]); LL = U[-1]
+def en(u):
+    k = min(len(U) - 2, max(0, np.searchsorted(U, u) - 1)); f_ = (u - U[k]) / max(1e-9, U[k + 1] - U[k])
+    x = Ls[k, 0] + (Ls[k + 1, 0] - Ls[k, 0]) * f_; z = Ls[k, 1] + (Ls[k + 1, 1] - Ls[k, 1]) * f_
+    tx, tz = Ls[k + 1, 0] - Ls[k, 0], Ls[k + 1, 1] - Ls[k, 1]; l = math.hypot(tx, tz); tx, tz = tx / l, tz / l
+    nx, nz = -tz, tx
+    if nx < 0: nx, nz = -nx, -nz
+    return x, z, tx, tz, nx, nz
+huecos = list(np.arange(.8, LL - .3, 1.3)); MURO = []; tramo = []; u = .1
+while u < LL - .1:
+    x, z, tx, tz, nx, nz = en(u); x += nx * .008; z += nz * .008
+    if any(abs(u - h) < .04 for h in huecos) or cl(x, z) in ('edificios', 'calzada'):
+        if len(tramo) > 3: MURO.append(tramo)
+        tramo = []; u += .03; continue
+    tramo += [R4(x), R4(z), R4(max(hy(x, z), hy(x - nx * .02, z - nz * .02)))]; u += .03
+if len(tramo) > 3: MURO.append(tramo)
+AM['muro'] = MURO
+FAR, PAL = [], []
+u = .25
+while u < LL - .1:
+    x, z, tx, tz, nx, nz = en(u)
+    for off in (.03, .045, .02, .06):
+        fx, fz = x + nx * off, z + nz * off
+        if suelo_ok(fx, fz) and cl(fx, fz) != 'playa' and dcal[pix(fx, fz)] > .008: FAR.append([R4(fx), R4(fz), R4(hy(fx, fz))]); break
+    for off in (.075, .09, .06, .11):
+        px2, pz2 = x + nx * off + tx * .15, z + nz * off + tz * .15
+        if suelo_ok(px2, pz2) and cl(px2, pz2) != 'playa' and dcal[pix(px2, pz2)] > .02: PAL.append([R4(px2), R4(pz2), R4(hy(px2, pz2)), round(rn(), 3)]); break
+    u += .3
+AM['farolas'] = FAR; AM['palmeras'] = PAL
+PAS = []
+for h in huecos:
+    x, z, tx, tz, nx, nz = en(h); q0, q1 = arena(x, z, nx, nz)
+    PAS.append([R4(x), R4(z), R4(hy(x - nx * .01, z - nz * .01)), R4(math.atan2(-nz, -nx)), R4(max(.05, min(.14, q0 + (q1 - q0) * .4)))])
+AM['pasarelas'] = PAS
+SOC = []
+for f_ in (.3, .62):
+    x, z, tx, tz, nx, nz = en(LL * f_); q0, q1 = arena(x, z, nx, nz); q = q0 + (q1 - q0) * .55
+    SOC.append([R4(x - nx * q), R4(z - nz * q), R4(hy(x - nx * q, z - nz * q)), R4(math.atan2(-nz, -nx))])
+AM['socorristas'] = SOC
+# letrero «PRAIA AMÉRICA»: en el césped del paseo, al sur, mirando al mar
+x, z, tx, tz, nx, nz = en(LL * .86)
+for off in (.1, .13, .08, .16, .2):
+    lx, lz = x + nx * off, z + nz * off
+    if suelo_ok(lx, lz) and cl(lx, lz) != 'playa' and dcal[pix(lx, lz)] > .06: break
+AM['letrero'] = [R4(lx), R4(lz), R4(media(lx, lz, .05)), R4(math.atan2(-nz, -nx))]
+# el puente medieval de A Ramallosa: el cruce más corto de la lagoa en su extremo este (donde empieza el río)
+best = None
+for cx in np.arange(-9.4, -7.9, .05):
+    for a in np.radians(np.arange(-35, 36, 5)):
+        dx, dz = math.sin(a), math.cos(a)                    # casi N-S
+        # desde un punto del agua hacia los dos lados hasta tierra
+        for cz in np.arange(183.4, 185.4, .1):
+            if not MAR[pix(cx, cz)]: continue
+            q1 = 0
+            while q1 < 2 and MAR[pix(cx - dx * q1, cz - dz * q1)]: q1 += .01
+            q2 = 0
+            while q2 < 2 and MAR[pix(cx + dx * q2, cz + dz * q2)]: q2 += .01
+            if q1 >= 2 or q2 >= 2: continue
+            l = q1 + q2
+            if l < .9: continue                                   # que cruce la lagoa, no un brazo
+            if best is None or l < best[0]: best = (l, cx - dx * q1, cz - dz * q1, cx + dx * q2, cz + dz * q2)
+l, x1, z1, x2, z2 = best
+ux, uz = (x2 - x1) / l, (z2 - z1) / l
+x1, z1, x2, z2 = x1 - ux * .08, z1 - uz * .08, x2 + ux * .08, z2 + uz * .08      # apoyos en tierra
+AM['puente'] = [R4(x1), R4(z1), R4(media(x1, z1, .03)), R4(x2), R4(z2), R4(media(x2, z2, .03))]
+# marismas: manchas de junco y lodo en la lagoa, sobre todo junto a las orillas y en el lado sur (Ladeira)
+LAG = MAR & (C == CID['agua']) & (XX > -17) & (ZZ > 179.5) & (XX < -7.8)
+dt = ndimage.distance_transform_edt(LAG) / RES
+S_ = .05; mx0, mz0 = -17.0, 179.5; mw, mh = int(10 / S_), int(8.5 / S_); MK = []
+for j in range(mh):
+    for i in range(mw):
+        x, z = mx0 + i * S_, mz0 + j * S_; jj, ii_ = pix(x, z)
+        if not (0 <= jj < H and 0 <= ii_ < W) or not LAG[jj, ii_]: MK.append('0'); continue
+        n = .5 + .25 * math.sin(x * 3.1 + math.sin(z * 2.3) * 1.6) + .25 * math.sin(z * 2.7 + math.cos(x * 1.9) * 2.2)
+        # más marisma cerca de la orilla y hacia el sur; un canal libre por el centro
+        v = n - dt[jj, ii_] * .9 + (z - 182) * .05
+        MK.append('2' if v > .55 else ('1' if v > .42 else '0'))     # 2 junco, 1 lodo
+mk = ''.join(MK); AM['marisma'] = {'x0': mx0, 'z0': mz0, 's': S_, 'w': mw, 'h': mh, 'k': mk}
+# garzas en los bordes de la marisma
+G_ = []
+for _ in range(4000):
+    if len(G_) >= 9: break
+    i, j = int(rn() * mw), int(rn() * mh)
+    if mk[j * mw + i] != '1': continue
+    x, z = mx0 + i * S_, mz0 + j * S_
+    if any(math.hypot(x - a, z - b) < .4 for a, b, *_ in G_): continue
+    G_.append([R4(x), R4(z), R4(rn() * 6.28), round(rn(), 2)])
+AM['garzas'] = G_
+OUT['america'] = AM
+print('america: muro', len(MURO), 'farolas', len(FAR), 'palmeras', len(PAL), 'pasarelas', len(PAS), 'letrero', AM['letrero'], 'puente', AM['puente'], 'largo', l, 'marisma', mk.count('2'), mk.count('1'), 'garzas', len(G_))
 OUT['pinar'] = len(NUEVOS)
 json.dump(OUT, open(os.path.join(RAIZ, 'nigran_detalle.json'), 'w'), separators=(',', ':'))
 print('monumento', OUT['monumento'], 'bateria', OUT['bateria'], 'mirador', OUT['mirador'], 'rosa', OUT['rosa'])

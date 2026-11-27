@@ -3688,6 +3688,9 @@ function gamelasTick(dt,t){if(!GAM.ok){gamelasInit();return}
 // Zona 2, Panxón: el Templo Votivo do Mar en la ladera sobre la playa (en lugar del bloque del catastro), el dique del
 // puerto con pretil, norays, farolas y la baliza verde de la punta, la rampa de varada y unas 45 barcas fondeadas
 // (gamelas, planeadoras y veleros pequeños con su boya) que se mecen en la dársena.
+// Zona 3, Playa América – A Ramallosa: paseo con muro, farolas, palmeras, pasarelas y socorristas, el letrero azul
+// «PRAIA AMÉRICA», la lagoa con marismas de junco y lodo y unas garzas, y el puente medieval de A Ramallosa (arcos de
+// granito con musgo, tajamares, pretiles, cruceiro y hornacina), que se puede cruzar a pie hacia Sabarís.
 // Zona 1 de Nigrán pulida con Google Earth, Street View y fotos como referencia (toda la geometría es propia).
 // Datos en nigran_detalle.json (fuente/herramientas/nigran_hornear.py); el pinar de Monteferro va en baiona_inst.json.
 // · Monteferro: suelo de monte (pinocha, musgo, helecho y tojo) en vez de césped, costa de granito con bolos,
@@ -3708,7 +3711,7 @@ function nigCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
  const C3=h=>{const c=new THREE.Color(h);return[c.r,c.g,c.b]};
  const MT=1/78;                                     // 1 unidad del mapa ≈ 78 m
  // ---------- piezas sueltas: se juntan por material al final ----------
- const PARTS=new Map(),SOLID=new Map();
+ const PARTS=new Map(),SOLID=new Map(),SUELOS=[];
  const prep=g=>{g=g.index?g.toNonIndexed():g;if(g.attributes.uv)g.deleteAttribute('uv');if(g.attributes.uv1)g.deleteAttribute('uv1');if(!g.attributes.normal)g.computeVertexNormals();return g};
  // pone la geometría g (local) girada a (ang: dirección cos,sin en x,z) en (x,y,z); solido → choca
  const pon=(g,mat,x,y,z,ang=0,solido=false)=>{g=prep(g);if(ang)g.rotateY(-ang);g.translate(x,y,z);const P_=solido?SOLID:PARTS;if(!P_.has(mat))P_.set(mat,[]);P_.get(mat).push(g)};
@@ -3816,25 +3819,27 @@ function nigCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
  {const[x,z,y]=D.rosa;pon(new THREE.CylinderGeometry(.03,.031,.004,24),GRA,x,y+.001,z,0,false);
   for(let k=0;k<8;k++){const b=k/8*6.283,L_=k%2?.016:.027;const g=new THREE.ConeGeometry(.004,L_,4);g.rotateZ(-Math.PI/2);g.translate(L_/2,0,0);g.scale(1,.25,1);pon(g,k===6?ROJ:GRAO,x,y+.0035,z,b)}}
  // ---------- 6) paseo de Patos: muro bajo con albardilla, farolas clásicas, pasarelas y socorristas ----------
- {const pos=[],col=[],cMuro=['#d9d4c8','#d2ccbf','#ddd8cd'].map(C3),cAlb=['#9d978b','#938d81','#a7a194'].map(C3);
+ // (las mismas piezas sirven para el paseo de Playa América)
+ const muroDe=(LIS,nombre)=>{const pos=[],col=[],cMuro=['#d9d4c8','#d2ccbf','#ddd8cd'].map(C3),cAlb=['#9d978b','#938d81','#a7a194'].map(C3);
   const box=(ax,az,ay,bx,bz,by,e,h,y0,cc)=>{const dx=bx-ax,dz=bz-az,l=Math.hypot(dx,dz);if(l<1e-5)return;const nx=-dz/l*e/2,nz=dx/l*e/2;
    const a0=ay+y0,b0=by+y0,a1=a0+h,b1=b0+h;const P=[[ax+nx,a0,az+nz],[bx+nx,b0,bz+nz],[bx+nx,b1,bz+nz],[ax+nx,a1,az+nz],[ax-nx,a0,az-nz],[bx-nx,b0,bz-nz],[bx-nx,b1,bz-nz],[ax-nx,a1,az-nz]];
    for(const[a,b,c,d]of[[0,1,2,3],[5,4,7,6],[3,2,6,7],[4,0,3,7],[1,5,6,2]]){pos.push(...P[a],...P[b],...P[c],...P[a],...P[c],...P[d]);for(let i=0;i<6;i++)col.push(...cc)}};
-  for(const t of D.muro){for(let i=3;i<t.length;i+=3){const[ax,az,ay,bx,bz,by]=[t[i-3],t[i-2],t[i-1],t[i],t[i+1],t[i+2]];
+  for(const t of LIS){for(let i=3;i<t.length;i+=3){const[ax,az,ay,bx,bz,by]=[t[i-3],t[i-2],t[i-1],t[i],t[i+1],t[i+2]];
    box(ax,az,ay,bx,bz,by,.007,.013,-.005,cMuro[(i/3|0)%3]);box(ax,az,ay,bx,bz,by,.0095,.0022,.008,cAlb[(i/3|0)%3])}}
   if(pos.length){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();
-   const mm=new THREE.Mesh(g,M(0xffffff,{vertexColors:true,roughness:.9}));mm.name='muro_paseo_patos';mm.castShadow=!LT;mm.receiveShadow=true;G.add(mm)}}
- for(const[x,z,y]of D.farolas){pon(new THREE.CylinderGeometry(.0026,.0032,.006,8),NEG,x,y+.003,z);pon(new THREE.CylinderGeometry(.0011,.0015,.042,6),NEG,x,y+.027,z);
+   const mm=new THREE.Mesh(g,M(0xffffff,{vertexColors:true,roughness:.9}));mm.name=nombre;mm.castShadow=!LT;mm.receiveShadow=true;G.add(mm)}};
+ muroDe(D.muro,'muro_paseo_patos');
+ const farolasDe=LIS=>{for(const[x,z,y]of LIS){pon(new THREE.CylinderGeometry(.0026,.0032,.006,8),NEG,x,y+.003,z);pon(new THREE.CylinderGeometry(.0011,.0015,.042,6),NEG,x,y+.027,z);
   pon(new THREE.CylinderGeometry(.0042,.0022,.0018,4),NEG,x,y+.049,z,Math.PI/4);pon(new THREE.CylinderGeometry(.0034,.0024,.0075,4,1),LUZF,x,y+.0525,z,Math.PI/4);
-  pon(new THREE.ConeGeometry(.0052,.004,4),NEG,x,y+.0584,z,Math.PI/4);pon(new THREE.SphereGeometry(.0011,6,4),NEG,x,y+.0612,z)}
- for(const[x,z,y,a,l]of D.pasarelas){const ca=Math.cos(a),sa=Math.sin(a),n=Math.max(4,Math.round(l/(LT?.01:.0055)));
+  pon(new THREE.ConeGeometry(.0052,.004,4),NEG,x,y+.0584,z,Math.PI/4);pon(new THREE.SphereGeometry(.0011,6,4),NEG,x,y+.0612,z)}};farolasDe(D.farolas);
+ const pasarelasDe=LIS=>{for(const[x,z,y,a,l]of LIS){const ca=Math.cos(a),sa=Math.sin(a),n=Math.max(4,Math.round(l/(LT?.01:.0055)));
   for(let k=0;k<n;k++){const u=(k+.5)/n*l;caja(.0035,.0012,.018,k%4?MAD:MAD2,x+ca*u,y-.0008,z+sa*u,a)}
-  for(const s of[-1,1])caja(l,.001,.0018,MAD2,x+ca*l/2-sa*s*.0075,y-.0014,z+sa*l/2+ca*s*.0075,a)}
- for(const[x,z,y,a]of D.socorristas){const ca=Math.cos(a),sa=Math.sin(a);
+  for(const s of[-1,1])caja(l,.001,.0018,MAD2,x+ca*l/2-sa*s*.0075,y-.0014,z+sa*l/2+ca*s*.0075,a)}};pasarelasDe(D.pasarelas);
+ const socorristasDe=LIS=>{for(const[x,z,y,a]of LIS){const ca=Math.cos(a),sa=Math.sin(a);
   for(const s of[-1,1])for(const t of[-1,1])caja(.0018,.028,.0018,BLA,x+ca*s*.007-sa*t*.007,y,z+sa*s*.007+ca*t*.007,a);
   caja(.02,.0025,.02,ROJ,x,y+.028,z,a);caja(.0025,.014,.016,BLA,x-ca*.008,y+.0305,z-sa*.008,a);caja(.008,.002,.012,AMA,x,y+.032,z,a);
   for(let k=0;k<4;k++)caja(.0015,.001,.012,BLA,x+ca*(.012+k*.004),y+.006+k*.0065,z+sa*(.012+k*.004),a);   // escalera
-  pon(new THREE.CylinderGeometry(.0007,.0007,.06,5),BLA,x-sa*.016,y+.03,z+ca*.016);caja(.0006,.009,.014,AMA,x-sa*.016+ca*.007,y+.05,z+ca*.016+sa*.007,a+Math.PI/2)}   // bandera amarilla
+  pon(new THREE.CylinderGeometry(.0007,.0007,.06,5),BLA,x-sa*.016,y+.03,z+ca*.016);caja(.0006,.009,.014,AMA,x-sa*.016+ca*.007,y+.05,z+ca*.016+sa*.007,a+Math.PI/2)}};socorristasDe(D.socorristas);   // bandera amarilla
  // ---------- 7) la ola de Prado: escultura blanca en el acceso a la playa ----------
  {const[x,z,y,a]=D.ola;const s=new THREE.Shape();
   s.moveTo(-.05,0);s.lineTo(.045,0);s.quadraticCurveTo(.05,.022,.034,.04);s.quadraticCurveTo(.018,.054,-.004,.046);s.quadraticCurveTo(-.016,.04,-.012,.03);
@@ -3931,10 +3936,73 @@ function nigCrea(root,D){const LT=!!window.LITE,t0=performance.now(),G=new THREE
    const t0=performance.now();const meces=()=>{if(!mallas.length||!mallas[0].parent)return;const t=(performance.now()-t0)/1000;
     for(const mm of mallas){const f=mm.userData.fase;mm.position.y=MAR_Y+Math.sin(t*1.3+f)*.0012;mm.rotation.z=Math.sin(t*.9+f)*.006;mm.rotation.x=Math.sin(t*1.1+f*1.7)*.005}
     requestAnimationFrame(meces)};requestAnimationFrame(meces);NIG.barcas=lista.length}}
+ // ================= ZONA 3: PLAYA AMÉRICA – A RAMALLOSA =================
+ if(D.america){const AM=D.america,m=MT;
+  // ---------- paseo de Playa América: muro, farolas, palmeras, pasarelas y socorristas ----------
+  muroDe(AM.muro,'muro_paseo_america');farolasDe(AM.farolas);pasarelasDe(AM.pasarelas);socorristasDe(AM.socorristas);
+  {const TRO=M(0x7a6650,{roughness:1}),TRO2=M(0x5f4f3e,{roughness:1}),HOJ=M(0x3f6b2f,{roughness:.8,side:THREE.DoubleSide}),HOJ2=M(0x55803a,{roughness:.8,side:THREE.DoubleSide});
+   for(const[x,z,y,s]of(LT?AM.palmeras.filter((p,i)=>i%2===0):AM.palmeras)){const h=.085+s*.035,lx=Math.cos(s*9)*.006,lz=Math.sin(s*9)*.006;
+    for(let k=0;k<4;k++){const f=k/4,f2=(k+1)/4;pon(new THREE.CylinderGeometry(.0026-f2*.0008,.0034-f*.0008,h/4,7),k%2?TRO:TRO2,x+lx*(f+f2)/2*((f+f2)/2),y+h*(f+f2)/2,z+lz*(f+f2)/2*((f+f2)/2))}
+    const tx=x+lx,tz=z+lz,ty=y+h;pon(new THREE.SphereGeometry(.004,7,5),TRO2,tx,ty,tz);
+    for(let k=0;k<9;k++){const b=k/9*6.283+s*3,g=new THREE.ConeGeometry(.005,.045,4);g.scale(1,1,.25);g.rotateZ(-Math.PI/2);g.translate(.022,0,0);g.rotateZ(-.35-(k%3)*.12);pon(g,k%2?HOJ:HOJ2,tx,ty,tz,b)}}}
+  // ---------- letrero «PRAIA AMÉRICA»: letras azules grandes sobre su peana ----------
+  {const[x0,z0,y0,a]=AM.letrero,ca=Math.cos(a),sa=Math.sin(a),AZU=M(0x3b8fd9,{roughness:.6});
+   const F={P:['1110','1001','1001','1110','1000','1000','1000'],R:['1110','1001','1001','1110','1010','1001','1001'],A:['0110','1001','1001','1111','1001','1001','1001'],
+    I:['111','010','010','010','010','010','111'],M:['10001','11011','10101','10001','10001','10001','10001'],E:['1111','1000','1000','1110','1000','1000','1111'],C:['0111','1000','1000','1000','1000','1000','0111'],' ':['00','00','00','00','00','00','00']};
+   const TX='PRAIA AMERICA',c=.0052,pr=.008,an=[];let w=0;for(const ch of TX){an.push(w);w+=F[ch][0].length*c+c*.8}w-=c*.8;
+   // L(u,v): u hacia el mar, v a lo largo del letrero; el que mira desde la playa lo lee de izquierda a derecha (−v)
+   const P_=(u,v)=>[x0+u*ca-v*sa,z0+u*sa+v*ca];
+   {const[x,z]=P_(-.002,0);caja(.022,.008,w+.02,HOR,x,y0-.004,z,a,true)}
+   [...TX].forEach((ch,k)=>{const g=F[ch];for(let r=0;r<7;r++){const fila=g[r];let i=0;while(i<fila.length){if(fila[i]!=='1'){i++;continue}let j=i;while(j<fila.length&&fila[j]==='1')j++;
+     const v=-(-w/2+an[k]+(i+j)/2*c),len=(j-i)*c;const[x,z]=P_(0,v);caja(pr,c,len,AZU,x,y0+.004+(6-r)*c,z,a,true);i=j}}
+    if(ch==='E'&&k>6){const v=-(-w/2+an[k]+2.5*c);const[x,z]=P_(0,v);caja(pr,c*.8,c*1.4,AZU,x,y0+.004+7.6*c,z,a+.5)}})}   // la tilde de la É
+  // ---------- el puente medieval de A Ramallosa: arcos de granito, tajamares, pretiles, cruceiro y la hornacina ----------
+  {const[x1,z1,h1,x2,z2,h2]=AM.puente,L=Math.hypot(x2-x1,z2-z1),a=Math.atan2(z2-z1,x2-x1),W=.046,YB=-.075,AG=-.032;
+   const n=Math.max(6,Math.round((L-.16)/.1)),paso=(L-.16)/n,sp=paso*.7,r=sp/2,ys=AG+.006,corona=ys+r;
+   const cima=(t)=>{const lin=h1+(h2-h1)*t,lomo=Math.max(h1,h2)+.018,k=1-Math.pow(2*t-1,2);return Math.max(lin+(lomo-lin)*k*.9,corona+.012)};
+   const sh=new THREE.Shape();sh.moveTo(0,YB);sh.lineTo(L,YB);const N=40;for(let i=N;i>=0;i--){const t=i/N;sh.lineTo(t*L,cima(t))}sh.lineTo(0,YB);
+   for(let k=0;k<n;k++){const cx=.08+paso*(k+.5),hp=new THREE.Path();hp.moveTo(cx-r,YB+.004);hp.lineTo(cx+r,YB+.004);hp.lineTo(cx+r,ys);hp.absarc(cx,ys,r,0,Math.PI,false);hp.lineTo(cx-r,YB+.004);sh.holes.push(hp)}
+   const g=new THREE.ExtrudeGeometry(sh,{depth:W,bevelEnabled:false,curveSegments:8});g.translate(0,0,-W/2);
+   const p=g.attributes.position,col=[],ga=C3('#9a948a'),gb=C3('#8a857b'),mo=C3('#56644a');
+   for(let i=0;i<p.count;i++){const y=p.getY(i),xx=p.getX(i),n_=.5+.5*Math.sin(xx*80+y*130);let cc=n_>.5?ga:gb;if(y<AG+.012){const f=Math.min(1,(AG+.012-y)/.02);cc=cc.map((v,j)=>v*(1-f)+mo[j]*f)}col.push(...cc)}
+   g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));if(g.attributes.uv)g.deleteAttribute('uv');
+   const gg=g.index?g.toNonIndexed():g;gg.rotateY(-a);gg.translate(x1,0,z1);gg.computeVertexNormals();
+   const pm=new THREE.Mesh(gg,M(0xffffff,{vertexColors:true,roughness:.95}));pm.name='puente_ramallosa';pm.castShadow=!LT;pm.receiveShadow=true;G.add(pm);SUELOS.push(pm);
+   const ca=Math.cos(a),sa=Math.sin(a),PT=(t,o)=>[x1+ca*t*L-sa*o,z1+sa*t*L+ca*o];
+   // tajamares en las pilas, aguas arriba y abajo
+   for(let k=0;k<=n;k++){const t=(.08+paso*k)/L;if(k===0||k===n)continue;for(const o of[-1,1]){const[x,z]=PT(t,o*(W/2+.004));const tg=new THREE.BoxGeometry(.016,ys-YB,.016);tg.rotateY(Math.PI/4);pon(tg,GRA2,x,(ys+YB)/2,z,a,true)}}
+   // pretiles a los dos lados, siguiendo el lomo
+   for(let i=0;i<24;i++){const t0=i/24,t1=(i+1)/24,yA=cima(t0),yB=cima(t1);for(const o of[-1,1]){const[xa,za]=PT((t0+t1)/2,o*(W/2-.003));caja(L/24+.001,.011,.006,i%2?GRA:GRA2,xa,(yA+yB)/2-.001,za,a,true)}}
+   // cruceiro en el centro y la hornacina de San Telmo enfrente
+   {const t=.5,[x,z]=PT(t,(W/2-.003)),y=cima(t);pon(new THREE.CylinderGeometry(.0016,.002,.035,8),GRA,x,y+.0275,z);caja(.0035,.012,.0035,GRA,x,y+.049,z,a);caja(.0035,.0035,.011,GRA,x,y+.051,z,a);caja(.008,.006,.008,GRA2,x,y+.008,z,a)}
+   {const t=.5,[x,z]=PT(t,-(W/2-.003)),y=cima(t);caja(.012,.022,.007,GRA,x,y+.006,z,a,true);const[xn,zn]=PT(t,-(W/2-.0068));caja(.006,.009,.0015,GRAO,xn,y+.014,zn,a);pon(new THREE.ConeGeometry(.0075,.006,4),GRA2,x,y+.031,z,a+Math.PI/4)}}
+  // ---------- la lagoa: marismas de junco y lodo, con garzas ----------
+  {const S=AM.marisma,W_=S.w,H_=S.h,pos=[],col=[];const JU=['#6b6f45','#76774c','#5e6540','#837b52','#6a6a48'].map(C3),LO=['#5a4d3c','#6b5a43','#4f4636'].map(C3);
+   const kv=(i,j)=>i<0||j<0||i>=W_||j>=H_?0:S.k.charCodeAt(j*W_+i)-48;const ns=(x,z)=>.5+.25*Math.sin(x*41+Math.sin(z*37)*1.3)+.25*Math.sin(z*33+Math.cos(x*29)*1.9);
+   const pasoM=LT?2:1,cn=[],cngeo=new THREE.ConeGeometry(.0028,.014,5);
+   for(let j=0;j<H_;j+=pasoM)for(let i=0;i<W_;i+=pasoM){const k=kv(i,j);if(!k)continue;const x=S.x0+i*S.s,z=S.z0+j*S.s,e=S.s*pasoM*.5+.001,y=k===2?-.0265:-.0285;
+    // color por vértice (no por celda): manchas suaves en vez de damero
+    const cv=(px,pz)=>{const n=ns(px*.35,pz*.35);if(k!==2)return LO[(n*2.99|0)];const a_=JU[(n*4.99|0)],b_=JU[((n*4.99|0)+1)%5],f=n*4.99%1;return[a_[0]*(1-f)+b_[0]*f,a_[1]*(1-f)+b_[1]*f,a_[2]*(1-f)+b_[2]*f]};
+    for(const[dx,dz]of[[-e,-e],[-e,e],[e,-e],[e,-e],[-e,e],[e,e]]){pos.push(x+dx,y,z+dz);const c=cv(x+dx,z+dz);col.push(c[0],c[1],c[2])}
+    if(k===2&&ns(x*3,z*3)>.45&&!(LT&&(i+j)%2))cn.push([x+(ns(x,z*2)-.5)*S.s,z+(ns(x*2,z)-.5)*S.s,ns(x*5,z*5)])}
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();
+   const mm=new THREE.Mesh(g,M(0xffffff,{vertexColors:true,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));mm.name='marisma_ramallosa';mm.receiveShadow=true;G.add(mm);
+   // matas de junco
+   const jp=[],jc=[];for(const[x,z,s]of cn){const q=cngeo.clone();q.scale(1+s,1+s*1.4,1+s);q.translate(x,-.0265+.007*(1+s*1.4),z);const a_=(q.index?q.toNonIndexed():q).attributes.position.array;jp.push(...a_);const c=JU[(s*5|0)%5];for(let i=0;i<a_.length/3;i++){const t=a_[i*3+1]>-.02?1.15:.8;jc.push(c[0]*t,c[1]*t,c[2]*t)}}
+   if(jp.length){const g2=new THREE.BufferGeometry();g2.setAttribute('position',new THREE.Float32BufferAttribute(jp,3));g2.setAttribute('color',new THREE.Float32BufferAttribute(jc,3));g2.computeVertexNormals();
+    const m2=new THREE.Mesh(g2,M(0xffffff,{vertexColors:true,roughness:1}));m2.name='juncos_ramallosa';m2.castShadow=false;G.add(m2)}
+   NIG.marisma=pos.length/18;NIG.juncos=cn.length}
+  {const GBL=M(0xf2f2ee,{roughness:.7}),PIC=M(0xe0b02a,{roughness:.6});
+   for(const[x,z,a,s]of AM.garzas){const ca=Math.cos(a),sa=Math.sin(a),y=-.0285;
+    for(const o of[-1,1])pon(new THREE.CylinderGeometry(.0003,.0003,.009,4),NEG,x-sa*o*.0012,y+.0045,z+ca*o*.0012);
+    const cu=new THREE.SphereGeometry(.0032,8,6);cu.scale(1.6,.85,.8);pon(cu,GBL,x,y+.011,z,a);
+    const cue=new THREE.CylinderGeometry(.0007,.0009,.008,5);cue.rotateZ(-.5+s*.4);pon(cue,GBL,x+ca*.004,y+.016,z+sa*.004,a);
+    pon(new THREE.SphereGeometry(.0013,6,5),GBL,x+ca*.0062,y+.0198,z+sa*.0062);{const pi=new THREE.ConeGeometry(.0006,.005,4);pi.rotateZ(-Math.PI/2);pon(pi,PIC,x+ca*.0092,y+.0195,z+sa*.0092,a)}}}
+  NIG.america=1}
  // ---------- juntar por material ----------
  const junta=(P_,nombre,solido)=>{for(const[mat,gs]of P_){if(!gs.length)continue;const mm=new THREE.Mesh(mergeGeometries(gs),mat);mm.name=nombre;mm.castShadow=!LT&&mat!==LUZF;mm.receiveShadow=true;G.add(mm);if(solido)try{colaBVH(mm)}catch(e){}}};
  junta(PARTS,'piezas_nigran',false);
- root.add(G);junta(SOLID,'piezas_nigran_solidas',true);
+ root.add(G);junta(SOLID,'piezas_nigran_solidas',true);for(const mm of SUELOS)try{colaBVH(mm,true)}catch(e){}
  NIG.G=G;NIG.ms=Math.round(performance.now()-t0)}
 // ---------- fin de nigran.js
 // ---------- Colegio Compañía de María (colegio.js)
