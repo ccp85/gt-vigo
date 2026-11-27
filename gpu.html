@@ -1880,6 +1880,43 @@ function gpuAlga(m,uT,uWY,iph){const T=TSL,{vec2,vec3,float,sin,cos,exp,max,min,
 function algasTick(){const A=ALG.u;if(!A)return;const on=MODO==='nado'?1:0;
  A.uN.value.set(P.x,P.z||0,P.y,on);A.uV.value=Math.min(1,Math.abs(P.v||0)/.15)}
 // ---------- fin de gpu_algas.js
+// ---------- coches del tráfico más ligeros (gpu_coches.js, solo gpu.html) ----------
+// Cada coche del tráfico se construye con muchas piezas (carrocería, cristales, ruedas, llantas, faros, pilotos, retrovisores...):
+// entre 17 y 58 mallas que el motor dibujaba una a una, y otra vez para las sombras. Al crearlo se juntan todas las piezas que
+// comparten material en una sola malla (una por material: pintura, cristal, goma, cromo, faros...), así que cada coche pasa
+// a dibujarse de 6 a 15 veces en vez de 17 a 58. Se ve igual: los faros y pilotos siguen encendiéndose de noche y las sirenas
+// destellando porque el material es el mismo. El haz de los faros y la sombra quedan aparte. Al subirte a un coche del
+// tráfico se le devuelven sus piezas de siempre. Con window.__COCHES_PIEZAS=true (antes de jugar) no se juntan.
+const AVH={n:0,antes:0,despues:0};window.__AVH=AVH;
+function aplanaVeh(g){try{if(!g||window.__COCHES_PIEZAS||g.userData.piezas)return g;
+ g.updateMatrixWorld(true);const inv=g.matrixWorld.clone().invert(),grupos=new Map(),fuera=[];let n=0;
+ g.traverse(o=>{if(!o.isMesh||o===g)return;n++;
+  if(o.isInstancedMesh||o.isSkinnedMesh||Array.isArray(o.material)||o.name==='haz'||o.name==='sombra'||!o.visible||o.morphTargetInfluences||o.children.length){fuera.push(o);return}
+  const k=o.material.uuid;let q=grupos.get(k);if(!q)grupos.set(k,q={mat:o.material,ms:[],nom:''});q.ms.push(o);if(o.name==='carroceria')q.nom='carroceria'});
+ if(n<6)return g;
+ const nuevas=[];
+ for(const q of grupos.values()){if(q.ms.length<2){continue}
+  const gs=q.ms.map(o=>{let ge=o.geometry.clone();const M=inv.clone().multiply(o.matrixWorld);ge.applyMatrix4(M);
+   if(M.determinant()<0){ge=ge.index?ge.toNonIndexed():ge;for(const a of Object.values(ge.attributes)){const s=a.itemSize,A=a.array;for(let t=0;t<a.count;t+=3)for(let c=0;c<s;c++){const x=A[(t+1)*s+c];A[(t+1)*s+c]=A[(t+2)*s+c];A[(t+2)*s+c]=x}}}
+   return ge});
+  const comunes=Object.keys(gs[0].attributes).filter(k=>gs.every(ge=>ge.attributes[k]&&ge.attributes[k].itemSize===gs[0].attributes[k].itemSize));
+  const todosIdx=gs.every(ge=>ge.index);
+  const listos=gs.map(ge=>{let x=todosIdx?ge:(ge.index?ge.toNonIndexed():ge);for(const k of Object.keys(x.attributes))if(!comunes.includes(k))x.deleteAttribute(k);x.morphAttributes={};return x});
+  const mg=mergeGeometries(listos,false);listos.forEach(x=>x.dispose());if(!mg)continue;
+  const m=new THREE.Mesh(mg,q.mat);m.name=q.nom||'pieza';m.castShadow=q.ms.some(o=>o.castShadow);m.receiveShadow=q.ms.some(o=>o.receiveShadow);m.userData.junta=1;
+  nuevas.push({m,ms:q.ms})}
+ if(!nuevas.length)return g;
+ const sacadas=[];for(const x of nuevas)for(const o of x.ms){sacadas.push([o,o.parent]);o.parent.remove(o)}
+ for(const x of nuevas)g.add(x.m);
+ g.userData.piezas={sacadas,juntas:nuevas.map(x=>x.m)};
+ AVH.n++;AVH.antes+=n;let d=0;g.traverse(o=>{if(o.isMesh)d++});AVH.despues+=d;
+ return g}catch(e){console.warn('aplanaVeh',e);return g}}
+// devuelve las piezas originales (para subirse al coche: vestirCoche copia las piezas de una en una)
+function desaplanaVeh(g){const P_=g&&g.userData.piezas;if(!P_)return g;
+ for(const m of P_.juntas){g.remove(m);m.geometry.dispose()}
+ for(const[o,p]of P_.sacadas)p.add(o);
+ delete g.userData.piezas;return g}
+// ---------- fin de gpu_coches.js
 function aguaSamil(m){m.roughness=.6;m.metalness=.0;if(window.LITE)m.defines=Object.assign(m.defines||{},{AGUA_LITE:''});m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,UW,UCO,USURF,URF,{uSun:SKYU.uSun,uZen:SKYU.uZen,uHor:SKYU.uHor});
  sh.vertexShader='varying vec3 vWp;uniform mat4 uRfM;varying vec4 vRfUv;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWp=(modelMatrix*vec4(position,1.0)).xyz;vRfUv=uRfM*vec4(vWp,1.0);');
  sh.fragmentShader='uniform float uT;uniform float uN;uniform sampler2D uCos;uniform vec4 uCoR;uniform vec3 uSun,uZen,uHor;varying vec3 vWp;uniform sampler2D uRf;uniform float uRfOn;varying vec4 vRfUv;vec3 aN;float aF;float aS;\n'+SURF_GLSL+
@@ -4910,7 +4947,7 @@ function accion(){if(!driving)return;if(PAL.on){palasGolpe();return}if(palasCerc
   P.a=Math.atan2(-(t[1]-P.y),t[0]-P.x);Object.assign(P,{x:t[0],y:t[1],v:0});cambiarModo('pie');return}
  if(!objetivo){mostrar('No hay ningún vehículo cerca');return}
  if(objetivo.k==='ferry'){P.ferry=objetivo.b;P.ferryZarpa=false;P.ferry.espera=Math.max(P.ferry.espera,3);mostrar(objetivo.txt.replace('Subir al','Has subido al'));return}
- if(objetivo.k==='traf'){const c=objetivo.c;TRAF.splice(TRAF.indexOf(c),1);scene.remove(c.g);if(c.bus){let m_=null;c.g.traverse(o=>{if(o.isMesh&&!m_&&o.material&&o.material.color)m_=o.material});vestirCoche(c.g,'bus')}else vestirCoche(c.g,c.tipo)
+ if(objetivo.k==='traf'){const c=objetivo.c;TRAF.splice(TRAF.indexOf(c),1);scene.remove(c.g);desaplanaVeh(c.g);if(c.bus){let m_=null;c.g.traverse(o=>{if(o.isMesh&&!m_&&o.material&&o.material.color)m_=o.material});vestirCoche(c.g,'bus')}else vestirCoche(c.g,c.tipo)
   Object.assign(P,{x:c.x,y:c.y,a:c.g.rotation.y,v:0});cambiarModo('coche');mostrar(c.bus?'¡Al volante del bus!':c.tipo==='moto'?'¡Moto nueva!':'¡'+(VNOM[c.tipo]||'coche')[0].toUpperCase()+(VNOM[c.tipo]||'coche').slice(1)+' nuevo!');return}
  if(objetivo.k==='aparc'){const v=objetivo.v;APARC.splice(APARC.indexOf(v),1);scene.remove(v.g);
   if(v.tipo==='coche'){if(v.g.userData.modelo)vestirCoche(v.g,v.g.userData.modelo);else if(v.col!=null)car.userData.body.color.set(v.col)}
@@ -5113,7 +5150,7 @@ PRIMERA.then(()=>fetch(ZONA+'_trafico.json')).then(r=>r.json()).then(j=>{RUTAS=j
    const ru=new THREE.Mesh(new THREE.BoxGeometry(.12,.008,.034),new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:.6}));ru.position.set(-.01,.07,0);g.add(ru);
    const ln=new THREE.Mesh(new THREE.BoxGeometry(.201,.009,.051),new THREE.MeshStandardMaterial({color:0xcfdc2a,roughness:.6}));ln.position.y=.016;g.add(ln);
    const tp=new THREE.Mesh(new THREE.BoxGeometry(.201,.013,.051),new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:.6}));tp.position.y=.0625;g.add(tp);
-   g.add(manchaSombra(.06,.22))}else{const cs=VTIPOS[tipo].col;g=mkVehiculo(tipo,cs[Math.floor(Math.random()*cs.length)])}g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.scale.multiplyScalar(VSC);g.userData.vsc=1;g.visible=false;scene.add(g);
+   g.add(manchaSombra(.06,.22))}else{const cs=VTIPOS[tipo].col;g=mkVehiculo(tipo,cs[Math.floor(Math.random()*cs.length)])}g.traverse(o=>{if(o.isMesh)o.castShadow=true});aplanaVeh(g);g.scale.multiplyScalar(VSC);g.userData.vsc=1;g.visible=false;scene.add(g);
   TRAF.push({g,r,s:Math.random()*r.L,dir:r.u||(Math.random()<.5?1:-1),v:.4,k:bus?.75:(tipo==='deportivo'||tipo==='moto'?1.05:tipo==='furgoneta'?.85:.9)+Math.random()*.2,x:0,y:0,bus,tipo})}});
 // rutas cercanas al jugador (se recalculan cada segundo) para recolocar coches y peatones que quedan lejos
 let CERCA=[],CERCA_P=[],cercaT=0;
