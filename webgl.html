@@ -242,22 +242,113 @@ const ext=(pts,depth,m,bev=.06,name)=>{const s=new THREE.Shape(pts.map(p=>new TH
 const base=()=>({glass:T('cristal',0x0b1020,{metalness:.9,roughness:.06}),black:T('negro',0x111114,{metalness:.1,roughness:.75}),chrome:T('cromo',0xdfe3ea,{metalness:1,roughness:.12})});
 const faro=()=>T('faro',0xffffff,{emissive:0xfff3d0,emissiveIntensity:2.5}),piloto=()=>T('piloto',0xff0010,{emissive:0xff1020,emissiveIntensity:2.5});
 
-// ---- Ría GT 300: deportivo naranja de dos puertas con alerón
-function coche(){
- const {glass,black,chrome}=base(),g=new THREE.Group(),paint=T('pintura',COL.coche,{metalness:.7,roughness:.22,envMapIntensity:1.4});
- g.add(ext([[-2.1,.38],[2.05,.38],[2.18,.62],[2.12,.82],[1.85,.95],[.9,1.02],[.3,1.42],[-.95,1.45],[-1.65,1.06],[-2.15,1.0]],1.62,paint,.09,'carroceria'));
- g.add(ext([[.82,1.05],[.3,1.44],[-.92,1.47],[-1.55,1.08]],1.86,glass,0));
- const st=T('negro',0x111114,{metalness:.4,roughness:.4});
- g.add(mesh(new THREE.BoxGeometry(.34,.05,1.9),st,-1.95,1.32,0));
- [-.6,.6].forEach(z=>g.add(mesh(new THREE.BoxGeometry(.08,.26,.06),st,-1.92,1.18,z)));
- [-.58,.58].forEach(z=>{g.add(mesh(new THREE.BoxGeometry(.06,.12,.42),faro(),2.2,.74,z));g.add(mesh(new THREE.BoxGeometry(.06,.1,.5),piloto(),-2.2,.86,z))});
- g.add(mesh(new THREE.BoxGeometry(.1,.16,1.2),black,2.18,.5,0));
- const wheels=[],hub=T('otro',0xff5a36,{emissive:0x5a1000});
- [[1.35,.82],[1.35,-.82],[-1.38,.82],[-1.38,-.82]].forEach(([x,z])=>{const w=new THREE.Group();w.position.set(x,.44,z);
-  const t=mesh(new THREE.CylinderGeometry(.44,.44,.34,28),black);t.rotation.x=Math.PI/2;w.add(t);
-  const r=mesh(new THREE.CylinderGeometry(.29,.29,.36,6),chrome);r.rotation.x=Math.PI/2;w.add(r);
-  const h=mesh(new THREE.CylinderGeometry(.08,.08,.38,12),hub);h.rotation.x=Math.PI/2;w.add(h);
-  g.add(w);wheels.push(w)});
+// ---- Ría GT 300: deportivo de dos puertas, el coche rojo de siempre. Carrocería modelada por secciones (como un torno a lo largo del coche),
+// paso de rueda, faros afilados, luz trasera de lado a lado, difusor con cuatro escapes, alerón, retrovisores, llantas de cinco radios con
+// pinzas de freno y, detrás de cristales tintados, el interior: salpicadero, volante, asientos tipo baquet y (con o.piloto) el conductor.
+function coche(o={}){
+ const {chrome,black}=base(),g=new THREE.Group(),paint=T('pintura',COL.coche,{metalness:.7,roughness:.22,envMapIntensity:1.4});
+ const glass=T('cristal',0x0b1020,{metalness:.9,roughness:.06,transparent:true,opacity:.42});
+ const goma=T('negro',0x111114,{metalness:.1,roughness:.8}),plastico=T('negro',0x16171b,{metalness:.3,roughness:.45});
+ const grafito=T('otro',0x2b2e35,{metalness:.8,roughness:.3}),naranja=T('otro',0xff5a36,{emissive:0x5a1000}),blanco=T('otro',0xf2f2ee,{roughness:.5}),plata=T('otro',0xc4c8cf,{metalness:.6,roughness:.28});
+ const interior=T('otro',0x1b1b1f,{roughness:.8,metalness:.05}),cuero=T('otro',0xd2451e,{roughness:.55,metalness:.05});
+ // curva suave por puntos (Catmull-Rom) para el perfil, el ancho y el suelo
+ const curva=K=>x=>{if(x>=K[0][0])return K[0][1];const n=K.length;if(x<=K[n-1][0])return K[n-1][1];let i=0;while(K[i+1][0]>x)i++;
+  const p0=K[Math.max(0,i-1)][1],p1=K[i][1],p2=K[i+1][1],p3=K[Math.min(n-1,i+2)][1],t=(K[i][0]-x)/(K[i][0]-K[i+1][0]);
+  return .5*(2*p1+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t*t+(-p0+3*p1-3*p2+p3)*t*t*t)};
+ const top=curva([[2.24,.6],[2.12,.75],[1.9,.85],[1.35,.95],[.9,.97],[.5,.99],[-.5,1.0],[-1.38,1.03],[-1.9,1.02],[-2.12,.97],[-2.24,.86]]);
+ const bot=curva([[2.24,.42],[2.0,.33],[1.0,.3],[-1.0,.3],[-2.0,.34],[-2.24,.44]]);
+ const anc=curva([[2.24,.58],[2.12,.74],[1.8,.85],[1.35,.89],[.8,.85],[0,.84],[-.8,.86],[-1.38,.91],[-1.9,.87],[-2.12,.79],[-2.24,.62]]);
+ const gTop=curva([[.94,.97],[.62,1.18],[.25,1.4],[0,1.44],[-.5,1.455],[-.92,1.42],[-1.22,1.3],[-1.64,1.0]]);
+ const se=(v,e)=>Math.sign(v)*Math.pow(Math.abs(v),e);
+ // punto de una sección: th=0 lado derecho (+z), PI/2 arriba; tumble = cuánto se estrecha hacia arriba (la cabina)
+ const P=(x,th,yb,yt,w,n,tumble,s=1)=>{const cy=(yb+yt)/2,h=(yt-yb)/2,c=Math.cos(th),sn=Math.sin(th),yy=se(sn,2/n),zz=se(c,2/n)*w*(1-tumble*Math.max(0,yy));
+  return [x,cy+h*yy*s,zz*s]};
+ // superficie: x de x0 a x1 (nx tramos), ángulo de a0 a a1 (na tramos); con tapas cierra los extremos
+ const sup=(fn,x0,x1,nx,a0,a1,na,mat,tapas,name)=>{const pos=[],idx=[];
+  for(let i=0;i<=nx;i++){const x=x0+(x1-x0)*i/nx;for(let j=0;j<=na;j++)pos.push(...fn(x,a0+(a1-a0)*j/na))}
+  for(let i=0;i<nx;i++)for(let j=0;j<na;j++){const a=i*(na+1)+j,b=a+na+1;idx.push(a,a+1,b,b,a+1,b+1)}
+  if(tapas)for(const i of [0,nx]){const c=pos.length/3;let sx=0,sy=0,sz=0;for(let j=0;j<=na;j++){const k=(i*(na+1)+j)*3;sx+=pos[k];sy+=pos[k+1];sz+=pos[k+2]}
+   pos.push(sx/(na+1),sy/(na+1),sz/(na+1));for(let j=0;j<na;j++){const a=i*(na+1)+j;i?idx.push(c,a,a+1):idx.push(c,a+1,a)}}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setIndex(idx);geo.computeVertexNormals();
+  const m=new THREE.Mesh(geo,mat);if(name)m.name=name;g.add(m);return m};
+ const cuerpo=(x,th,s=1)=>P(x,th,bot(x),top(x),anc(x),5,0,s);
+ const cabina=(x,th,s=1)=>{const yb=top(x)-.04,yt=Math.max(yb+.01,gTop(x));return P(x,th,yb-(yt-yb)*.15,yt,anc(x)*.8,3,.28,s)};
+ // la carrocería va de delante (+x) hacia atrás: las caras miran hacia fuera
+ sup(cuerpo,2.24,-2.24,64,0,Math.PI*2,40,paint,true,'carroceria');
+ // cabina: cristal tintado entero y, encima, las piezas de chapa (techo, pilares, aletas traseras)
+ sup(cabina,.94,-1.64,40,-.9,Math.PI+.9,36,glass,false);
+ const chapa=(x0,x1,a0,a1)=>sup((x,th)=>cabina(x,th,1.012),x0,x1,Math.max(2,Math.round(Math.abs(x1-x0)*14)),a0,a1,8,paint,false,'carroceria');
+ chapa(.3,-1.0,.62,Math.PI-.62);                       // techo
+ chapa(.94,-1.64,.46,.62);chapa(.94,-1.64,Math.PI-.62,Math.PI-.46);   // pilares A y canaletas del techo
+ chapa(-.98,-1.64,-.9,.46);chapa(-.98,-1.64,Math.PI-.46,Math.PI+.9); // pilares traseros (fastback)
+ const ad=(geo,mat,x,y,z,rx=0,ry=0,rz=0,name)=>{const m=mesh(geo,mat,x,y,z,name);m.rotation.set(rx,ry,rz);g.add(m);return m};
+ const caja=(w,h,d,mat,x,y,z,rx,ry,rz,name)=>ad(new THREE.BoxGeometry(w,h,d),mat,x,y,z,rx,ry,rz,name);
+ // ruedas: neumático, llanta de cinco radios, disco y pinza naranja; pasos de rueda negros con su ceja de chapa
+ const wheels=[];
+ [[1.35,1],[1.35,-1],[-1.38,1],[-1.38,-1]].forEach(([x,s])=>{const z=.8*s,w=new THREE.Group();w.position.set(x,.44,z);
+  const cil=(r,l,m,zz,seg=28)=>{const c=mesh(new THREE.CylinderGeometry(r,r,l,seg),m,0,0,zz);c.rotation.x=Math.PI/2;w.add(c);return c};
+  const banda=mesh(new THREE.CylinderGeometry(.44,.44,.3,32,1,true),goma);banda.rotation.x=Math.PI/2;w.add(banda);
+  const flanco=mesh(new THREE.RingGeometry(.3,.44,32),goma,0,0,.15*s);if(s<0)flanco.rotation.y=Math.PI;w.add(flanco);
+  const barril=mesh(new THREE.CylinderGeometry(.3,.3,.28,24,1,true),grafito);barril.rotation.x=Math.PI/2;w.add(barril);
+  const fondo=mesh(new THREE.CircleGeometry(.3,24),goma,0,0,-.1*s);if(s<0)fondo.rotation.y=Math.PI;w.add(fondo);
+  cil(.25,.02,T('otro',0x8a8d93,{metalness:.9,roughness:.4}),-.03*s,24);
+  const pz=mesh(new THREE.BoxGeometry(.13,.2,.07),naranja,x-.13,.6,z+.02*s);pz.rotation.z=.55;g.add(pz);
+  for(let k=0;k<5;k++){const a=k*Math.PI*2/5,sp=mesh(new THREE.BoxGeometry(.25,.055,.04),plata,Math.cos(a)*.15,Math.sin(a)*.15,.155*s);sp.rotation.z=a;w.add(sp)}
+  cil(.075,.33,naranja,.01*s,14);w.add(mesh(new THREE.TorusGeometry(.295,.018,6,28),plata,0,0,.14*s));
+  g.add(w);wheels.push(w);
+  const zc=(anc(x)+.004)*s,arco=new THREE.CircleGeometry(.48,24,0,Math.PI);
+  ad(arco,goma,x,.42,zc,0,s>0?0:Math.PI,0);
+  ad(new THREE.TorusGeometry(.48,.028,6,24,Math.PI),paint,x,.42,zc-.022*s,0,0,0,'carroceria')});
+ // morro: parrilla, tomas de aire, faldón y faros afilados con luz de día
+ caja(.03,.12,.9,plastico,2.245,.5,0);for(let k=-4;k<=4;k++)caja(.02,.11,.012,chrome,2.258,.5,k*.1);
+ [-1,1].forEach(s=>{caja(.06,.1,.26,plastico,2.2,.45,.5*s,0,.35*s,0);
+  const f=ad(new THREE.SphereGeometry(1,18,10),faro(),2.01,.79,.58*s,0,-.35*s,-.12);f.scale.set(.19,.04,.12);
+  caja(.24,.018,.05,plastico,1.98,.825,.5*s,0,-.35*s,-.12);
+  caja(.03,.015,.3,T('luz',0xffffff,{emissive:0xeaf4ff}),2.08,.72,.52*s,0,-.45*s,0);
+  // espejos, tiradores, línea de puerta, faldón y toma lateral
+  const zl=x=>(anc(x)+.003)*s;
+  const esp=ad(new THREE.SphereGeometry(1,14,10),paint,.7,1.07,(anc(.7)+.1)*s,0,0,0,'carroceria');esp.scale.set(.12,.065,.09);
+  caja(.06,.03,.1,plastico,.72,1.02,(anc(.7)+.03)*s);ad(new THREE.PlaneGeometry(.13,.08),T('cromo',0xdfe3ea,{metalness:1,roughness:.05}),.59,1.07,(anc(.7)+.1)*s,0,-Math.PI/2,0);
+  caja(.012,.5,.012,plastico,.86,.68,zl(.86));caja(.012,.5,.012,plastico,-.72,.7,zl(-.72));
+  caja(.14,.035,.03,chrome,-.48,.88,zl(-.48)+.01*s);
+  caja(1.95,.09,.06,plastico,0,.35,(anc(0)-.02)*s);
+  caja(.34,.13,.04,plastico,-.82,.63,zl(-.82));for(let k=0;k<3;k++)caja(.3,.012,.05,goma,-.82,.59+k*.04,zl(-.82)+.006*s);
+  // pilotos traseros grandes
+  caja(.05,.09,.28,piloto(),-2.24,.78,.48*s)});
+ caja(.04,.035,.7,piloto(),-2.245,.8,0);
+ caja(.15,.025,1.3,plastico,2.17,.33,0);
+ // capó: dos rejillas
+ [-.26,.26].forEach(z=>{caja(.36,.02,.12,plastico,1.52,top(1.52)+.004,z,0,0,-.17);for(let k=0;k<3;k++)caja(.34,.024,.012,goma,1.52,top(1.52)+.006,z-.04+k*.04,0,0,-.17)});
+ // trasera: difusor con aletas, cuatro escapes y matrícula
+ caja(.18,.12,1.3,plastico,-2.16,.39,0);for(let k=-2;k<=2;k++)caja(.16,.11,.02,goma,-2.18,.38,k*.25);
+ [-.37,-.25,.25,.37].forEach(z=>{const e=ad(new THREE.CylinderGeometry(.05,.05,.16,14),chrome,-2.2,.42,z,0,0,Math.PI/2);ad(new THREE.CircleGeometry(.036,12),goma,-2.282,.42,z,0,-Math.PI/2,0)});
+ caja(.02,.11,.5,blanco,-2.25,.6,0);caja(.022,.11,.05,T('otro',0x2a4fb8,{roughness:.5}),-2.252,.6,-.225);
+ // alerón con perfil de ala, patas y placas laterales
+ {const s=new THREE.Shape();s.moveTo(.2,0);s.quadraticCurveTo(0,.07,-.22,.025);s.lineTo(-.22,.0);s.quadraticCurveTo(0,.02,.2,0);
+  const geo=new THREE.ExtrudeGeometry(s,{depth:1.76,bevelEnabled:false});geo.translate(0,0,-.88);ad(geo,plastico,-1.98,1.27,0,0,0,.08);
+  [-.55,.55].forEach(z=>caja(.1,.26,.04,plastico,-1.96,1.15,z));[-.89,.89].forEach(z=>caja(.34,.14,.02,plastico,-1.98,1.3,z))}
+ // antena de aleta en el techo
+ ad(new THREE.ConeGeometry(.05,.14,4),plastico,-.82,1.48,0,0,0,.6).scale.set(1,1,.35);
+ // interior, visto a través de los cristales: suelo, salpicadero, volante, consola y asientos baquet
+ caja(2.0,.02,1.0,interior,-.3,1.005,0);
+ caja(.36,.1,1.04,interior,.48,1.05,0);caja(.02,.03,1.04,cuero,.3,1.07,0);caja(.14,.05,.2,plastico,.4,1.11,-.38);
+ caja(.7,.08,.2,interior,0,1.04,0);caja(.08,.06,.04,chrome,.1,1.09,0);
+ const vol=ad(new THREE.TorusGeometry(.14,.022,8,24),plastico,.24,1.15,-.38);vol.rotation.order='YXZ';vol.rotation.set(.35,Math.PI/2,0);
+ ad(new THREE.CylinderGeometry(.035,.035,.12,10),plastico,.24,1.15,-.38,0,Math.PI/2,0).rotation.set(0,0,Math.PI/2-.35);
+ [-.32,.32].forEach(z=>{const r=new THREE.Group();r.position.set(-.5,.52,z);r.rotation.z=.2;g.add(r);
+  r.add(mesh(new THREE.BoxGeometry(.5,.12,.42),interior,.14,.06,0));
+  r.add(mesh(new THREE.BoxGeometry(.1,.78,.38),interior,-.1,.41,0));r.add(mesh(new THREE.BoxGeometry(.106,.56,.13),cuero,-.1,.45,0));
+  [-1,1].forEach(q=>r.add(mesh(new THREE.BoxGeometry(.16,.5,.05),interior,-.06,.42,q*.2)))});
+ caja(.3,.04,.9,interior,-1.2,1.04,0);
+ // el conductor (sudadera roja como en la moto), con las manos en el volante
+ if(o.piloto){const piel=T('otro',0xe0a98a,{roughness:.7}),sud=T('otro',0xc0262b,{roughness:.8}),pelo=T('otro',0x2a1c14,{roughness:.9});
+  const z=-.38,tr=mesh(new THREE.CapsuleGeometry(.15,.3,6,12),sud,-.44,.86,z);tr.rotation.z=.2;tr.scale.set(.75,1,1);g.add(tr);
+  ad(new THREE.CylinderGeometry(.045,.055,.08,10),piel,-.34,1.19,z);
+  ad(new THREE.SphereGeometry(.1,16,12),piel,-.32,1.3,z).scale.set(1,1.1,.92);
+  const pe=ad(new THREE.SphereGeometry(.105,16,10,0,Math.PI*2,0,Math.PI*.55),pelo,-.335,1.315,z,0,0,.35);pe.scale.set(1.04,1.08,.96);
+  [-1,1].forEach(q=>{const hom=new THREE.Vector3(-.38,1.1,z+q*.17),man=new THREE.Vector3(.22,1.15,z+q*.14),d=man.clone().sub(hom);
+   const b=ad(new THREE.CapsuleGeometry(.045,d.length(),4,8),sud,0,0,0);b.position.copy(hom).add(man).multiplyScalar(.5);b.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());
+   ad(new THREE.SphereGeometry(.042,10,8),piel,man.x+.01,man.y,man.z)})}
  g.userData.wheels=wheels;return g}
 
 // ---- Castro 600: naked azul. Con {piloto:true} lleva al protagonista (sudadera roja, vaqueros) con casco a juego
@@ -454,7 +545,7 @@ function vortex(){
  g.userData.rot=rot;g.userData.tr=tr;return g}
 
 const C3=[coche,bouzas,spider],M3=[moto,toralla,arenal],H3=[heli,rande,vortex];
-return{coche:(i=0)=>C3[i](),moto:(i=0,o)=>M3[i](o),heli:(i=0)=>H3[i](),COL}};
+return{coche:(i=0,o)=>C3[i](o),moto:(i=0,o)=>M3[i](o),heli:(i=0)=>H3[i](),COL}};
 window.GTV_OF_INFO={
  coche:[{n:'Ría GT 300',k:'Deportivo',s:[82,70,76]},{n:'Bouzas 4x4',k:'Todoterreno',s:[62,58,72]},{n:'Samil Spider',k:'Descapotable',s:[76,66,86]}],
  moto:[{n:'Castro 600',k:'Naked',s:[74,92,88]},{n:'Toralla RR',k:'Superdeportiva',s:[96,94,70]},{n:'Arenal 125',k:'Scooter',s:[46,58,96]}],
@@ -5616,7 +5707,7 @@ const OFJ=(()=>{
  const std=(o)=>new THREE.MeshStandardMaterial(o);
  const T=(rol,c,o={})=>{switch(rol){
   case 'pintura':return pintura(c);
-  case 'cristal':{const m=new THREE.MeshPhysicalMaterial({color:0x0e121a,roughness:.03,metalness:0,clearcoat:1,clearcoatRoughness:0,envMapIntensity:2.2});REFLEJAN.add(m);return m}
+  case 'cristal':{const m=new THREE.MeshPhysicalMaterial({color:0x0e121a,roughness:.03,metalness:0,clearcoat:1,clearcoatRoughness:0,envMapIntensity:2.2});if(o.opacity<1){m.transparent=true;m.opacity=o.opacity;m.depthWrite=false}REFLEJAN.add(m);return m}
   case 'cromo':{const m=std({color:0xd8dbe0,roughness:.18,metalness:.9});REFLEJAN.add(m);return m}
   case 'negro':return std({color:0x1a1a22,roughness:o.roughness>.5?.85:.45,metalness:o.roughness>.5?0:.3});
   case 'faro':{const m=std({color:0xfff6dc,roughness:.2,emissive:0xfff2c0,emissiveIntensity:.4});m.userData.faro='f';FAROMATS.add(m);return m}
@@ -5626,10 +5717,15 @@ const OFJ=(()=>{
  const F=window.GTV_OF(THREE,T);
  // coche y moto: piezas sueltas (vestirCoche solo copia mallas) con la escala ya aplicada; el grupo va a .6 como el coche del juego
  const plano=(g,f,dy,sombra,haz)=>{g.updateMatrixWorld(true);const out=new THREE.Group(),S=new THREE.Matrix4().makeScale(f,f,f).premultiply(new THREE.Matrix4().makeTranslation(0,dy,0));
-  g.traverse(o=>{if(!o.isMesh)return;const geo=o.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(S,o.matrixWorld));
-   const m=new THREE.Mesh(geo,o.material);m.name=o.name;m.castShadow=true;out.add(m)});
+  // se juntan las piezas que comparten material: una malla por material
+  const L=new Map();g.traverse(o=>{if(!o.isMesh)return;let geo=o.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(S,o.matrixWorld));if(geo.index)geo=geo.toNonIndexed();if(!geo.attributes.normal)geo.computeVertexNormals();
+   if(!L.has(o.material))L.set(o.material,{gs:[],n:o.name});const e=L.get(o.material);e.gs.push(geo);if(o.name==='carroceria')e.n='carroceria'});
+  for(const [mat,e] of L){let n=0;for(const q of e.gs)n+=q.attributes.position.count;const Pp=new Float32Array(n*3),Nn=new Float32Array(n*3);let k=0;
+   for(const q of e.gs){Pp.set(q.attributes.position.array,k*3);Nn.set(q.attributes.normal.array,k*3);k+=q.attributes.position.count}
+   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(Pp,3));geo.setAttribute('normal',new THREE.BufferAttribute(Nn,3));geo.computeBoundingSphere();
+   const m=new THREE.Mesh(geo,mat);m.name=e.n;m.castShadow=!mat.transparent;if(mat.transparent)m.renderOrder=3;out.add(m)}
   out.add(manchaSombra(...sombra));if(haz)out.add(haz);out.scale.setScalar(.6);return out};
- const coche=(i=0)=>{const h=hazFaros(.085);h.scale.set(1.6,1,1.6);const g=plano(F.coche(i),.038,0,[i===1?.1:.09,.18],h);g.userData.tipo='oficial'+i;return g};
+ const coche=(i=0)=>{const h=hazFaros(.085);h.scale.set(1.6,1,1.6);const g=plano(F.coche(i,{piloto:true}),.038,0,[i===1?.1:.09,.18],h);g.userData.tipo='oficial'+i;g.children.forEach(m=>m.userData.oficial='coche'+i);return g};
  const moto=(i=0)=>{const h=hazFaros(.08);h.scale.set(1.3,1,.9);const g=plano(F.moto(i,{piloto:true}),.07,.0007,[.045,.16],h);g.userData.tipo='moto';return g};
  // helicóptero: misma escala que el del juego (rotor de unas .28), patines en el suelo y el rotor en el centro de giro
  const heli=(i=0)=>{const b=F.heli(i),f=.06,g=new THREE.Group(),dx=-.35*f,dy=-.23*f;
@@ -6241,7 +6337,7 @@ function cabCrear(){
  const caja=(w,h,d,mat,ro,p)=>add(new THREE.BoxGeometry(w,h,d),mat,ro,p);
  // pieza recta entre dos puntos (pilares)
  const barra=(a,b,w,d,mat,ro)=>{const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),L=A.distanceTo(B);const m=caja(w,L,d,mat,ro);m.position.copy(A).add(B).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());return m};
- const NEG=M(0x2a2421),NEG2=M(0x141211,.7),CUERO=M(0x6a3a24,.65),CROMO=M(0xb9bcc2,.25,.9),TECHO=M(0x3b3734,.95),GOMA=M(0x0d0c0c,.9);
+ const NEG=M(0x2a2421),NEG2=M(0x141211,.7),CUERO=M(0x6a3a24,.65),PESP=M(0xc9a27a,.6),CROMO=M(0xb9bcc2,.25,.9),TECHO=M(0x3b3734,.95),GOMA=M(0x0d0c0c,.9);
  // capó (pintura del coche, se cambia sola si cambia el color)
  {const geo=new THREE.PlaneGeometry(1.46,1.6,16,10);geo.rotateX(-Math.PI/2);const p=geo.attributes.position;
   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),t=(.8-z)/1.6,xn=x/.73;p.setX(i,.37+x*(1-.16*t));p.setZ(i,-1.05-(.8-z)+0*t);p.setY(i,-.315-.1*t-.07*xn*xn*(1-.3*t)+.02*Math.sin(Math.PI*Math.min(1,t*1.2)))}
@@ -6250,7 +6346,7 @@ function cabCrear(){
  caja(1.5,.36,.58,NEG,ord++,[.37,-.47,-.84]);
  caja(1.5,.03,.09,NEG2,ord++,[.37,-.282,-1.09]);
  caja(1.5,.07,.03,CUERO,ord++,[.37,-.335,-.548]);
- caja(1.5,.008,.032,M(0xc9a27a,.6),ord++,[.37,-.317,-.546]);
+ caja(1.5,.008,.032,PESP,ord++,[.37,-.317,-.546]);
  caja(1.5,.45,.32,NEG2,ord++,[.37,-.86,-.74]);
  // aireadores
  for(const x of [.24,.62]){caja(.13,.055,.02,CROMO,ord++,[x,-.385,-.545]);caja(.115,.042,.02,GOMA,ord++,[x,-.385,-.538])}
@@ -6286,13 +6382,31 @@ function cabCrear(){
   for(const a of [0,Math.PI,-Math.PI/2]){const s=add(new THREE.BoxGeometry(.17,.035,.02),M(0x262321,.55,.3),ord++,null,r);s.rotation.z=a;s.position.set(Math.cos(a)*.085,Math.sin(a)*.085,0)}
   add(new THREE.CylinderGeometry(.065,.07,.04,20),M(0x232120,.5,.3),ord++,[0,0,.005],r).rotation.x=Math.PI/2;
   add(new THREE.CylinderGeometry(.022,.022,.01,16),CROMO,ord++,[0,0,.03],r).rotation.x=Math.PI/2}
+ // brazos y manos del conductor: las manos van agarradas al aro (giran con él); los antebrazos se recolocan en cada imagen
+ {const PIEL=M(0xd9a184,.6),MANGA=M(0xb8222a,.85),PUNO=M(0x8e1a20,.85);CAB.brazos=[];
+  for(const lado of [-1,1]){const piel=add(new THREE.CylinderGeometry(.026,.03,1,10),PIEL,ord++),manga=add(new THREE.CylinderGeometry(.046,.052,1,12),MANGA,ord++),puno=add(new THREE.CylinderGeometry(.05,.05,.03,12),PUNO,ord++);
+   CAB.brazos.push({lado,piel,manga,puno,codo:new THREE.Vector3(.34*lado,-.82,-.16)})}
+  // mano en ejes del aro: x hacia fuera del volante, y a lo largo del aro, z hacia el conductor; los dedos rodean el aro
+  const dedo=(R,ang)=>{const q=new THREE.TorusGeometry(R,.0115,6,12,ang);q.rotateZ(-Math.PI/5);q.rotateX(Math.PI/2);return q};
+  for(const b of CAB.brazos){const lado=b.lado,an=lado>0?Math.PI/5:Math.PI-Math.PI/5,h=new THREE.Group();h.position.set(.19*Math.cos(an),.19*Math.sin(an),0);h.rotation.z=an;CAB.rueda.add(h);b.mano=h;
+   b.dorso=add(new THREE.BoxGeometry(.082,.09,.028),PIEL,ord++);
+   [.03,.01,-.01,-.029].forEach((y,k)=>add(dedo(k===3?.033:.036,Math.PI*1.3),PIEL,ord++,[0,y,0],h));
+   const pu=add(new THREE.CapsuleGeometry(.012,.035,3,8),PIEL,ord++,[-.028,.04*lado,.03],h);pu.rotation.z=.4*lado;
+   b.nud=new THREE.Vector3(0,0,.03)}}
+ CAB.mCuero=CUERO;CAB.mPesp=PESP;CAB.cueroBase=CUERO.color.getHex();CAB.pespBase=PESP.color.getHex();
  g.traverse(o=>{if(o.isMesh)o.layers.set(5)});g.visible=false;scene.add(g);pcam.layers.enable(5);CAB.g=g}
 // color del coche para el capó y la carcasa del retrovisor
-function cabColor(){let c=null,best=0;const bx=new THREE.Box3(),v=new THREE.Vector3();car.traverse(o=>{if(o.isMesh&&o.material&&o.material.userData&&o.material.userData.pintura){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();bx.copy(o.geometry.boundingBox).getSize(v);const a=v.x*v.y+v.y*v.z+v.x*v.z;if(a>best){best=a;c=o.material}}});
+function cabColor(){const ria=car.children.some(c=>c.userData&&c.userData.oficial==='coche0');CAB.mCuero.color.setHex(ria?0xc93d18:CAB.cueroBase);CAB.mPesp.color.setHex(ria?0xff8a5a:CAB.pespBase);
+ let c=null,best=0;const bx=new THREE.Box3(),v=new THREE.Vector3();car.traverse(o=>{if(o.isMesh&&o.material&&o.material.userData&&o.material.userData.pintura){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();bx.copy(o.geometry.boundingBox).getSize(v);const a=v.x*v.y+v.y*v.z+v.x*v.z;if(a>best){best=a;c=o.material}}});
  if(!c&&car.userData.body)c=car.userData.body;if(!c)return;const h=c.color.getHex();if(h===CAB.col)return;CAB.col=h;
  CAB.carcasa.color.setHex(h);const m=c.clone();m.depthTest=false;m.depthWrite=true;m.userData={pintura:1};try{REFLEJAN.add(m)}catch(e){}const old=CAB.capo.material;CAB.capo.material=m;if(old&&old!==m){try{REFLEJAN.delete(old)}catch(e){}old.dispose()}}
 // esconde las piezas opacas del coche (las luces y la mancha de sombra se quedan)
-function cabEsconder(){car.traverse(o=>{if(o.isMesh&&o.visible&&!(o.material&&o.material.transparent)&&o.name!=='haz'){o.visible=false;CAB.ocultos.add(o)}})}
+function cabEsconder(){car.traverse(o=>{if(o.isMesh&&o.visible&&o.name!=='haz'&&o.name!=='sombra'){o.visible=false;CAB.ocultos.add(o)}})}
+// medidas del coche en sus propios ejes (para sentar al conductor en cualquier modelo): caja de las piezas, sin sombra ni haz
+function cabMedidas(){const k=car.children.length+':'+(car.children[0]?car.children[0].uuid:'');if(CAB.mk===k)return CAB.med;
+ car.updateMatrixWorld(true);const inv=car.matrixWorld.clone().invert(),b=new THREE.Box3(),t=new THREE.Box3(),m=new THREE.Matrix4();
+ for(const c of car.children){if(!c.isMesh||c.name==='sombra'||c.name==='haz')continue;if(!c.geometry.boundingBox)c.geometry.computeBoundingBox();t.copy(c.geometry.boundingBox).applyMatrix4(m.multiplyMatrices(inv,c.matrixWorld));b.union(t)}
+ if(b.isEmpty())b.set(new THREE.Vector3(-.08,0,-.04),new THREE.Vector3(.08,.07,.04));CAB.mk=k;CAB.med=b;return b}
 function cabOff(){if(!CAB.on)return;CAB.on=false;if(CAB.g)CAB.g.visible=false;for(const o of CAB.ocultos)o.visible=true;CAB.ocultos.clear();camInit=false;window.CD=undefined;CAB.qi=false}
 window.cabOff=cabOff;
 function cabCuadro(kmh){const {g}=CAB.cl,W=512,H=192;g.clearRect(0,0,W,H);
@@ -6340,20 +6454,28 @@ function cabCam(dt,gy){if(!CAB.g)cabCrear();
  if(!CAB.on){CAB.on=true;CAB.g.visible=true;CAB.col=-1}
  cabEsconder();if((CAB.tc-=dt)<=0){CAB.tc=1;cabColor()}
  const qCar=car.getWorldQuaternion(new THREE.Quaternion());if(!CAB.qi){CAB.q.copy(qCar);CAB.qi=true}else CAB.q.slerp(qCar,Math.min(1,dt*12));
- const S=CAB.UPM,v=Math.abs(P.v);CAB.bob+=dt*(6+v*10);
- const off=new THREE.Vector3(-.004,.0225+Math.sin(CAB.bob)*.00012*Math.min(1,v*3),-.0068).applyQuaternion(CAB.q);
- const eye=car.getWorldPosition(new THREE.Vector3());eye.y=Math.max(eye.y,gy);eye.add(off);
+ const v=Math.abs(P.v);CAB.bob+=dt*(6+v*10);
+ const B=cabMedidas(),L=B.max.x-B.min.x,H=B.max.y-B.min.y,cz=(B.min.z+B.max.z)/2,hw=(B.max.z-B.min.z)/2;
+ car.updateMatrixWorld(true);const a0=car.localToWorld(new THREE.Vector3(B.min.x,0,0)),a1=car.localToWorld(new THREE.Vector3(B.max.x,0,0));
+ const S=a0.distanceTo(a1)/4.4;   // el coche mide unos 4,4 m: de ahí los metros del mundo
+ const eye=car.localToWorld(new THREE.Vector3(B.min.x+.43*L,B.min.y+.8*H,cz-.42*hw));eye.y+=Math.sin(CAB.bob)*S*.006*Math.min(1,v*3);
+ const cy=car.getWorldPosition(new THREE.Vector3()).y;if(cy<gy)eye.y+=gy-cy;
  // cabina: ejes del coche (−z hacia delante), ampliada K veces alrededor del ojo
  const qG=CAB.q.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),-Math.PI/2));
  CAB.g.position.copy(eye);CAB.g.quaternion.copy(qG);CAB.g.scale.setScalar(S*CAB.K);CAB.g.updateMatrixWorld(true);
  // la cabeza se inclina un poco hacia la curva
  let stIn=0;try{stIn=((keys.left?1:0)-(keys.right?1:0))*(typeof JOY!=='undefined'&&JOY.act?JOY.k:1)}catch(e){}CAB.st+=(stIn-CAB.st)*Math.min(1,dt*6);
- CAB.rueda.rotation.z=CAB.st*1.5;
+ CAB.rueda.rotation.z=CAB.st*1.2;CAB.g.updateMatrixWorld(true);
+ // dorso de la mano desde los nudillos hacia el codo, y luego muñeca, puño de la manga y antebrazo
+ for(const b of CAB.brazos){const K=CAB.g.worldToLocal(b.mano.localToWorld(b.nud.clone())),Tg=CAB.g.worldToLocal(b.mano.localToWorld(new THREE.Vector3(0,1,.03))).sub(K);
+  const d=b.codo.clone().sub(K).normalize(),xA=Tg.addScaledVector(d,-Tg.dot(d)).normalize(),zA=new THREE.Vector3().crossVectors(xA,d);
+  b.dorso.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xA,d,zA));b.dorso.position.copy(K).addScaledVector(d,.042);
+  const w=K.clone().addScaledVector(d,.08),l=b.codo.distanceTo(w),q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d);
+  const pon=(m,a,c)=>{m.position.copy(w).addScaledVector(d,(a+c)/2);m.quaternion.copy(q);m.scale.set(1,c-a,1)};pon(b.piel,-.01,.07);pon(b.manga,.06,l);b.puno.position.copy(w).addScaledVector(d,.065);b.puno.quaternion.copy(q)}
  pcam.up.set(0,1,0);pcam.position.copy(eye);pcam.quaternion.copy(qG).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-.075,CAB.st*.06*Math.min(1,v*2),0,'YXZ')));
  const asp=cv.clientWidth/Math.max(1,cv.clientHeight);pcam.fov=Math.min(100,(asp<1?2*Math.atan(Math.tan(.68)/asp)*180/Math.PI:66)+5*Math.min(1,v));pcam.updateProjectionMatrix();camInit=false;
  const kmh=v*125;if((CAB.tp-=dt)<=0){CAB.tp=.09;cabCuadro(kmh);if((CAB.tq=(CAB.tq||0)+1)%3===0)cabPantalla()}
  cabEspejo(eye,CAB.q)}
-
 function camCambia(){CAMC=CAMC===0?1:CAMC===1&&cabOK()?3:0;try{localStorage.setItem('gtvigo_cam',CAMC)}catch(e){}if(CAMC!==3)cabOff();camInit=false;window.CD=undefined;const t_=CAMC===3?'🎥 Vista interior':CAMC?'🎥 Cámara pegada al coche':'🎥 Cámara de persecución';if(RACE.on)aviso(t_,1.1,'peq');else mostrar(t_)}
 document.getElementById('bCam').onclick=camCambia;addEventListener('keydown',e=>{if(driving&&e.code==='KeyC'&&!e.repeat)camCambia()});
 document.getElementById('bCoche').onclick=()=>{if(REP.on){if(REP.ent>0&&!REP.fin)repFin();else salirReparto(true);return}if(RACE.on){salirCarrera(true);return}setDrive(!driving)};
