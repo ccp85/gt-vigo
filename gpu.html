@@ -10637,6 +10637,7 @@ function musCambia(){MUS.on=!MUS.on;try{localStorage.setItem('gtvigo_mus',MUS.on
 const NAV_SFX=.45;   // Navidad: volumen de los efectos (la radio se compensa)
 const RADIO={i:0,on:true,run:false,k:0,t:0,g:null};window.__RADIO=RADIO;
 try{const v=localStorage.getItem(window.SOLO_NAVIDAD?'gtvigo_nav_radio':'gtvigo_radio');if(v==='off')RADIO.on=false;else if(v!==null)RADIO.i=(+v||0)%10}catch(e){}
+if(window.LITE&&window.GAMA_BAJA&&!window.SOLO_NAVIDAD){RADIO.on=false;addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('bRadio');if(b)b.classList.add('off')})}   // calidad Baja: radio apagada al empezar (edit_radiobaja.py)
 function radNodos(){if(RADIO.g||!AC||!master)return;const Q=RADIO;Q.g=AC.createGain();Q.g.gain.value=0;{const bo=AC.createGain();bo.gain.value=window.SOLO_NAVIDAD?1/NAV_SFX:1;Q.g.connect(bo);bo.connect(master)}
  Q.duck=AC.createGain();Q.duck.connect(Q.g);Q.lp=AC.createBiquadFilter();Q.lp.type='lowpass';Q.lp.frequency.value=3200;Q.lp.Q.value=2;Q.lp.connect(Q.duck);
  Q.dl=AC.createDelay(1);Q.fb=AC.createGain();Q.fb.gain.value=.3;Q.wet=AC.createGain();Q.wet.gain.value=.25;Q.lp.connect(Q.dl);Q.dl.connect(Q.fb);Q.fb.connect(Q.dl);Q.dl.connect(Q.wet);Q.wet.connect(Q.g);
