@@ -25,3 +25,4 @@ cd /home/claude/work/vigo/visor && cp /home/claude/work/carrera/nav/index_base.h
 # y después de edit_cabina.py: python3 /home/claude/work/carrera/nav/edit_riagt.py
 # y al final de todo: python3 /home/claude/work/carrera/nav/edit_trozos.py (lee trozos.js)
 # y al final de todo: python3 /home/claude/work/carrera/nav/edit_bajamenos.py
+# y al final de todo: python3 /home/claude/work/carrera/nav/edit_radiobaja.py
