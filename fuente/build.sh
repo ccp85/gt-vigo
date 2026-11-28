@@ -21,3 +21,4 @@ cd /home/claude/work/vigo/visor && cp /home/claude/work/carrera/nav/index_base.h
 # y después de edit_fpsmovil.py, en las siete páginas: python3 /home/claude/work/carrera/nav/edit_sinvaiven.py
 # y al final de todo, en las siete páginas: python3 /home/claude/work/carrera/nav/edit_calidad.py
 # y después de edit_calidad.py, en index, indexm y webgl: python3 /home/claude/work/carrera/nav/edit_volver.py
+# y después de edit_cabina.py: python3 /home/claude/work/carrera/nav/edit_riagt.py
