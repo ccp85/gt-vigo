@@ -8602,12 +8602,22 @@ function cielo(dt){
  if(lab!==CIELO.txt){CIELO.txt=lab;document.getElementById('bNoche').textContent=lab}}
 
 // ---------- tiempo de Vigo: despejado, nubes, chuvia y néboa (bruma) + calima de distancia en la maqueta + faros de noche ----------
-const TIEMPO={modo:'auto',act:'despejado',sig:150,txt:'',W:{cov:0,rain:0,fog:0}};window.TIEMPO=TIEMPO;
-const TOBJ={despejado:{cov:0,rain:0,fog:0},nubes:{cov:.72,rain:0,fog:.12},lluvia:{cov:1,rain:1,fog:.38},neboa:{cov:.3,rain:0,fog:1}};
-const TICO={auto:'🌦️',despejado:'☀️',nubes:'⛅',lluvia:'🌧️',neboa:'🌫️'},TNOM={despejado:'Despejado',nubes:'Nubes',lluvia:'Chuvia',neboa:'Néboa'};
+const TIEMPO={modo:'auto',act:'despejado',sig:150,txt:'',W:{cov:0,rain:0,fog:0,tur:0,sol:1,dif:0,exp:1,som:0,oro:0,bre:0,chub:0},rach:.5,rt:0};window.TIEMPO=TIEMPO;
+// climas: presets que se mezclan (cov nubes, rain lluvia, fog niebla, tur turbidez del aire, sol sol directo, dif luz difusa, exp exposición,
+// som sombras suaves, oro tono dorado, bre brétema baja, chub chaparrones a rachas)
+const TOBJ={despejado:{cov:0,rain:0,fog:0,tur:0,sol:1,dif:0,exp:1,som:0,oro:0,bre:0,chub:0},                 // despejado atlántico: aire limpio, sombras duras
+ nubes:{cov:.85,rain:0,fog:.12,tur:3,sol:.85,dif:.28,exp:1.07,som:1,oro:0,bre:0,chub:0},                     // nublado plateado: luz difusa, sombras suaves
+ bretema:{cov:.2,rain:0,fog:.18,tur:2,sol:1,dif:.1,exp:1.03,som:.35,oro:.12,bre:.45,chub:0},                // brétema matinal: niebla baja en la ría, el resto despejado
+ lluvia:{cov:1,rain:1,fog:.38,tur:4,sol:1,dif:.1,exp:1,som:1,oro:0,bre:.08,chub:1},                          // chubasco: a rachas, suelo mojado y reflejos
+ dorado:{cov:.15,rain:0,fog:.05,tur:3.5,sol:1.08,dif:0,exp:1.04,som:0,oro:1,bre:0,chub:0},                   // atardecer dorado: calima cálida y sol de oro
+ neboa:{cov:.3,rain:0,fog:1,tur:0,sol:1,dif:0,exp:1,som:.6,oro:0,bre:0,chub:0}};                             // néboa cerrada
+// para misiones y eventos: tiempoPreset('neboa') (con transición) o tiempoPreset('neboa',true) (de golpe); 'auto' vuelve al tiempo que cambia solo
+window.tiempoPreset=(n,inm)=>{if(n==='auto'){TIEMPO.modo='auto';return}if(!TOBJ[n])return;TIEMPO.modo=n;TIEMPO.act=n;if(inm)Object.assign(TIEMPO.W,TOBJ[n])};
+const TICO={auto:'🌦️',despejado:'☀️',nubes:'🌥️',bretema:'🌁',lluvia:'🌧️',dorado:'🌇',neboa:'🌫️'},TNOM={despejado:'Despejado',nubes:'Nublado',bretema:'Brétema',lluvia:'Chubasco',dorado:'Dorado',neboa:'Néboa'};
 // cambios de tiempo al azar, como en la ría (después de llover suele quedar nublado; la néboa entra más por la mañana)
 function tiempoSiguiente(){const a=TIEMPO.act,h=CIELO.h,r=Math.random();
- const P=a==='lluvia'?{nubes:.6,despejado:.25,lluvia:.15}:a==='neboa'?{despejado:.55,nubes:.45}:a==='nubes'?{despejado:.45,lluvia:.3,nubes:.1,neboa:.15}:{despejado:.35,nubes:.4,neboa:(h>5&&h<11)?.2:.08,lluvia:.1};
+ const man=h>5.5&&h<11,tar=h>18.3&&h<21.3;
+ const P=a==='lluvia'?{nubes:.6,despejado:.22,lluvia:.18}:a==='neboa'?{despejado:.5,nubes:.4,bretema:man?.2:0}:a==='bretema'?{despejado:.6,nubes:.3,bretema:man?.15:0}:a==='dorado'?{despejado:.5,dorado:tar?.35:0,nubes:.25}:a==='nubes'?{despejado:.4,lluvia:.3,nubes:.12,neboa:.08,dorado:tar?.15:0}:{despejado:.3,nubes:.35,bretema:man?.25:0,neboa:man?.08:.03,lluvia:.1,dorado:tar?.35:0};
  let s=0,tot=Object.values(P).reduce((x,y)=>x+y,0);for(const k in P){s+=P[k]/tot;if(r<=s)return k}return 'despejado'}
 const FOGM=new THREE.Fog(0xcfe0f2,50,200);
 // lluvia: trazos que caen alrededor de lo que se mira (la cámara del coche o el centro de la vista de maqueta)
@@ -8638,19 +8648,23 @@ function tiempoTick(dt,t){
  const O=TOBJ[TIEMPO.act],W=TIEMPO.W,k=Math.min(1,dt*.35);for(const q in W)W[q]+=(O[q]-W[q])*k;
  const cov=W.cov,fog=W.fog,rain=W.rain,ov=Math.max(cov,fog*.8);SKYU.uCov.value=cov;
  // cielo cubierto: menos sol directo, más luz difusa y gris
- sun.intensity*=1-.78*ov;hemi.intensity*=1+.12*ov;hemi.color.lerp(_c2.set(0xc9ced8),ov*.55);
+ sun.intensity*=(1-.78*ov)*W.sol;hemi.intensity*=1+.12*ov+W.dif;hemi.color.lerp(_c2.set(0xc9ced8),ov*.55);
  const gris=_c1.set(0x9aa3b2).multiplyScalar(.25+.75*(1-CIELO.nf));SKYU.uZen.value.lerp(gris,ov*.75);SKYU.uHor.value.lerp(_c1.set(0xc4cad3).multiplyScalar(.2+.8*(1-CIELO.nf)),Math.max(ov*.6,fog*.85));
- R.toneMappingExposure=1.05*(1-.12*rain);lucesBrillo();NUBE_MAT.opacity=Math.min(.9,NUBE_MAT.opacity*(1+1.1*cov));NUBE_MAT.color.lerp(_c2.set(0x8d94a2),cov*.55*(1-CIELO.nf));
+ {const dia=1-CIELO.nf;if(W.oro>.01){sun.color.lerp(_c2.set(0xffb15a),W.oro*.45*dia);hemi.color.lerp(_c2.set(0xffd6a6),W.oro*.22*dia);SKYU.uHor.value.lerp(_c1.set(0xf2c27a).multiplyScalar(.2+.8*dia),W.oro*.28*dia)}
+  const S=sun.shadow;S.radius=1+5*W.som;S.intensity=1-.5*W.som;if(window.CSMG&&CSMG.csm)for(const l of CSMG.csm.lights){l.shadow.radius=S.radius;l.shadow.intensity=S.intensity}}
+ R.toneMappingExposure=1.05*(1-.12*rain)*W.exp;lucesBrillo();NUBE_MAT.opacity=Math.min(.9,NUBE_MAT.opacity*(1+1.1*cov));NUBE_MAT.color.lerp(_c2.set(0x8d94a2),cov*.55*(1-CIELO.nf));
  const top='#'+SKYU.uZen.value.getHexString(),bot='#'+SKYU.uHor.value.getHexString(),bg=`linear-gradient(to bottom,${top},${bot})`;if(CIELO.bg!==bg){CIELO.bg=bg;document.body.style.background=bg}
  if(driving){if(!window.__BAJO)FOG.color.copy(SKYU.uHor.value);scene.fog=FOG}
  else{// calima de distancia en la maqueta (lo lejano, arriba de la pantalla, se aclara hacia el color del horizonte)
   const D=cam.position.distanceTo(ctl.target),vis=(cam.top-cam.bottom)/cam.zoom;FOGM.color.copy(SKYU.uHor.value);
   FOGM.near=D-vis*(.15+.45*fog);FOGM.far=D+vis*(4.6-3.7*fog-1.4*rain);scene.fog=FOGM}
- lluviaTick(dt,rain);TIEMPO.moj=THREE.MathUtils.clamp((TIEMPO.moj||0)+(rain>.3?dt/35*rain:-dt/160),0,1);UMO.uWet.value=TIEMPO.moj;UMO.uTm.value=t;UMO.uLz.value=THREE.MathUtils.smoothstep(CIELO.nf,.35,.8);CHARCO_MAT.opacity=Math.min(1,CHARCO_MAT.opacity*(1+.9*TIEMPO.moj));
+ TIEMPO.rt+=dt;TIEMPO.rach=.5+.5*Math.sin(TIEMPO.rt*.21)*Math.sin(TIEMPO.rt*.067+1.3);
+ lluviaTick(dt,rain*(1-W.chub*.55+W.chub*.75*TIEMPO.rach));TIEMPO.moj=THREE.MathUtils.clamp((TIEMPO.moj||0)+(rain>.3?dt/(35-17*W.chub)*rain:-dt/160),0,1);UMO.uWet.value=TIEMPO.moj;UMO.uTm.value=t;UMO.uLz.value=THREE.MathUtils.smoothstep(CIELO.nf,.35,.8);CHARCO_MAT.opacity=Math.min(1,CHARCO_MAT.opacity*(1+.9*TIEMPO.moj));
  const fo=Math.max(THREE.MathUtils.smoothstep(CIELO.nf,.3,.75),fog*.7);HAZ_MAT.uniforms.uO.value=fo*(.42+.3*fog);LUZ_FARO.opacity=fo;
  for(const g of FAROS_M){g.visible=fo>.02;if(g.visible)g.rotation.y=t*g.userData.v}
  const lab=TICO[TIEMPO.modo]+' '+(TIEMPO.modo==='auto'?TNOM[TIEMPO.act]:TNOM[TIEMPO.modo]);if(lab!==TIEMPO.txt){TIEMPO.txt=lab;const b=document.getElementById('bTiempo');if(b)b.textContent=lab}}
-document.getElementById('bTiempo').onclick=e=>{const M=['auto','despejado','nubes','lluvia','neboa'];TIEMPO.modo=M[(M.indexOf(TIEMPO.modo)+1)%5];e.currentTarget.setAttribute('aria-pressed',TIEMPO.modo==='auto')};
+document.getElementById('bTiempo').onclick=e=>{const M=['auto','despejado','nubes','bretema','lluvia','dorado','neboa'];TIEMPO.modo=M[(M.indexOf(TIEMPO.modo)+1)%M.length];
+ if(CIELO.modo==='auto'){const h=CIELO.h;if(TIEMPO.modo==='dorado'&&!(h>19&&h<21.3))CIELO.h=20.3;if(TIEMPO.modo==='bretema'&&!(h>6.8&&h<10.5))CIELO.h=8.2}e.currentTarget.setAttribute('aria-pressed',TIEMPO.modo==='auto')};
 function nubesTick(dt,t){if((CIELO.sz!==size||CIELO.nz!==ZROOTS.length)&&NUBES.length)hacerNubes();const B_=CIELO.bx||(CIELO.bx=cajaZonas()),wx=.35,wz=.13;
  const zf=driving?1:THREE.MathUtils.clamp(1.5-cam.zoom*.25,0,1);NUBE_MAT.opacity=.45*zf*(1-.75*CIELO.nf);
  for(const n of NUBES){n.m.visible=zf>.02;n.m.position.x+=wx*n.v*dt;n.m.position.z+=wz*n.v*dt;

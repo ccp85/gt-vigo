@@ -64,7 +64,7 @@ function bretemaTick(dt){if(window.__BRETEMA_OFF){if(BRT.ini){scene.fogNode=null
  try{bretemaAntes(R,scene,driving?pcam:cam)}catch(e){}   // la cámara principal, ya para esta imagen
  // mañanas tranquilas: brétema sobre la ría que se levanta hacia media mañana
  const man=THREE.MathUtils.smoothstep(h,6.3,7.8)*(1-THREE.MathUtils.smoothstep(h,9.6,11.6))*(1-W.rain)*(1-.6*W.cov);
- const obj=BRT.forzar!=null?BRT.forzar*1.7:Math.max(1.7*W.fog,.42*man,.02+.06*W.cov);
+ const obj=BRT.forzar!=null?BRT.forzar*1.7:Math.max(1.7*W.fog,1.7*(W.bre||0),.42*man,.02+.06*W.cov);
  BRT.b+=(obj-BRT.b)*Math.min(1,dt*.5);U.uB.value=BRT.b;
  U.uAm.value=.5-.15*CIELO.nf;
  // color de la brétema: lo que vería una pared blanca iluminada por el sol (desde arriba) y el cielo, como una nube baja
