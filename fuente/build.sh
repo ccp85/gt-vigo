@@ -26,3 +26,4 @@ cd /home/claude/work/vigo/visor && cp /home/claude/work/carrera/nav/index_base.h
 # y al final de todo: python3 /home/claude/work/carrera/nav/edit_trozos.py (lee trozos.js)
 # y al final de todo: python3 /home/claude/work/carrera/nav/edit_bajamenos.py
 # y al final de todo: python3 /home/claude/work/carrera/nav/edit_radiobaja.py
+# y al final de todo, en las siete páginas: python3 /home/claude/work/carrera/nav/edit_lineasrectas.py (lee lineasrectas.js; los <zona>_lineas.bin se hornean con node fuente/herramientas/lineas_hornear.mjs)
