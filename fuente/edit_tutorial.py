@@ -14,7 +14,12 @@ FILES=sys.argv[1:] or [f for f in ['index.html','indexm.html','webgl.html','gpu.
 JS=open(os.path.join(D,'tutorial.js'),encoding='utf8').read().strip('\n')
 for f in FILES:
     s=open(f,encoding='utf8').read()
-    if '/*tutorial*/' in s:print('ya estaba',f);continue
+    if '/*tutorial*/' in s:
+        # ya estaba: se cambia solo el script del tutorial por la versión nueva
+        i=s.find('<script>/* tutorial:');j=s.find('</script>',i)
+        assert i>0 and j>i,f
+        s=s[:i]+'<script>'+JS+s[j:]
+        open(f,'w',encoding='utf8').write(s);print('actualizado tutorial',f);continue
     def r(a,b):
         global s
         assert s.count(a)==1,(f,s.count(a),a[:90]); s=s.replace(a,b)
