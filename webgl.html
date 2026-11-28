@@ -802,6 +802,11 @@ const h=SZ.querySelector('.iHint');if(h)h.textContent='◀ ▶ vehículo · ▲ 
  let q=location.search.replace(/([?&])pc=1(&|$)/,'$1').replace(/[?&]+$/,'');if(dest!=='indexm.html')q+=(q?'&':'?')+'pc=1';
  window.__SALTO=1;location.replace(dest+q+location.hash)})();
 /* 🎨 botón y menú de calidad */
+/* 🎨 volver al mismo sitio tras cambiar la calidad: sin menú de inicio, en la zona y el punto donde estabas */
+addEventListener('DOMContentLoaded',()=>{let v=null;try{v=JSON.parse(sessionStorage.getItem('gtvigo_volver')||'null')}catch(e){}
+ if(!v||Date.now()-v.t>120000||window.__SALTO)return;window.__VOLVER=v;const t0=Date.now();
+ const paso=()=>{const j=document.getElementById('selzJugar');if(j&&!j.disabled&&window.__volverEmpezar){try{sessionStorage.removeItem('gtvigo_volver')}catch(e){}const o=j.onclick;j.onclick=()=>window.__volverEmpezar(v.x,v.y);try{j.click()}finally{j.onclick=o}return}
+  if(Date.now()-t0<60000)setTimeout(paso,200);else window.__VOLVER=null};setTimeout(paso,200)});
 addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('bCal');if(!b)return;
  const OP=[['auto','Auto','El juego elige según tu aparato'],['baja','Baja','Móviles antiguos: menos resolución, distancia y zonas'],['media','Media','Versión móvil normal'],['alta','Alta','Gráficos completos (motor clásico)'],['maxima','Máxima','WebGPU: hierba, árboles con viento, reflejos… (necesita un equipo potente)']];
  const nom=c=>(OP.find(o=>o[0]===c)||OP[0])[1];b.textContent='🎨 '+nom(window.CALIDAD);
@@ -811,6 +816,7 @@ addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('bCal')
   m.innerHTML='<b>🎨 Calidad gráfica</b>'+OP.map(o=>'<button data-c="'+o[0]+'"'+(o[0]===window.CALIDAD?' class="on" aria-pressed="true"':'')+'><span>'+o[1]+'</span><small>'+o[2]+'</small></button>').join('')+'<i>Al cambiarla se recarga el juego</i>';
   m.addEventListener('click',ev=>{ev.stopPropagation();const c=ev.target.closest('[data-c]');if(!c)return;const v=c.dataset.c;if(v===window.CALIDAD){cierra();return}
    try{localStorage.setItem('gtvigo_calidad',v);sessionStorage.removeItem('gtvigo_saltos')}catch(e){}
+   try{const g=window.__estadoJuego&&window.__estadoJuego();if(g&&g.driving&&isFinite(g.x)&&isFinite(g.y)){sessionStorage.setItem('gtvigo_volver',JSON.stringify({x:g.x,y:g.y,a:g.a,t:Date.now()}));if(/^(coche|moto|heli)$/.test(g.modo))localStorage.setItem('gtvigo_veh',g.modo)}}catch(e){}   // volver al mismo sitio
    const pg=location.pathname.split('/').pop()||'index.html';const q=location.search.replace(/([?&])(gama=\w+|pc=1)(?=&|$)/g,'$1').replace(/[?&]{2,}/g,'&').replace(/[?&]+$/,'').replace(/^&/,'?');
    location.replace((v==='auto'?'index.html':pg)+q+location.hash)});
   document.body.appendChild(m)});
@@ -5648,7 +5654,7 @@ window.GTV_ponModelo=(k,i)=>{if(OF_SEL[k]===i)return;OF_SEL[k]=i;
 
 const P={x:0,y:0,a:0,v:0};window.P=P;let CAMC=0;try{const v_=+localStorage.getItem('gtvigo_cam')||0;CAMC=v_===1||v_===3?v_:0}catch(e){}let CZ=1;
 // ---------- vehículos: coche, moto de agua y a pie ----------
-let MODO='coche';window.modo=()=>MODO;
+let MODO='coche';window.modo=()=>MODO;window.__estadoJuego=()=>({driving:!!driving,x:P.x,y:P.y,a:P.a,modo:MODO});window.__volverEmpezar=(x,y)=>{let b=null,bd=1e9;for(const q of ZMETA.zonas){const d=zonaDist(q,x,y);if(d<bd){bd=d;b=q}}if(b)empezarEn(b,[x,y])};
 const MS=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55});
 function mkPersona(){const g=new THREE.Group();   // protagonista (edit_muneco.py): cartoon pulido · camiseta blanca, vaqueros, zapatillas, ojos de punto y pelo rapado castaño
  // mira hacia +x · pies en y=0 · userData.piernas/brazos con dos hijos cada uno (los usan andar, nadar y la moto)
@@ -6207,7 +6213,7 @@ function updateTraffic(dt){frameN++;window.__TT=(window.__TT||0)+dt;cercaT-=dt;i
   if(c.z==null||(frameN+ci)%3===0)c.z=groundY(c.x,c.y);c.g.position.set(c.x,c.z,c.y);c.g.rotation.y=ang+(c.rot||0)-((c.latT||0)-(c.lat||0))*2.2;c.g.visible=F.vida&&Math.hypot(c.x-F.x,c.y-F.y)<F.R*1.1}
  burbujasTick()
  for(const v of APARC){v.g.visible=driving;v.g.position.set(v.x,v.tipo==='moto'?-.03+Math.sin(performance.now()/500+v.x)*.003:v.tipo==='heli'?v.z:groundY(v.x,v.y),v.y);v.g.rotation.y=v.a}}const keys={};let driving=false;
-function startPos(){{const c=cell(START[0],START[1]).t;if(c===1||c===2||c===4||c===5)return START}let best=null,bd=1e9;for(let j=0;j<(MAPA?.h||0);j+=2)for(let i=0;i<MAPA.w;i+=2){const o=(j*MAPA.w+i)*4;const tt=Math.round(MI[o]/40);if(tt!==2&&tt!==4)continue;const x=MAPA.ox+i/MAPA.res,y=MAPA.oy+j/MAPA.res,d=Math.hypot(x-START[0],y-START[1]);if(d<bd){bd=d;best=[x,y]}}return best||[center.x,center.z]}
+function startPos(){if(window.__VOLVER){const v=window.__VOLVER;window.__VOLVER=null;START=[v.x,v.y];START_A=v.a}{const c=cell(START[0],START[1]).t;if(c===1||c===2||c===4||c===5)return START}let best=null,bd=1e9;for(let j=0;j<(MAPA?.h||0);j+=2)for(let i=0;i<MAPA.w;i+=2){const o=(j*MAPA.w+i)*4;const tt=Math.round(MI[o]/40);if(tt!==2&&tt!==4)continue;const x=MAPA.ox+i/MAPA.res,y=MAPA.oy+j/MAPA.res,d=Math.hypot(x-START[0],y-START[1]);if(d<bd){bd=d;best=[x,y]}}return best||[center.x,center.z]}
 function setDrive(on,modo='coche'){if(!on&&window.taxiSalir)window.taxiSalir();if(!on&&window.aeSalir)window.aeSalir();if(!on&&window.surfgSalir)window.surfgSalir();if(!on&&window.basketSalir)window.basketSalir();if(on&&!window.SOLO_CARRERA&&!window._avClx){window._avClx=1;setTimeout(()=>{if(driving&&!RACE.on)mostrar(matchMedia('(pointer:coarse)').matches?'📯 Toca 📯 para pitar · la ciudad reacciona a cómo conduces':'📯 H (o LB en el mando) para pitar · la ciudad reacciona a cómo conduces')},5000)}driving=on;calleAct='';calleCand='';document.getElementById('calle').classList.remove('on');sun.castShadow=!on;for(const s_ of SOMBRAS)s_.visible=on;recortar(0,true);if(on){ponerMotos();car.visible=false};document.getElementById('pad').hidden=!on;document.getElementById('mini').hidden=!on;document.getElementById('vel').hidden=!on;document.getElementById('bCoche').setAttribute('aria-pressed',on);
  document.querySelector('.hint').hidden=on;document.querySelector('header p').hidden=on;ctl.enabled=!on;
  document.body.classList.toggle('drive',on);scene.fog=on?FOG:null;document.getElementById('bCoche').textContent=on?'✕ Salir':'🚗 Conducir';
