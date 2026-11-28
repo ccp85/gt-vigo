@@ -41,10 +41,10 @@ const _cfZ=new THREE.Color(),_cfH=new THREE.Color();
 // se llama en cielo() con la dirección del sol ya puesta: calcula la atmósfera y mezcla los colores del cielo (zen, hor)
 function cieloFis(sd,el,zen,hor){cfisU();const C=CFIS;C.ok=!window.__CIELOFIS_OFF;SKYU.uFis.value=C.ok?1:0;if(!C.ok)return;
  // aire más turbio con néboa, nubes o lluvia (sol más pálido, horizonte más blanco)
- const W=window.TIEMPO&&TIEMPO.W||{cov:0,fog:0,rain:0},tur=C.tur+3.5*Math.max(W.fog,W.rain*.7)+1.2*W.cov;
+ const W=window.TIEMPO&&TIEMPO.W||{cov:0,fog:0,rain:0},tur=C.tur+3.5*Math.max(W.fog,W.rain*.7)+1.2*W.cov+(W.tur||0);   // + la turbidez del clima (calima del atardecer dorado, aire de chubasco)
  C.s[0]=sd.x;C.s[1]=sd.y;C.s[2]=sd.z;
  C.sE=1000*Math.max(0,1-Math.exp(-((1.6110731556870734-Math.acos(Math.max(-1,Math.min(1,sd.y))))/1.5)));
- const cm=.434*(.2*tur*10e-18);for(let i=0;i<3;i++){C.bR[i]=C.TR[i]*C.ray;C.bM[i]=cm*C.MC[i]*C.mie}
+ const cm=.434*(.2*tur*10e-18);for(let i=0;i<3;i++){C.bR[i]=C.TR[i]*C.ray;C.bM[i]=cm*C.MC[i]*C.mie*(1+1.4*(W.oro||0))}
  SKYU.uBR.value.fromArray(C.bR);SKYU.uBM.value.fromArray(C.bM);SKYU.uSE.value=C.sE;
  // cenit y media del horizonte (8 rumbos)
  cfisP(0,1,0,C.z);const h=C.h;h[0]=h[1]=h[2]=0;
